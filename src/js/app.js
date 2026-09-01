@@ -1,11 +1,11 @@
-/**
+﻿/**
  * PZHub Website - Main App Orchestrator
  */
 
 import { initAuth } from './auth.js';
 import { initWorkshop } from './workshop.js';
 import { initModpackBuilder } from './modpackBuilder.js';
-import { saveApiCredentials, isConfigured } from './supabaseClient.js';
+import { isConfigured } from './supabaseClient.js';
 
 class WebsiteApp {
   constructor() {
@@ -14,7 +14,7 @@ class WebsiteApp {
 
   async init() {
     this.setupNavigation();
-    this.setupConfigModal();
+    this.updateCloudStatus();
 
     await initAuth();
     await initWorkshop();
@@ -31,7 +31,7 @@ class WebsiteApp {
       tab.addEventListener('click', () => {
         const view = tab.dataset.view;
         if (view) {
-          window.location.hash = `#${view}`;
+          window.location.hash = '#' + view;
         }
       });
     });
@@ -52,45 +52,17 @@ class WebsiteApp {
 
     // Atualiza sections
     document.querySelectorAll('.site-view').forEach(sec => {
-      sec.classList.toggle('active', sec.id === `view-${viewName}`);
+      sec.classList.toggle('active', sec.id === ('view-' + viewName));
     });
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  setupConfigModal() {
-    const setupBtn = document.getElementById('btn-setup-supabase');
-    const modal = document.getElementById('supabase-config-modal');
-    const closeBtn = document.getElementById('config-modal-close');
-    const form = document.getElementById('config-form');
-
+  updateCloudStatus() {
     const statusBadge = document.getElementById('cloud-status-badge');
     if (statusBadge) {
-      statusBadge.textContent = isConfigured ? 'SUPABASE CONECTADO' : 'MODO DEMO / OFFLINE';
-      statusBadge.className = `tarkov-tag ${isConfigured ? 'badge-emerald' : 'badge-amber'}`;
-    }
-
-    if (setupBtn && modal) {
-      setupBtn.addEventListener('click', () => {
-        modal.classList.add('visible');
-      });
-    }
-
-    if (closeBtn && modal) {
-      closeBtn.addEventListener('click', () => {
-        modal.classList.remove('visible');
-      });
-    }
-
-    if (form) {
-      form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const url = document.getElementById('config-supabase-url').value;
-        const key = document.getElementById('config-supabase-key').value;
-        if (url && key) {
-          saveApiCredentials(url, key);
-        }
-      });
+      statusBadge.textContent = isConfigured ? 'PZHUB CLOUD ATIVO' : 'MODO COMUNIDADE';
+      statusBadge.className = 'tarkov-tag ' + (isConfigured ? 'badge-emerald' : 'badge-amber');
     }
   }
 }

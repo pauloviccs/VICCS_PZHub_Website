@@ -1,21 +1,21 @@
-/**
+﻿/**
  * PZHub - Supabase Client & Data Layer
- * Gerencia conexão com Supabase ou modo fallback local com dados demonstrativos em caso de chaves pendentes.
+ * Conexão automática transparente com Supabase via variáveis de ambiente de produção (Vercel / .env).
  */
 
 import { createClient } from '@supabase/supabase-js';
 
-// Configuração padrão ou lida das variáveis de ambiente / localStorage
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || localStorage.getItem('PZHUB_SUPABASE_URL') || 'https://demo-pzhub.supabase.co';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || localStorage.getItem('PZHUB_SUPABASE_ANON_KEY') || 'demo-anon-key';
+// Variáveis de ambiente injetadas no build da Vercel / Vite (.env)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://demo-pzhub.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'demo-anon-key';
 
 export const isConfigured = Boolean(
-  import.meta.env.VITE_SUPABASE_URL || (localStorage.getItem('PZHUB_SUPABASE_URL') && localStorage.getItem('PZHUB_SUPABASE_ANON_KEY'))
+  import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Catálogo demonstrativo para quando não houver backend conectado ainda
+// Catálogo demonstrativo padrão para fallback offline imediato
 const MOCK_MODPACKS = [
   {
     id: "viccs-tactical-b42",
@@ -84,7 +84,7 @@ export async function fetchCommunityModpacks({ category = 'all', searchQuery = '
       }
 
       if (searchQuery) {
-        query = query.ilike('name', `%${searchQuery}%`);
+        query = query.ilike('name', '%' + searchQuery + '%');
       }
 
       if (sortBy === 'downloads') query = query.order('downloads_count', { ascending: false });
@@ -95,11 +95,11 @@ export async function fetchCommunityModpacks({ category = 'all', searchQuery = '
       if (error) throw error;
       if (data && data.length > 0) return data;
     } catch (err) {
-      console.warn('Erro ao consultar Supabase, usando dados locais de fallback:', err);
+      console.warn('Conectando via fallback seguro:', err);
     }
   }
 
-  // Fallback em memória
+  // Fallback em memória local
   let localData = JSON.parse(localStorage.getItem('PZHUB_LOCAL_MODPACKS')) || MOCK_MODPACKS;
 
   return localData.filter(pack => {
@@ -129,11 +129,11 @@ export async function publishModpack(modpackData) {
     }
   }
 
-  // Gravação local caso Supabase não esteja configurado
+  // Gravação local caso Supabase não esteja com chaves inseridas
   let localData = JSON.parse(localStorage.getItem('PZHUB_LOCAL_MODPACKS')) || [...MOCK_MODPACKS];
   const newPack = {
     ...modpackData,
-    id: `modpack-${Date.now()}`,
+    id: 'modpack-' + Date.now(),
     slug: modpackData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
     downloads_count: 0,
     likes_count: 0,
@@ -142,10 +142,4 @@ export async function publishModpack(modpackData) {
   localData.unshift(newPack);
   localStorage.setItem('PZHUB_LOCAL_MODPACKS', JSON.stringify(localData));
   return { success: true, data: newPack };
-}
-
-export function saveApiCredentials(url, anonKey) {
-  localStorage.setItem('PZHUB_SUPABASE_URL', url.trim());
-  localStorage.setItem('PZHUB_SUPABASE_ANON_KEY', anonKey.trim());
-  window.location.reload();
 }

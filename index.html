@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
@@ -7,7 +7,7 @@
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
 
     <link rel="stylesheet" href="./src/css/style.css" />
@@ -35,11 +35,7 @@
       </nav>
 
       <div class="site-header-actions">
-        <span id="cloud-status-badge" class="tarkov-tag badge-emerald">CONECTADO</span>
-        
-        <button id="btn-setup-supabase" class="tarkov-btn" title="Configurar credenciais da nuvem Supabase" style="padding: 6px 12px;">
-          ⚙️ API SUPABASE
-        </button>
+        <span id="cloud-status-badge" class="tarkov-tag badge-emerald">PZHUB CLOUD ATIVO</span>
 
         <button id="nav-auth-btn" class="tarkov-btn btn-amber" style="padding: 6px 14px;">
           ENTRAR / CADASTRO
@@ -165,7 +161,7 @@
 
           <div class="field-group">
             <label>DESCRIÇÃO OPERACIONAL:</label>
-            <textarea id="builder-desc" class="tarkov-input-sm" rows="3" placeholder="Explique os objetivos e mecânicas do seu modpack..." required>Modpack balanceado e focado em imersão tática para o Project Zomboid Build 42.</textarea>
+            <textarea id="builder-desc" class="tarkov-input-sm" rows="3" required>Modpack balanceado e focado em imersão tática para o Project Zomboid Build 42.</textarea>
           </div>
 
           <!-- Seção de Mods Inclusos -->
@@ -265,7 +261,6 @@
         </div>
         <div class="modal-card-body">
           <p>Disparamos a sincronização para o aplicativo nativo PZHub instalado no seu computador para o pacote <strong id="sync-modal-pack-name" style="color: var(--accent-amber);"></strong>.</p>
-          <p style="font-size: 11px; color: var(--text-muted);">Se o aplicativo não abriu automaticamente, você pode copiar o link do manifesto abaixo e colar direto na aba <strong>MODPACKS</strong> do seu PZHub:</p>
           <div style="display: flex; gap: 8px;">
             <input type="text" id="sync-modal-link-input" class="tarkov-input-sm" readonly style="flex: 1;" />
             <button id="btn-copy-sync-link" class="tarkov-btn btn-amber">COPIAR LINK</button>
@@ -336,35 +331,6 @@
           </button>
           <button type="button" id="btn-toggle-auth-mode" style="background: transparent; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; text-align: center; margin-top: 6px;">
             Não tem conta? Cadastre-se como Criador
-          </button>
-        </form>
-      </div>
-    </div>
-
-    <!-- MODAL 5: CONFIGURAÇÃO DE CREDENCIAIS SUPABASE -->
-    <div id="supabase-config-modal" class="tactical-modal-overlay">
-      <div class="tarkov-modal-card" style="max-width: 480px;">
-        <div class="modal-card-header">
-          <div class="modal-title-wrap">
-            <span class="modal-tag">PZHUB // CONEXÃO DA NUVEM</span>
-            <h3 class="modal-title">CREDENCIAS SUPABASE (100% FREE)</h3>
-          </div>
-          <button id="config-modal-close" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;">✕</button>
-        </div>
-        <form id="config-form" class="modal-card-body">
-          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">
-            Cole a URL e a Anon Key do seu projeto Supabase para conectar a plataforma em tempo real com seu banco de dados PostgreSQL gratuito:
-          </p>
-          <div class="field-group">
-            <label>SUPABASE PROJECT URL:</label>
-            <input type="url" id="config-supabase-url" class="tarkov-input-sm" placeholder="https://xyzcompany.supabase.co" required />
-          </div>
-          <div class="field-group">
-            <label>SUPABASE ANON KEY (PÚBLICA):</label>
-            <input type="text" id="config-supabase-key" class="tarkov-input-sm" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." required />
-          </div>
-          <button type="submit" class="tarkov-btn btn-emerald" style="width: 100%; margin-top: 8px;">
-            SALVAR & CONECTAR NUVEM
           </button>
         </form>
       </div>
