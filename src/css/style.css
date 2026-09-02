@@ -645,13 +645,32 @@ body {
   box-shadow: 0 0 8px var(--accent-amber-glow);
 }
 
-.tarkov-textarea {
-  resize: vertical;
+.tarkov-select {
+  background-color: #0e141c;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f1f5f9;
+  padding: 8px 30px 8px 12px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color-scheme: dark;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23e5a93c' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 10px) center;
+  background-size: 10px 10px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.tarkov-select {
-  background: #0d1218;
-  cursor: pointer;
+.tarkov-select option,
+.tarkov-select optgroup {
+  background-color: #141a22 !important;
+  color: #f8fafc !important;
+  font-family: var(--font-sans);
+  padding: 8px 12px;
 }
 
 .form-group, .field-group {
@@ -2613,90 +2632,247 @@ body {
 .tactical-toast.fade-out { opacity: 0; transform: translateY(10px); }
 
 /* ========================================================================= */
-/* TEMA CLARO (WHITE / LIGHT MODE)                                           */
+/* TEMA CLARO (ESTILO APPLE / PRO WHITE MODE) WEBSITE                         */
 /* ========================================================================= */
 body.theme-light {
-  --bg-darkest: #f4f6f9;
-  --bg-main: #edf2f7;
+  --bg-darkest: #f5f5f7;
+  --bg-main: #f5f5f7;
   --bg-surface: #ffffff;
-  --bg-surface-card: #f8fafc;
+  --bg-surface-card: #ffffff;
   --bg-surface-elevated: #ffffff;
-  --panel-border: rgba(0, 0, 0, 0.12);
-  --text-main: #1e293b;
-  --text-dim: #475569;
-  --text-muted: #64748b;
-  color: var(--text-main);
-  background-color: var(--bg-darkest);
+  --panel-border: rgba(0, 0, 0, 0.08);
+  --panel-border-bright: rgba(0, 0, 0, 0.16);
+  --text-main: #1d1d1f;
+  --text-dim: #515154;
+  --text-muted: #6e6e73;
+  color: #1d1d1f !important;
+  background-color: #f5f5f7 !important;
+  color-scheme: light;
 }
 
+/* Header & Barra Superior */
 body.theme-light .site-header {
-  background: rgba(255, 255, 255, 0.92);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: saturate(180%) blur(20px) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03) !important;
 }
+
 body.theme-light .site-nav-tab {
-  color: #64748b;
+  color: #6e6e73;
 }
+
+body.theme-light .site-nav-tab:hover {
+  color: #1d1d1f;
+  background: rgba(0, 0, 0, 0.04);
+}
+
 body.theme-light .site-nav-tab.active {
-  color: var(--accent-amber);
+  color: #d97706;
+  background: rgba(217, 119, 6, 0.08);
+  border-bottom: 2px solid #d97706;
 }
+
+/* Banner Principal (Hero) */
 body.theme-light .tarkov-hero-banner {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(240, 243, 246, 0.8) 100%);
-  border-color: rgba(0, 0, 0, 0.15);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
 }
+
 body.theme-light .hero-title {
-  color: #0f172a;
+  color: #1d1d1f !important;
 }
+
 body.theme-light .hero-desc {
-  color: #475569;
+  color: #6e6e73 !important;
 }
+
+body.theme-light .hero-kicker,
+body.theme-light .section-kicker,
+body.theme-light .section-subtitle {
+  color: #b45309 !important;
+}
+
+body.theme-light .section-title {
+  color: #1d1d1f !important;
+}
+
+/* Cards em todas as Abas (Workshop, Perfil, Studio, Timeline, Admin) */
 body.theme-light .ws-card,
 body.theme-light .profile-main-card,
 body.theme-light .profile-stat-box,
 body.theme-light .scrap-card,
-body.theme-light .builder-form-card {
-  background: #ffffff;
-  border-color: rgba(0, 0, 0, 0.1);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+body.theme-light .builder-form-card,
+body.theme-light .my-upload-card,
+body.theme-light .timeline-compose-card,
+body.theme-light .timeline-post-card,
+body.theme-light .timeline-sidebar-card,
+body.theme-light .admin-stat-card,
+body.theme-light .admin-table-card,
+body.theme-light .tarkov-panel,
+body.theme-light .tactical-panel {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  color: #1d1d1f !important;
 }
+
+body.theme-light .ws-card:hover,
+body.theme-light .my-upload-card:hover,
+body.theme-light .timeline-post-card:hover {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08) !important;
+  border-color: rgba(217, 119, 6, 0.4) !important;
+}
+
+body.theme-light .ws-card-title,
+body.theme-light .upload-card-title,
+body.theme-light .builder-section-heading {
+  color: #1d1d1f !important;
+}
+
+/* Painéis e Caixas Internas (Estúdio, Detalhes, Comentários) */
+body.theme-light .builder-mods-builder-section,
+body.theme-light .builder-mod-row,
+body.theme-light .ws-details-left,
+body.theme-light .ws-details-right,
+body.theme-light .comments-stream-container,
+body.theme-light .comments-stream,
+body.theme-light .profile-badge-chip,
+body.theme-light .timeline-comments-box {
+  background: #fbfbfd !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  color: #1d1d1f !important;
+}
+
+body.theme-light .builder-mod-row:hover {
+  background: #f1f5f9 !important;
+}
+
+/* Categorias e Filtros em Pílulas */
+body.theme-light .ws-category-btn {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid transparent !important;
+  color: #6e6e73 !important;
+}
+
+body.theme-light .ws-category-btn:hover {
+  background: rgba(0, 0, 0, 0.08) !important;
+  color: #1d1d1f !important;
+}
+
+body.theme-light .ws-category-btn.active {
+  background: #ffffff !important;
+  color: #1d1d1f !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
+  font-weight: 700 !important;
+}
+
+/* Inputs, Textareas e Selects */
 body.theme-light .tarkov-input,
-body.theme-light .tarkov-select,
 body.theme-light .tarkov-textarea,
 body.theme-light .tarkov-input-sm {
-  background: #ffffff;
-  border-color: rgba(0, 0, 0, 0.2);
-  color: #1e293b;
+  background: #ffffff !important;
+  border: 1px solid #d2d2d7 !important;
+  color: #1d1d1f !important;
 }
+
+body.theme-light .tarkov-input:focus,
+body.theme-light .tarkov-textarea:focus,
+body.theme-light .tarkov-input-sm:focus {
+  border-color: #0071e3 !important;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15) !important;
+}
+
+/* Dropdowns / Selects Apple Style */
+body.theme-light .tarkov-select {
+  background-color: #ffffff !important;
+  border: 1px solid #d2d2d7 !important;
+  color: #1d1d1f !important;
+  color-scheme: light !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236e6e73' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E") !important;
+}
+
+body.theme-light .tarkov-select option,
+body.theme-light .tarkov-select optgroup {
+  background-color: #ffffff !important;
+  color: #1d1d1f !important;
+}
+
+/* Botões */
 body.theme-light .tarkov-btn {
-  background: #f1f5f9;
-  border-color: rgba(0, 0, 0, 0.18);
-  color: #1e293b;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #1d1d1f;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
+
 body.theme-light .tarkov-btn:hover {
-  background: #e2e8f0;
+  background: #f5f5f7;
+  border-color: rgba(0, 0, 0, 0.18);
 }
+
+body.theme-light .tarkov-btn.btn-amber {
+  background: linear-gradient(180deg, #d97706 0%, #b45309 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3) !important;
+}
+
+body.theme-light .tarkov-btn.btn-emerald {
+  background: linear-gradient(180deg, #16a34a 0%, #15803d 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3) !important;
+}
+
+/* Controles de Idioma e Tema */
 body.theme-light .lang-selector-group,
 body.theme-light .theme-toggle-btn {
-  background: #ffffff;
-  border-color: rgba(0, 0, 0, 0.15);
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
 }
+
 body.theme-light .web-lang-btn {
-  color: #64748b;
+  color: #6e6e73 !important;
 }
+
 body.theme-light .web-lang-btn:hover {
-  color: #0f172a;
-  background: rgba(0, 0, 0, 0.05);
+  color: #1d1d1f !important;
+  background: rgba(0, 0, 0, 0.05) !important;
 }
-body.theme-light .tactical-modal-dialog {
-  background: #ffffff;
-  border-color: rgba(0, 0, 0, 0.15);
+
+body.theme-light .web-lang-btn.active {
+  color: #d97706 !important;
+  font-weight: 700 !important;
 }
+
+/* Modais Táteis & Toasts */
+body.theme-light .tactical-modal-dialog,
+body.theme-light .tarkov-modal-card {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(25px) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12) !important;
+  color: #1d1d1f !important;
+}
+
 body.theme-light .modal-dialog-header {
-  background: #f8fafc;
-  border-bottom-color: rgba(0, 0, 0, 0.08);
+  background: #fbfbfd !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+  color: #1d1d1f !important;
 }
+
 body.theme-light .modal-dialog-msg {
-  color: #1e293b;
+  color: #515154 !important;
+}
+
+body.theme-light .tactical-toast {
+  background: rgba(255, 255, 255, 0.96) !important;
+  color: #1d1d1f !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 

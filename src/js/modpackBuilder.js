@@ -187,7 +187,7 @@ export function renderBuilderModsList() {
     }
 
     return `
-      <div class="builder-mod-row" style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border: 1px solid var(--panel-border); border-radius: 4px; margin-bottom: 6px; gap: 10px; flex-wrap: wrap;">
+      <div class="builder-mod-row" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border: 1px solid var(--panel-border); border-radius: 4px; margin-bottom: 6px; gap: 10px; flex-wrap: wrap;">
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
           <strong style="color: #fff; font-size: 12px;">${m.name}</strong>
           ${typeTag}
@@ -363,11 +363,11 @@ export function renderCreatorUploadsList() {
   }
 
   container.innerHTML = myPacks.map(pack => `
-    <div class="my-upload-card" style="display: flex; justify-content: space-between; align-items: center; background: rgba(14,20,28,0.9); border: 1px solid var(--panel-border); padding: 14px 18px; border-radius: 4px; margin-bottom: 10px; gap: 14px; flex-wrap: wrap;">
+    <div class="my-upload-card" style="display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--panel-border); padding: 14px 18px; border-radius: 4px; margin-bottom: 10px; gap: 14px; flex-wrap: wrap;">
       <div style="display: flex; align-items: center; gap: 14px;">
         <img src="${pack.image || pack.banner_url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=120&q=80'}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" alt="${pack.name}" onerror="this.src='https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=120&q=80'" />
         <div>
-          <h4 style="color: #fff; font-size: 14px; text-transform: uppercase;">${pack.name}</h4>
+          <h4 class="upload-card-title" style="font-size: 14px; text-transform: uppercase;">${pack.name}</h4>
           <span style="font-size: 11px; color: var(--text-dim); font-family: var(--font-mono);">v${pack.version} • ${pack.mods?.length || 0} mods • ❤️ ${pack.likes_count || 0} likes • 🚀 ${pack.downloads_count || 0} downloads</span>
         </div>
       </div>
