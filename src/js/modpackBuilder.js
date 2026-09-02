@@ -50,16 +50,17 @@ export async function initModpackBuilder() {
     });
   }
 
-  // Botão Adicionar Mod Componente
-  if (addModBtn) {
-    addModBtn.addEventListener('click', () => {
-      handleAddModComponent();
+  const customUploadBtn = document.getElementById('btn-trigger-pack-cover-upload');
+  if (customUploadBtn && coverFileInput) {
+    customUploadBtn.addEventListener('click', () => {
+      coverFileInput.click();
     });
   }
 
   if (publishBtn) {
-    publishBtn.addEventListener('click', async () => {
-      await handlePublishModpack();
+    publishBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handlePublishModpack();
     });
   }
 
@@ -68,7 +69,7 @@ export async function initModpackBuilder() {
       const pack = extractBuilderFormData();
       if (!pack) return;
       navigator.clipboard.writeText(JSON.stringify(pack, null, 2));
-      alert('Manifesto JSON do modpack copiado para a área de transferência!');
+      showTacticalToast('Manifesto JSON copiado para a área de transferência!', 'success');
     });
   }
 
@@ -113,7 +114,7 @@ function handleAddModComponent() {
   const required = reqCheckbox?.checked || false;
 
   if (!name) {
-    alert('Informe o nome do mod componente.');
+    showTacticalAlert('Informe o nome do mod componente antes de adicionar.', 'VALOR OBRIGATÓRIO', 'warning');
     return;
   }
 
@@ -122,7 +123,7 @@ function handleAddModComponent() {
   if (mod_type === 'workshop') {
     const workshop_id = wsInput?.value.trim();
     if (!workshop_id) {
-      alert('Por favor, informe o Steam Workshop ID (apenas números, ex: 1510950729).');
+      showTacticalAlert('Por favor, informe o Steam Workshop ID (apenas números, ex: 1510950729).', 'ID INVÁLIDO', 'warning');
       return;
     }
     modObject = {
@@ -139,7 +140,7 @@ function handleAddModComponent() {
     const folder_name = directFolderInput?.value.trim() || name.replace(/[^a-zA-Z0-9_-]/g, '');
 
     if (!download_url || !download_url.startsWith('http')) {
-      alert('Por favor, informe uma URL válida (.ZIP ou .RAR) para o download direto do mod.');
+      showTacticalAlert('Por favor, informe uma URL válida (.ZIP ou .RAR) para o download direto do mod.', 'URL INVÁLIDA', 'warning');
       return;
     }
 
@@ -216,7 +217,7 @@ function extractBuilderFormData() {
   const image = document.getElementById('builder-pack-image')?.value.trim();
 
   if (!name || !desc) {
-    alert('Preencha o Nome e a Descrição do modpack.');
+    showTacticalAlert('Preencha o Nome e a Descrição completa do modpack antes de continuar.', 'CAMPOS OBRIGATÓRIOS', 'warning');
     return null;
   }
 
@@ -260,15 +261,17 @@ async function handlePublishModpack() {
   const currentUser = getCurrentUser();
   const currentProfile = getCurrentUserProfile();
   if (!currentUser) {
-    alert('Você precisa estar autenticado no Supabase para publicar modpacks no banco de dados.');
+    await showTacticalAlert('Você precisa estar autenticado para publicar modpacks na rede.', 'AUTENTICAÇÃO NECESSÁRIA', 'warning');
     document.getElementById('auth-modal')?.classList.add('visible');
     return;
   }
 
   if (builderModsList.length === 0) {
-    if (!confirm('Este modpack não possui nenhum mod componente adicionado. Deseja publicar mesmo assim?')) {
-      return;
-    }
+    const confirmed = await showTacticalConfirm(
+      'Este modpack não possui nenhum mod componente adicionado. Deseja publicar apenas o manifesto informativo?',
+      'MODPACK SEM COMPONENTES'
+    );
+    if (!confirmed) return;
   }
 
   if (isConfigured) {
@@ -298,10 +301,14 @@ async function handlePublishModpack() {
         throw error;
       }
 
-      alert(editingPackId ? `Modpack "${pack.name}" atualizado no Supabase com sucesso!` : `Modpack "${pack.name}" publicado com sucesso no banco de dados Supabase!`);
+      await showTacticalAlert(
+        editingPackId ? `Modpack "${pack.name}" atualizado no Supabase com sucesso!` : `Modpack "${pack.name}" publicado com sucesso no banco de dados!`,
+        'OPERAÇÃO CONCLUÍDA',
+        'success'
+      );
     } catch (err) {
       console.error('Erro ao salvar no Supabase:', err);
-      alert(`Falha ao gravar no Supabase: ${err.message || JSON.stringify(err)}`);
+      await showTacticalAlert(`Falha ao gravar no Supabase: ${err.message || JSON.stringify(err)}`, 'ERRO DE SINCRONIZAÇÃO', 'error');
       return;
     }
   } else {
@@ -314,7 +321,7 @@ async function handlePublishModpack() {
       updated = [pack, ...all];
     }
     localStorage.setItem('PZHUB_COMMUNITY_MODPACKS', JSON.stringify(updated));
-    alert(`Modpack "${pack.name}" gravado localmente.`);
+    await showTacticalAlert(`Modpack "${pack.name}" gravado localmente.`, 'MODO LOCAL', 'info');
   }
 
   resetBuilderForm();
@@ -421,7 +428,7 @@ export function renderCreatorUploadsList() {
         } catch(e) {}
       }
       localStorage.setItem('PZHUB_COMMUNITY_MODPACKS', JSON.stringify(all));
-      alert(`Changelog v${newVer} publicado com sucesso para "${pack.name}"!`);
+      showTacticalAlert(`Changelog v${newVer} publicado com sucesso para "${pack.name}"!`, 'CHANGELOG PUBLICADO', 'success');
       renderCreatorUploadsList();
     };
   });

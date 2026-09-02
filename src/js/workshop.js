@@ -6,6 +6,7 @@ import { supabase, isConfigured } from './supabaseClient.js';
 import { getCurrentUser } from './auth.js';
 import { fetchModpackChangelogs } from './changelogs.js';
 import { i18n, PZ_CATEGORIES } from './i18n.js';
+import { showTacticalAlert, showTacticalToast } from './tacticalModal.js';
 
 let modpacksList = [];
 let activeCategory = 'all';
@@ -264,7 +265,7 @@ export function renderWorkshop() {
       const pack = modpacksList.find(p => p.id === packId);
       if (pack) {
         navigator.clipboard.writeText(JSON.stringify(pack, null, 2));
-        alert(`Manifesto tático do pacote "${pack.name}" copiado para a área de transferência!`);
+        showTacticalToast(`Manifesto "${pack.name}" copiado para a área de transferência!`, 'success');
       }
     });
   });
@@ -460,7 +461,7 @@ function renderModalTabContent(pack, changelogs) {
               }]);
             } catch(e) {}
           }
-          alert('Denúncia encaminhada com sucesso para a moderação da Staff.');
+          showTacticalAlert('Denúncia encaminhada com sucesso para a moderação da Staff.', 'DENÚNCIA REGISTRADA', 'success');
         }
       };
     }

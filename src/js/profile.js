@@ -93,7 +93,7 @@ export async function loadUserProfileView(targetUsername) {
     try {
       const { data: followRel } = await supabase
         .from('follows')
-        .select('id')
+        .select('follower_id, following_id')
         .eq('follower_id', currentUser.id)
         .eq('following_id', activeProfileData.id)
         .maybeSingle();
@@ -530,15 +530,17 @@ function setupProfileEventListeners(isOwner, isStaff) {
       if (isConfigured) {
         try {
           if (nextFollowState) {
-            await supabase.from('follows').insert([{
+            const { error: insErr } = await supabase.from('follows').upsert([{
               follower_id: currentUser.id,
               following_id: activeProfileData.id
-            }]);
+            }], { onConflict: 'follower_id,following_id' });
+            if (insErr && insErr.code !== '23505') throw insErr;
             showTacticalToast(`Agora você está seguindo @${activeProfileData.username}!`, 'success');
           } else {
-            await supabase.from('follows').delete()
+            const { error: delErr } = await supabase.from('follows').delete()
               .eq('follower_id', currentUser.id)
               .eq('following_id', activeProfileData.id);
+            if (delErr) throw delErr;
             showTacticalToast(`Deixou de seguir @${activeProfileData.username}.`, 'info');
           }
         } catch (err) {

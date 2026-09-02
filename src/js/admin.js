@@ -4,6 +4,7 @@
 
 import { supabase, isConfigured } from './supabaseClient.js';
 import { getCurrentUser, getCurrentUserProfile } from './auth.js';
+import { showTacticalToast } from './tacticalModal.js';
 
 let reportsList = [];
 let usersManagementList = [];
@@ -252,7 +253,7 @@ function setupAdminEventListeners() {
         }
       }
 
-      alert(`Cargo de @${username} atualizado para ${newRole.toUpperCase()} com sucesso.`);
+      showTacticalToast(`Cargo de @${username} atualizado para ${newRole.toUpperCase()} com sucesso.`, 'success');
       renderAdminDashboard();
     });
   });

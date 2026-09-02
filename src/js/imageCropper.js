@@ -3,6 +3,8 @@
  * Permite Pan (arraste), Zoom com mouse/slider, Rotação e compressão WebP de alta qualidade.
  */
 
+import { showTacticalAlert, showTacticalToast } from './tacticalModal.js';
+
 let activeCropperState = {
   img: null,
   imgUrl: null,
@@ -34,7 +36,7 @@ let activeCropperState = {
  */
 export function openImageCropperModal(file, options = {}) {
   if (!file || !file.type.startsWith('image/')) {
-    alert('Por favor, selecione um arquivo de imagem válido (PNG, JPG, WebP).');
+    showTacticalAlert('Por favor, selecione um arquivo de imagem válido (PNG, JPG, WebP).', 'FORMATO INVÁLIDO', 'warning');
     return;
   }
 
@@ -72,7 +74,7 @@ export function openImageCropperModal(file, options = {}) {
     modal.classList.add('visible');
   };
   img.onerror = () => {
-    alert('Erro ao carregar e decodificar a imagem selecionada.');
+    showTacticalAlert('Erro ao carregar e decodificar a imagem selecionada.', 'FALHA DE LEITURA', 'error');
   };
   img.src = activeCropperState.imgUrl;
 }
@@ -273,7 +275,7 @@ function setupCropperEvents() {
         }
       } catch (err) {
         console.error('Erro ao processar imagem:', err);
-        alert('Erro ao processar e comprimir a imagem.');
+        showTacticalAlert('Erro ao processar e comprimir a imagem.', 'FALHA DE PROCESSAMENTO', 'error');
       } finally {
         applyBtn.disabled = false;
         applyBtn.textContent = '🚀 CONFIRMAR & APLICAR';

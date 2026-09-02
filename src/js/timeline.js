@@ -6,6 +6,7 @@
 import { supabase, isConfigured } from './supabaseClient.js';
 import { getCurrentUser, getCurrentUserProfile, openAuthModal } from './auth.js';
 import { openImageCropperModal } from './imageCropper.js';
+import { showTacticalAlert, showTacticalToast } from './tacticalModal.js';
 
 let postsList = [];
 let activeFeedTab = 'discovery'; // 'discovery' | 'following'
@@ -51,7 +52,7 @@ export async function initTimeline() {
   if (addMediaBtn && mediaFileInput) {
     addMediaBtn.addEventListener('click', () => {
       if (attachedMediaList.length >= 4) {
-        alert('Você pode anexar no máximo 4 imagens por postagem.');
+        showTacticalAlert('Você pode anexar no máximo 4 imagens por postagem.', 'LIMITE DE ANEXOS', 'warning');
         return;
       }
       mediaFileInput.click();
@@ -96,7 +97,7 @@ export async function initTimeline() {
         youtubeUrlInput.value = '';
         renderComposeMediaPreviews();
       } else {
-        alert('URL do YouTube inválida. Insira um link como https://youtu.be/... ou https://youtube.com/watch?v=...');
+        showTacticalAlert('URL do YouTube inválida. Insira um link como https://youtu.be/... ou https://youtube.com/watch?v=...', 'VÍDEO INVÁLIDO', 'warning');
       }
     });
   }
@@ -279,7 +280,7 @@ async function handlePublishTimelinePost() {
   const content = textarea?.value.trim();
 
   if (!content && attachedMediaList.length === 0 && !attachedYoutubeId) {
-    alert('Escreva uma mensagem ou anexe uma foto/vídeo antes de publicar.');
+    showTacticalAlert('Escreva uma mensagem ou anexe uma foto/vídeo antes de publicar na rede.', 'CONTEÚDO NECESSÁRIO', 'warning');
     return;
   }
 
@@ -745,7 +746,7 @@ function setupTweetCardInteractions() {
     btn.onclick = () => {
       const postId = btn.dataset.postId;
       navigator.clipboard.writeText(`${window.location.origin}/#timeline?post=${postId}`);
-      alert('Link da transmissão copiado para a área de transferência!');
+      showTacticalToast('Link da transmissão copiado para a área de transferência!', 'success');
     };
   });
 }
