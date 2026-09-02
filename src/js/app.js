@@ -1,8 +1,8 @@
-﻿/**
+/**
  * PZHub Workshop - Main SPA Application Controller
  */
 
-import { initAuth } from './auth.js';
+import { initAuth, getCurrentUser, getCurrentUserProfile } from './auth.js';
 import { initWorkshop, loadWorkshopData } from './workshop.js';
 import { initModpackBuilder, renderCreatorUploadsList } from './modpackBuilder.js';
 import { loadUserProfileView } from './profile.js';
@@ -21,8 +21,9 @@ class PZHubApp {
     await initWorkshop();
     await initModpackBuilder();
 
-    // 3. Configura Roteamento SPA
+    // 3. Configura Roteamento SPA e Botões Globais
     this.setupRouting();
+    this.setupGlobalButtons();
 
     // 4. Trata a rota inicial
     this.handleRoute();
@@ -38,6 +39,21 @@ class PZHubApp {
         if (view) window.location.hash = `#${view}`;
       });
     });
+  }
+
+  setupGlobalButtons() {
+    const heroProfileBtn = document.getElementById('hero-btn-my-profile');
+    if (heroProfileBtn) {
+      heroProfileBtn.addEventListener('click', () => {
+        const currentUser = getCurrentUser();
+        const profile = getCurrentUserProfile();
+        if (currentUser && profile?.username) {
+          window.location.hash = `#profile/${profile.username}`;
+        } else {
+          document.getElementById('auth-modal')?.classList.add('visible');
+        }
+      });
+    }
   }
 
   handleRoute() {

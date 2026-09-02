@@ -7,6 +7,7 @@ import { supabase, isConfigured } from './supabaseClient.js';
 import { getCurrentUser, getCurrentUserProfile } from './auth.js';
 
 let activeProfileData = null;
+let currentTargetUsername = null;
 let profileScrapsList = [];
 let lastScrapPostTime = 0;
 
@@ -15,11 +16,55 @@ export async function loadUserProfileView(targetUsername) {
   if (!container) return;
 
   const currentUser = getCurrentUser();
-  const usernameToFetch = targetUsername || currentUser?.user_metadata?.username || 'operador_alpha';
+  const currentProfile = getCurrentUserProfile();
 
-  activeProfileData = await fetchProfileData(usernameToFetch);
-  profileScrapsList = await fetchProfileScraps(activeProfileData.id || usernameToFetch);
+  currentTargetUsername = targetUsername || currentProfile?.username || currentUser?.user_metadata?.username;
 
+  if (!currentTargetUsername) {
+    // Usuário não autenticado tentando abrir rota genérica de perfil
+    container.innerHTML = `
+      <div class="tarkov-empty-state" style="padding: 60px 20px; background: var(--bg-surface-card); border: 1px solid var(--panel-border); border-radius: var(--radius-md);">
+        <div class="tarkov-empty-title" style="color: var(--accent-amber); font-size: 16px;">IDENTIFICAÇÃO NECESSÁRIA</div>
+        <div class="tarkov-empty-desc" style="margin: 10px 0 20px;">Você precisa se autenticar ou criar uma conta para acessar seu painel de sobrevivente.</div>
+        <button id="btn-prompt-login-profile" class="tarkov-btn btn-amber" style="padding: 10px 20px;">ENTRAR / CRIAR CONTA DE CRIADOR</button>
+      </div>
+    `;
+
+    document.getElementById('btn-prompt-login-profile')?.addEventListener('click', () => {
+      document.getElementById('auth-modal')?.classList.add('visible');
+    });
+    return;
+  }
+
+  activeProfileData = await fetchProfileData(currentTargetUsername);
+
+  if (!activeProfileData) {
+    // Perfil pesquisado não existe no Supabase
+    container.innerHTML = `
+      <div class="tarkov-empty-state" style="padding: 60px 20px; background: var(--bg-surface-card); border: 1px solid var(--panel-border); border-radius: var(--radius-md);">
+        <div class="tarkov-empty-title" style="color: var(--accent-red); font-size: 16px;">REGISTRO NÃO ENCONTRADO</div>
+        <div class="tarkov-empty-desc" style="margin: 10px 0 20px;">O operador <strong>@${currentTargetUsername}</strong> ainda não existe no banco de dados do Supabase.</div>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+          <a href="#workshop" class="tarkov-btn">VOLTAR AO CATÁLOGO</a>
+          <button id="btn-create-account-from-missing" class="tarkov-btn btn-amber">REGISTRAR ESTE NOME</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btn-create-account-from-missing')?.addEventListener('click', () => {
+      const authModal = document.getElementById('auth-modal');
+      const toggleAuthBtn = document.getElementById('btn-toggle-auth-mode');
+      const userInput = document.getElementById('auth-username');
+      if (userInput) userInput.value = currentTargetUsername;
+      if (toggleAuthBtn && !document.getElementById('auth-username-group')?.style.display.includes('block')) {
+        toggleAuthBtn.click();
+      }
+      authModal?.classList.add('visible');
+    });
+    return;
+  }
+
+  profileScrapsList = await fetchProfileScraps(activeProfileData.id || currentTargetUsername);
   renderProfileView();
 }
 
@@ -36,31 +81,36 @@ export async function fetchProfileData(username) {
         return data;
       }
     } catch (e) {
-      console.warn('Erro ao carregar perfil do Supabase:', e);
+      console.warn('Perfil não encontrado no Supabase:', e);
     }
   }
 
-  // Fallback Local / Demo
+  // Fallback Local se o usuário salvou ou está no modo demo
   const saved = localStorage.getItem(`PZHUB_PROFILE_${username}`);
   if (saved) {
     try { return JSON.parse(saved); } catch(e) {}
   }
 
-  return {
-    id: `user-${username}`,
-    username: username,
-    display_name: username === 'operador_alpha' ? 'Capitão Miller [VICCS]' : (username === 'admin' ? 'Comandante Supremo' : username),
-    avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80',
-    banner_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
-    bio: 'Veterano de Knox County e explorador de Z-Levels. Desenvolvedor de coleções táticas e sobrevivência militar para Build 42.',
-    role: username === 'admin' ? 'admin' : (username.includes('viccs') || username === 'operador_alpha' ? 'creator' : 'user'),
-    badges: ['SOBREVIVENTE B42', 'CRIADOR TÁTICO', 'LÍDER DE ESQUADRÃO'],
-    followers_count: 148,
-    following_count: 32,
-    total_mods_count: 4,
-    total_likes_received: 894,
-    created_at: new Date(Date.now() - 86400000 * 60).toISOString()
-  };
+  if (username === 'operador_alpha') {
+    return {
+      id: `user-${username}`,
+      username: username,
+      display_name: 'Capitão Miller [VICCS]',
+      avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80',
+      banner_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
+      bio: 'Veterano de Knox County e explorador de Z-Levels. Desenvolvedor de coleções táticas e sobrevivência militar para Build 42.',
+      role: 'creator',
+      badges: ['SOBREVIVENTE B42', 'CRIADOR TÁTICO', 'LÍDER DE ESQUADRÃO'],
+      followers_count: 148,
+      following_count: 32,
+      total_mods_count: 4,
+      total_likes_received: 894,
+      is_demo: true,
+      created_at: new Date(Date.now() - 86400000 * 60).toISOString()
+    };
+  }
+
+  return null;
 }
 
 export function renderProfileView() {
@@ -123,6 +173,7 @@ export function renderProfileView() {
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
               <h1 class="profile-display-name">${activeProfileData.display_name || activeProfileData.username}</h1>
               ${roleBadgeHtml}
+              ${activeProfileData.is_demo ? '<span class="tarkov-tag badge-version" style="color: var(--accent-amber); border-color: var(--accent-amber);">PERFIL DEMONSTRATIVO</span>' : ''}
             </div>
             <span class="profile-handle">@${activeProfileData.username}</span>
           </div>
@@ -154,19 +205,19 @@ export function renderProfileView() {
       <div class="profile-stats-grid">
         <div class="profile-stat-box">
           <span class="stat-label">SEGUIDORES</span>
-          <span class="stat-value text-amber" id="profile-followers-count">${activeProfileData.followers_count || 148}</span>
+          <span class="stat-value text-amber" id="profile-followers-count">${activeProfileData.followers_count || 0}</span>
         </div>
         <div class="profile-stat-box">
           <span class="stat-label">SEGUINDO</span>
-          <span class="stat-value text-cyan">${activeProfileData.following_count || 32}</span>
+          <span class="stat-value text-cyan">${activeProfileData.following_count || 0}</span>
         </div>
         <div class="profile-stat-box">
           <span class="stat-label">MODS PUBLICADOS</span>
-          <span class="stat-value text-emerald">${activeProfileData.total_mods_count || 4}</span>
+          <span class="stat-value text-emerald">${activeProfileData.total_mods_count || 0}</span>
         </div>
         <div class="profile-stat-box">
           <span class="stat-label">LIKES RECEBIDOS</span>
-          <span class="stat-value text-red">❤️ ${activeProfileData.total_likes_received || 894}</span>
+          <span class="stat-value text-red">❤️ ${activeProfileData.total_likes_received || 0}</span>
         </div>
       </div>
 
@@ -308,12 +359,14 @@ function setupProfileEventListeners(isOwner, isStaff) {
 
       lastScrapPostTime = now;
       const currentUser = getCurrentUser();
+      const currentProfile = getCurrentUserProfile();
+
       const newScrap = {
         id: `sc-${Date.now()}`,
         profile_id: activeProfileData.id || activeProfileData.username,
         sender_id: currentUser?.id || 'guest-user',
-        sender_name: currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.username || 'Sobrevivente Anônimo',
-        sender_avatar: currentUser?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80',
+        sender_name: currentProfile?.display_name || currentUser?.user_metadata?.display_name || currentProfile?.username || 'Sobrevivente Anônimo',
+        sender_avatar: currentProfile?.avatar_url || currentUser?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80',
         message: text,
         likes_count: 0,
         reactions: { thumb: 0, fire: 0, skull: 0, heart: 0 },
@@ -323,11 +376,11 @@ function setupProfileEventListeners(isOwner, isStaff) {
       profileScrapsList.unshift(newScrap);
       saveScrapsLocally(activeProfileData.id || activeProfileData.username, profileScrapsList);
 
-      if (isConfigured) {
+      if (isConfigured && currentUser) {
         try {
           await supabase.from('profile_scraps').insert([{
             profile_id: activeProfileData.id,
-            sender_id: currentUser?.id,
+            sender_id: currentUser.id,
             sender_name: newScrap.sender_name,
             sender_avatar: newScrap.sender_avatar,
             message: text,
@@ -464,7 +517,7 @@ async function fetchProfileScraps(profileId) {
 
       if (!error && data && data.length > 0) return data;
     } catch (e) {
-      console.warn('Erro ao ler scraps:', e);
+      console.warn('Erro ao ler scraps do Supabase:', e);
     }
   }
 
@@ -473,18 +526,7 @@ async function fetchProfileScraps(profileId) {
     try { return JSON.parse(saved); } catch(e) {}
   }
 
-  return [
-    {
-      id: "sc-1",
-      profile_id: profileId,
-      sender_id: "user-rick",
-      sender_name: "Rick Grimes",
-      sender_avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=128&q=80",
-      message: "Excelente modpack tático! Testamos ontem no servidor com 16 sobreviventes em Louisville e a estabilidade ficou impecável.",
-      reactions: { thumb: 14, fire: 8, skull: 2, heart: 19 },
-      created_at: new Date(Date.now() - 3600000 * 4).toISOString()
-    }
-  ];
+  return [];
 }
 
 function saveScrapsLocally(profileId, scraps) {
