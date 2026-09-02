@@ -1500,3 +1500,180 @@ body {
     justify-content: center;
   }
 }
+
+/* ==========================================================================
+   Tactical Image Cropper & Lossless/Perceptual Canvas Compressor Modal
+   ========================================================================== */
+
+.cropper-modal-card {
+  width: 95%;
+  max-width: 620px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--accent-amber);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(229, 142, 38, 0.15);
+}
+
+.cropper-modal-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cropper-hint-bar {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--panel-border);
+}
+
+.cropper-viewport {
+  position: relative;
+  width: 100%;
+  height: 340px;
+  background: #05070a;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cropper-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.cropper-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.cropper-crop-box {
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
+  border: 1px solid var(--accent-amber);
+  pointer-events: none;
+  transition: width 0.2s ease, height 0.2s ease;
+}
+
+.cropper-crop-box.circle-mask {
+  border-radius: 50%;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75);
+}
+
+/* Cantos táticos reforçados */
+.crop-corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--accent-amber);
+}
+.crop-corner.tl { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+.crop-corner.tr { top: -2px; right: -2px; border-left: none; border-bottom: none; }
+.crop-corner.bl { bottom: -2px; left: -2px; border-right: none; border-top: none; }
+.crop-corner.br { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+
+/* Grid da regra dos terços */
+.crop-grid-line {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.15);
+}
+.crop-grid-line.h1 { top: 33.33%; left: 0; right: 0; height: 1px; }
+.crop-grid-line.h2 { top: 66.66%; left: 0; right: 0; height: 1px; }
+.crop-grid-line.v1 { left: 33.33%; top: 0; bottom: 0; width: 1px; }
+.crop-grid-line.v2 { left: 66.66%; top: 0; bottom: 0; width: 1px; }
+
+.cropper-controls-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+}
+
+.cropper-zoom-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.tarkov-range {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  outline: none;
+}
+.tarkov-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--accent-amber);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 6px var(--accent-amber-glow);
+}
+
+.cropper-telemetry-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: rgba(14, 20, 28, 0.8);
+  border: 1px solid var(--panel-border);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.telemetry-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.telemetry-item .t-label {
+  color: var(--text-dim);
+}
+.telemetry-item .t-val {
+  color: #fff;
+  font-weight: bold;
+}
+.telemetry-arrow {
+  color: var(--accent-amber);
+  font-weight: bold;
+}
+
+.cropper-modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--panel-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+

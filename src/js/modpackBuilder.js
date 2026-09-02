@@ -7,6 +7,7 @@ import { supabase, isConfigured } from './supabaseClient.js';
 import { getCurrentUser, getCurrentUserProfile } from './auth.js';
 import { getAllModpacks, loadWorkshopData } from './workshop.js';
 import { createChangelog } from './changelogs.js';
+import { openImageCropperModal } from './imageCropper.js';
 
 let builderModsList = [];
 let editingPackId = null;
@@ -16,6 +17,26 @@ export async function initModpackBuilder() {
   const publishBtn = document.getElementById('btn-builder-publish');
   const saveLocalBtn = document.getElementById('btn-builder-save-local');
   const cancelEditBtn = document.getElementById('btn-cancel-edit');
+  const coverFileInput = document.getElementById('input-upload-pack-cover');
+
+  if (coverFileInput) {
+    coverFileInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        openImageCropperModal(file, {
+          title: 'AJUSTE DE CAPA DE MODPACK (HD)',
+          aspectRatio: 16 / 9,
+          outputWidth: 1200,
+          outputHeight: 675,
+          quality: 0.85,
+          onComplete: (compressedBase64) => {
+            const imageInput = document.getElementById('builder-pack-image');
+            if (imageInput) imageInput.value = compressedBase64;
+          }
+        });
+      }
+    });
+  }
 
   if (addModBtn) {
     addModBtn.addEventListener('click', () => {

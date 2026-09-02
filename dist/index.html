@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
 
-    <script type="module" crossorigin src="/assets/index-uRzxWmKE.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-sFzsxuj3.css">
+    <script type="module" crossorigin src="/assets/index-J6YV3cEA.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-QmSrK_-c.css">
   </head>
 
   <body>
@@ -243,8 +243,14 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">URL da Imagem de Capa (Banner HD)</label>
-            <input type="text" id="builder-pack-image" class="tarkov-input" placeholder="https://exemplo.com/capa.jpg (opcional)" />
+            <label class="form-label">Imagem de Capa (Banner HD)</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="builder-pack-image" class="tarkov-input" placeholder="https://exemplo.com/capa.jpg ou envie um arquivo..." style="flex: 1;" />
+              <label class="tarkov-btn" style="cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; padding: 6px 12px; font-size: 11px;">
+                <span>📷 AJUSTAR & ENVIAR</span>
+                <input type="file" id="input-upload-pack-cover" accept="image/*" style="display: none;" />
+              </label>
+            </div>
           </div>
 
           <!-- Seção de Adicionar Mods ao Pacote -->
@@ -355,6 +361,81 @@
             Não tem conta? Cadastre-se como Criador
           </button>
         </form>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL: AJUSTE DE IMAGEM & COMPRESSÃO TÁTICA (CROPPER / PAN & ZOOM)   -->
+    <!-- ===================================================================== -->
+    <div id="image-cropper-modal" class="tarkov-modal-backdrop">
+      <div class="tarkov-modal-card cropper-modal-card">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: var(--accent-amber); font-size: 14px;">✂️</span>
+            <h3 id="cropper-modal-title" class="modal-title">AJUSTE & ENQUADRAMENTO TÁTICO</h3>
+          </div>
+          <button id="cropper-modal-close" class="modal-close-icon">✕</button>
+        </div>
+
+        <div class="cropper-modal-body">
+          <!-- Dica de Operação -->
+          <div class="cropper-hint-bar">
+            <span>🖱️ Clique e arraste para posicionar • Use a rodinha do mouse para dar zoom</span>
+          </div>
+
+          <!-- Viewport do Recorte -->
+          <div id="cropper-viewport" class="cropper-viewport">
+            <canvas id="cropper-canvas" class="cropper-canvas"></canvas>
+            
+            <div class="cropper-overlay-backdrop"></div>
+
+            <div id="cropper-crop-box" class="cropper-crop-box">
+              <div class="crop-corner tl"></div>
+              <div class="crop-corner tr"></div>
+              <div class="crop-corner bl"></div>
+              <div class="crop-corner br"></div>
+              
+              <div class="crop-grid-line h1"></div>
+              <div class="crop-grid-line h2"></div>
+              <div class="crop-grid-line v1"></div>
+              <div class="crop-grid-line v2"></div>
+            </div>
+          </div>
+
+          <!-- Barra de Controles de Zoom e Rotação -->
+          <div class="cropper-controls-strip">
+            <div class="cropper-zoom-group">
+              <button type="button" id="btn-cropper-zoom-out" class="tarkov-btn-mini" title="Diminuir Zoom">➖</button>
+              <input type="range" id="cropper-zoom-slider" class="tarkov-range" min="0" max="100" value="25" />
+              <button type="button" id="btn-cropper-zoom-in" class="tarkov-btn-mini" title="Aumentar Zoom">➕</button>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+              <button type="button" id="btn-cropper-rotate" class="tarkov-btn-mini" title="Girar 90 graus">⟲ GIRAR 90°</button>
+              <button type="button" id="btn-cropper-reset" class="tarkov-btn-mini" title="Restaurar posição original">↺ CENTRALIZAR</button>
+            </div>
+          </div>
+
+          <!-- Telemetria de Compressão Inteligente -->
+          <div class="cropper-telemetry-bar">
+            <div class="telemetry-item">
+              <span class="t-label">ARQUIVO ORIGINAL:</span>
+              <span class="t-val" id="cropper-orig-size">0 KB</span>
+            </div>
+            <div class="telemetry-arrow">➔</div>
+            <div class="telemetry-item">
+              <span class="t-label">ESTIMADO PÓS-COMPRESSÃO:</span>
+              <span class="t-val text-emerald" id="cropper-opt-size">~85 KB (WebP HD)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cropper-modal-footer">
+          <button type="button" id="btn-cropper-cancel" class="tarkov-btn">CANCELAR</button>
+          <button type="button" id="btn-cropper-apply" class="tarkov-btn btn-amber" style="padding: 8px 24px;">
+            🚀 CONFIRMAR & APLICAR
+          </button>
+        </div>
       </div>
     </div>
   </body>

@@ -1,10 +1,11 @@
 /**
  * PZHub - Social Profile Module (X / Steam Showcase Style)
- * Gerenciamento de perfil, avatar/banner em Canvas, Seguidores e Mural de Recados com Reações Discord.
+ * Gerenciamento de perfil, avatar/banner com Enquadramento Tático, Compressor WebP e Mural de Recados.
  */
 
 import { supabase, isConfigured } from './supabaseClient.js';
 import { getCurrentUser, getCurrentUserProfile } from './auth.js';
+import { openImageCropperModal } from './imageCropper.js';
 
 let activeProfileData = null;
 let currentTargetUsername = null;
@@ -85,29 +86,10 @@ export async function fetchProfileData(username) {
     }
   }
 
-  // Fallback Local se o usuário salvou ou está no modo demo
+  // Fallback Local se o usuário salvou
   const saved = localStorage.getItem(`PZHUB_PROFILE_${username}`);
   if (saved) {
     try { return JSON.parse(saved); } catch(e) {}
-  }
-
-  if (username === 'operador_alpha') {
-    return {
-      id: `user-${username}`,
-      username: username,
-      display_name: 'Capitão Miller [VICCS]',
-      avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80',
-      banner_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
-      bio: 'Veterano de Knox County e explorador de Z-Levels. Desenvolvedor de coleções táticas e sobrevivência militar para Build 42.',
-      role: 'creator',
-      badges: ['SOBREVIVENTE B42', 'CRIADOR TÁTICO', 'LÍDER DE ESQUADRÃO'],
-      followers_count: 148,
-      following_count: 32,
-      total_mods_count: 4,
-      total_likes_received: 894,
-      is_demo: true,
-      created_at: new Date(Date.now() - 86400000 * 60).toISOString()
-    };
   }
 
   return null;
@@ -144,7 +126,7 @@ export function renderProfileView() {
         <div class="profile-banner-overlay"></div>
 
         ${isOwner ? `
-          <label class="btn-edit-banner" title="Alterar Banner Panorâmico">
+          <label class="btn-edit-banner" title="Alterar e Ajustar Banner Panorâmico">
             <svg viewBox="0 0 24 24"><path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>
             <span>ALTERAR BANNER</span>
             <input type="file" id="input-upload-banner" accept="image/*" style="display: none;" />
@@ -161,7 +143,7 @@ export function renderProfileView() {
           </div>
 
           ${isOwner ? `
-            <label class="btn-edit-avatar" title="Trocar Foto de Perfil">
+            <label class="btn-edit-avatar" title="Trocar e Ajustar Foto de Perfil">
               <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
               <input type="file" id="input-upload-avatar" accept="image/*" style="display: none;" />
             </label>
@@ -173,7 +155,6 @@ export function renderProfileView() {
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
               <h1 class="profile-display-name">${activeProfileData.display_name || activeProfileData.username}</h1>
               ${roleBadgeHtml}
-              ${activeProfileData.is_demo ? '<span class="tarkov-tag badge-version" style="color: var(--accent-amber); border-color: var(--accent-amber);">PERFIL DEMONSTRATIVO</span>' : ''}
             </div>
             <span class="profile-handle">@${activeProfileData.username}</span>
           </div>
@@ -397,7 +378,7 @@ function setupProfileEventListeners(isOwner, isStaff) {
     });
   }
 
-  // Deletar Recado (Apenas dono do perfil ou staff)
+  // Deletar Recado
   document.querySelectorAll('.btn-delete-scrap').forEach(btn => {
     btn.addEventListener('click', async () => {
       const scrapId = btn.dataset.scrapId;
@@ -437,73 +418,67 @@ function setupProfileEventListeners(isOwner, isStaff) {
     });
   });
 
-  // Upload e redimensionamento em Canvas de Avatar
+  // Upload, Ajuste e Compressão de Foto de Perfil (Avatar 1:1 Circular)
   const avatarInput = document.getElementById('input-upload-avatar');
   if (avatarInput) {
-    avatarInput.addEventListener('change', async (e) => {
+    avatarInput.addEventListener('change', (e) => {
       const file = e.target.files?.[0];
       if (file) {
-        const compressedBase64 = await resizeImageWithCanvas(file, 256, 256);
-        activeProfileData.avatar_url = compressedBase64;
-        saveProfileLocally(activeProfileData);
+        openImageCropperModal(file, {
+          title: 'AJUSTE DE FOTO DE PERFIL // AVATAR',
+          aspectRatio: 1,
+          isCircle: true,
+          outputWidth: 384,
+          outputHeight: 384,
+          quality: 0.85,
+          onComplete: async (compressedBase64) => {
+            activeProfileData.avatar_url = compressedBase64;
+            saveProfileLocally(activeProfileData);
 
-        if (isConfigured) {
-          try {
-            await supabase.from('profiles').update({ avatar_url: compressedBase64 }).eq('username', activeProfileData.username);
-          } catch(e) {}
-        }
-        renderProfileView();
+            if (isConfigured) {
+              try {
+                await supabase.from('profiles').update({ avatar_url: compressedBase64 }).eq('username', activeProfileData.username);
+              } catch(e) {
+                console.warn('Erro ao salvar avatar no Supabase:', e);
+              }
+            }
+            renderProfileView();
+          }
+        });
       }
     });
   }
 
-  // Upload e redimensionamento em Canvas de Banner
+  // Upload, Ajuste e Compressão de Banner Panorâmico (3:1 Panorâmico HD)
   const bannerInput = document.getElementById('input-upload-banner');
   if (bannerInput) {
-    bannerInput.addEventListener('change', async (e) => {
+    bannerInput.addEventListener('change', (e) => {
       const file = e.target.files?.[0];
       if (file) {
-        const compressedBase64 = await resizeImageWithCanvas(file, 1200, 400);
-        activeProfileData.banner_url = compressedBase64;
-        saveProfileLocally(activeProfileData);
+        openImageCropperModal(file, {
+          title: 'AJUSTE DE BANNER PANORÂMICO TÁTICO',
+          aspectRatio: 3 / 1,
+          isCircle: false,
+          outputWidth: 1200,
+          outputHeight: 400,
+          quality: 0.85,
+          onComplete: async (compressedBase64) => {
+            activeProfileData.banner_url = compressedBase64;
+            saveProfileLocally(activeProfileData);
 
-        if (isConfigured) {
-          try {
-            await supabase.from('profiles').update({ banner_url: compressedBase64 }).eq('username', activeProfileData.username);
-          } catch(e) {}
-        }
-        renderProfileView();
+            if (isConfigured) {
+              try {
+                await supabase.from('profiles').update({ banner_url: compressedBase64 }).eq('username', activeProfileData.username);
+              } catch(e) {
+                console.warn('Erro ao salvar banner no Supabase:', e);
+              }
+            }
+            renderProfileView();
+          }
+        });
       }
     });
   }
-}
-
-/**
- * Utilitário de redimensionamento e compressão em Canvas (Zero dependências externas)
- */
-export function resizeImageWithCanvas(file, targetWidth, targetHeight) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
-        const ctx = canvas.getContext('2d');
-        
-        // Cobertura proporcional (object-fit: cover)
-        const scale = Math.max(targetWidth / img.width, targetHeight / img.height);
-        const x = (targetWidth - img.width * scale) / 2;
-        const y = (targetHeight - img.height * scale) / 2;
-        
-        ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-        resolve(canvas.toDataURL('image/jpeg', 0.85));
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
 }
 
 async function fetchProfileScraps(profileId) {
