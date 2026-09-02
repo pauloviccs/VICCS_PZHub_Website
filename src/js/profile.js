@@ -8,6 +8,7 @@ import { supabase, isConfigured } from './supabaseClient.js';
 import { getCurrentUser, getCurrentUserProfile } from './auth.js';
 import { openImageCropperModal } from './imageCropper.js';
 import { showTacticalAlert, showTacticalConfirm, showTacticalToast } from './tacticalModal.js';
+import { openModpackDetailsModal } from './workshop.js';
 
 let activeProfileData = null;
 let currentTargetUsername = null;
@@ -377,22 +378,28 @@ export function renderProfileView() {
             <div class="tarkov-empty-desc" style="font-size: 12px;">Este operador ainda não publicou coleções de mods no catálogo comunitário.</div>
           </div>
         ` : `
-          <div class="workshop-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 14px;">
+          <div class="profile-modpacks-grid">
             ${profileUserModpacksList.map(pack => `
-              <div class="ws-card">
-                <div class="ws-card-banner" style="background-image: url('${pack.banner_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80'}'); height: 110px; background-size: cover; background-position: center; position: relative;">
-                  <div class="ws-card-tags" style="position: absolute; top: 8px; left: 8px; display: flex; gap: 4px;">
-                    <span class="tarkov-tag badge-amber">${pack.zomboid_version || '42.0+'}</span>
+              <div class="profile-modpack-card" data-pack-id="${pack.id}">
+                <div class="profile-modpack-banner" style="background-image: url('${pack.banner_url || pack.image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80'}');">
+                  <div class="profile-modpack-tags">
+                    <span class="tarkov-tag badge-amber">B${pack.zomboid_version || '42.0+'}</span>
                     <span class="tarkov-tag badge-cyan">${pack.category || 'Militar'}</span>
                   </div>
                 </div>
-                <div class="ws-card-body" style="padding: 12px 14px;">
-                  <h3 class="ws-card-title" style="font-size: 13.5px; margin: 0 0 6px 0; color: #fff;">${pack.name}</h3>
-                  <p class="ws-card-desc" style="font-size: 11.5px; color: var(--text-dim); line-height: 1.4; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${pack.description || 'Coleção tática de mods.'}</p>
+                <div class="profile-modpack-body">
+                  <h3 class="profile-modpack-title">${pack.name}</h3>
+                  <p class="profile-modpack-desc">${pack.description || 'Coleção tática de mods.'}</p>
                   
-                  <div class="ws-card-meta" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 8px; font-size: 11px; font-family: var(--font-mono);">
+                  <div class="profile-modpack-meta">
                     <span style="color: var(--accent-emerald);">📦 ${(pack.mods || []).length} Mods</span>
                     <span style="color: var(--accent-amber);">❤️ ${pack.likes_count || 0} Likes</span>
+                  </div>
+
+                  <div class="profile-modpack-action">
+                    <button type="button" class="tarkov-btn btn-amber btn-open-profile-pack" data-pack-id="${pack.id}">
+                      <span>VER DETALHES DO MODPACK ➔</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -669,6 +676,17 @@ function setupProfileEventListeners(isOwner, isStaff) {
       }
     });
   }
+
+  // Click listener para abrir detalhes dos modpacks publicados no perfil
+  document.querySelectorAll('.profile-modpack-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const packId = card.dataset.packId;
+      const pack = profileUserModpacksList.find(p => p.id === packId);
+      if (pack) {
+        openModpackDetailsModal(pack);
+      }
+    });
+  });
 }
 
 function triggerAvatarCropper(file) {

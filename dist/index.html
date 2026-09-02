@@ -1,797 +1,872 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PZHub Community Workshop - Modpack Creator & Social Platform</title>
 
-    <!-- Official Favicons & App Icons -->
-    <link rel="icon" type="image/svg+xml" href="/assets/PZHub_LogoIcon-CDJcGwfb.svg" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32-DZPUOhAv.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16-BBq8xOQu.png" />
-    <link rel="apple-touch-icon" href="/assets/apple-touch-icon-BEHiZNjl.png" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PZHub Community Workshop - Modpack Creator & Social Platform</title>
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+  <!-- Official Favicons & App Icons -->
+  <link rel="icon" type="image/svg+xml" href="/assets/PZHub_LogoIcon-CDJcGwfb.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32-DZPUOhAv.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16-BBq8xOQu.png" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon-BEHiZNjl.png" />
 
-    <script type="module" crossorigin src="/assets/index-DMoEwRje.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-Cxukq7OF.css">
-  </head>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap"
+    rel="stylesheet" />
 
-  <body>
-    <!-- 1. TOP HEADER NAVBAR -->
-    <header class="site-header">
-      <a href="#workshop" class="site-brand">
-        <img src="/assets/PZHub_LogoIcon-CDJcGwfb.svg" class="brand-logo-img" alt="PZHub Logo" style="width: 26px; height: 26px; object-fit: contain;" />
-        <div class="brand-title">
-          <span class="brand-title-main">PZHUB WORKSHOP</span>
-          <span class="brand-title-sub">COMMUNITY & SOCIAL</span>
-        </div>
-      </a>
+  <script type="module" crossorigin src="/assets/index-DaN37O4t.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DVZFZq4g.css">
+</head>
 
-      <!-- Desktop Navigation Tabs (Clean & Professional) -->
-      <nav class="site-nav-menu">
-        <button class="site-nav-tab active" data-view="workshop">
-          <span data-i18n="nav_workshop">CATÁLOGO</span>
-        </button>
-        <button class="site-nav-tab" data-view="dashboard">
-          <span data-i18n="nav_dashboard">DASHBOARD</span>
-        </button>
-        <button class="site-nav-tab" data-view="studio">
-          <span data-i18n="nav_builder">ESTÚDIO</span>
-        </button>
-        <button class="site-nav-tab" data-view="timeline">
-          <span data-i18n="nav_feed">RADAR SOCIAL</span>
-        </button>
-        <button class="site-nav-tab" data-view="admin" id="nav-admin-tab" style="display: none; border-bottom-color: var(--accent-red); color: var(--accent-red);">
-          <span data-i18n="nav_admin">👑 MODERAÇÃO</span>
-        </button>
-      </nav>
+<body>
+  <!-- 1. TOP HEADER NAVBAR -->
+  <header class="site-header">
+    <a href="#workshop" class="site-brand">
+      <img src="/assets/PZHub_LogoIcon-CDJcGwfb.svg" class="brand-logo-img" alt="PZHub Logo"
+        style="width: 26px; height: 26px; object-fit: contain;" />
+      <div class="brand-title">
+        <span class="brand-title-main">PZHUB WORKSHOP</span>
+        <span class="brand-title-sub">COMMUNITY & SOCIAL</span>
+      </div>
+    </a>
 
-      <div class="site-header-actions">
-        <!-- Compact Language Selector -->
-        <div class="lang-selector-group">
-          <button class="web-lang-btn active" data-lang="pt" title="Português (Brasil)">PT</button>
-          <button class="web-lang-btn" data-lang="en" title="English (US)">EN</button>
-          <button class="web-lang-btn" data-lang="es" title="Español (ES)">ES</button>
-        </div>
+    <!-- Desktop Navigation Tabs (Clean & Professional) -->
+    <nav class="site-nav-menu">
+      <button class="site-nav-tab active" data-view="workshop">
+        <span data-i18n="nav_workshop">CATÁLOGO</span>
+      </button>
+      <button class="site-nav-tab" data-view="dashboard">
+        <span data-i18n="nav_dashboard">DASHBOARD</span>
+      </button>
+      <button class="site-nav-tab" data-view="studio">
+        <span data-i18n="nav_builder">ESTÚDIO</span>
+      </button>
+      <button class="site-nav-tab" data-view="timeline">
+        <span data-i18n="nav_feed">RADAR SOCIAL</span>
+      </button>
+      <button class="site-nav-tab" data-view="admin" id="nav-admin-tab"
+        style="display: none; border-bottom-color: var(--accent-red); color: var(--accent-red);">
+        <span data-i18n="nav_admin">👑 MODERAÇÃO</span>
+      </button>
+    </nav>
 
-        <!-- White/Dark Mode Toggle -->
-        <button id="btn-theme-toggle" class="tarkov-btn-icon" title="Alternar Modo Claro / Escuro">
-          <span id="theme-toggle-icon">☀️</span>
-        </button>
+    <div class="site-header-actions">
+      <!-- Compact Language Selector -->
+      <div class="lang-selector-group">
+        <button class="web-lang-btn active" data-lang="pt" title="Português (Brasil)">PT</button>
+        <button class="web-lang-btn" data-lang="en" title="English (US)">EN</button>
+        <button class="web-lang-btn" data-lang="es" title="Español (ES)">ES</button>
+      </div>
 
-        <button id="nav-auth-btn" class="tarkov-btn btn-amber" style="padding: 6px 14px;" data-i18n="nav_login">
-          ENTRAR / CADASTRO
-        </button>
+      <!-- White/Dark Mode Toggle -->
+      <button id="btn-theme-toggle" class="tarkov-btn-icon" title="Alternar Modo Claro / Escuro">
+        <span id="theme-toggle-icon">☀️</span>
+      </button>
 
-        <!-- User Profile Card com Dropdown -->
-        <div id="nav-user-profile" class="nav-user-card" style="display: none;">
-          <div id="nav-user-card-trigger" class="user-card-trigger" title="Opções da Conta">
-            <img id="nav-user-avatar" class="nav-avatar-img" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=64&q=80" alt="Avatar" />
-            <div class="user-card-info">
-              <span id="nav-username" class="user-card-name">Operador</span>
-              <span id="nav-user-role-badge" class="tarkov-tag badge-role-creator">💎 CRIADOR</span>
-            </div>
-            <span class="user-dropdown-arrow">▾</span>
+      <button id="nav-auth-btn" class="tarkov-btn btn-amber" style="padding: 6px 14px;" data-i18n="nav_login">
+        ENTRAR / CADASTRO
+      </button>
+
+      <!-- User Profile Card com Dropdown -->
+      <div id="nav-user-profile" class="nav-user-card" style="display: none;">
+        <div id="nav-user-card-trigger" class="user-card-trigger" title="Opções da Conta">
+          <img id="nav-user-avatar" class="nav-avatar-img"
+            src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=64&q=80"
+            alt="Avatar" />
+          <div class="user-card-info">
+            <span id="nav-username" class="user-card-name">Operador</span>
+            <span id="nav-user-role-badge" class="tarkov-tag badge-role-creator">💎 CRIADOR</span>
           </div>
-
-          <!-- Dropdown Menu de Usuário -->
-          <div id="user-context-menu" class="user-dropdown-menu">
-            <a href="#profile" id="menu-opt-profile" class="dropdown-item">
-              <span>👤 Meu Perfil Social</span>
-            </a>
-            <div class="dropdown-divider"></div>
-            <button type="button" id="nav-logout-btn" class="dropdown-item text-danger">
-              <span>🚪 Sair da Conta</span>
-            </button>
-          </div>
+          <span class="user-dropdown-arrow">▾</span>
         </div>
 
-        <!-- Mobile Hamburger Toggle -->
-        <button type="button" id="btn-mobile-nav-toggle" class="mobile-nav-hamburger" title="Abrir Menu">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-      </div>
-    </header>
-
-    <!-- Mobile Drawer Overlay & Navigation -->
-    <div id="mobile-nav-drawer" class="mobile-nav-drawer">
-      <div class="mobile-drawer-header">
-        <div class="site-brand">
-          <img src="/assets/PZHub_LogoIcon-CDJcGwfb.svg" class="brand-logo-img" alt="PZHub Logo" style="width: 22px; height: 22px;" />
-          <span class="brand-title-main" style="font-size: 13px;">PZHUB NAVEGAÇÃO</span>
-        </div>
-        <button type="button" id="btn-mobile-nav-close" class="mobile-drawer-close">✕</button>
-      </div>
-      <div class="mobile-drawer-links">
-        <button class="mobile-nav-tab active" data-view="workshop">📦 Catálogo de Modpacks</button>
-        <button class="mobile-nav-tab" data-view="dashboard">📊 Dashboard Geral</button>
-        <button class="mobile-nav-tab" data-view="studio">🛠️ Estúdio do Criador</button>
-        <button class="mobile-nav-tab" data-view="timeline">📡 Radar Social (Feed)</button>
-        <button class="mobile-nav-tab" data-view="admin" id="mobile-nav-admin-tab" style="display: none; color: var(--accent-red);">👑 Moderação & Staff</button>
-      </div>
-      <div class="mobile-drawer-footer">
-        <a href="https://github.com/viccs/pzhub/releases/latest/download/PZHub_2.0.0_x64-setup.exe" class="tarkov-btn btn-amber" style="width: 100%; justify-content: center; font-size: 11px;">
-          ⬇️ BAIXAR PZHUB DESKTOP (.EXE)
-        </a>
-      </div>
-    </div>
-    <div id="mobile-nav-backdrop" class="mobile-nav-backdrop"></div>
-
-    <!-- 2. HERO OPERATIONAL BANNER -->
-    <div class="site-hero-wrap">
-      <div class="tarkov-hero-banner">
-        <div class="hero-corner corner-tl"></div>
-        <div class="hero-corner corner-tr"></div>
-        <div class="hero-corner corner-bl"></div>
-        <div class="hero-corner corner-br"></div>
-
-        <div class="hero-tag">PROJECT ZOMBOID // BUILD 42 & 41 ECOSYSTEM</div>
-        <h1 class="hero-title" data-i18n="hero_title">ECOSSISTEMA SOCIAL & TÁTICO DE MODPACKS</h1>
-        <p class="hero-desc" data-i18n="hero_desc">
-          Publique suas coleções de mods com 1 clique, siga seus criadores favoritos, interaja no mural de recados e sincronize instantaneamente com o aplicativo desktop <strong>PZHub</strong>.
-        </p>
-
-        <div class="hero-cta-group">
-          <!-- Download Software CTA -->
-          <a href="https://github.com/viccs/pzhub/releases/latest/download/PZHub_2.0.0_x64-setup.exe" id="hero-btn-download-app" class="tarkov-btn btn-download-glow" target="_blank">
-            <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: currentColor;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-            <span data-i18n="btn_download_software">⬇️ BAIXAR PZHUB DESKTOP (.EXE)</span>
+        <!-- Dropdown Menu de Usuário -->
+        <div id="user-context-menu" class="user-dropdown-menu">
+          <a href="#profile" id="menu-opt-profile" class="dropdown-item">
+            <span>👤 Meu Perfil Social</span>
           </a>
-
-          <a href="#studio" class="tarkov-btn btn-amber">
-            <span data-i18n="nav_builder">+ CRIAR NOVO MODPACK</span>
-          </a>
-          <a href="#workshop" class="tarkov-btn">
-            <span data-i18n="nav_workshop">EXPLORAR CATÁLOGO</span>
-          </a>
-          <button id="hero-btn-my-profile" class="tarkov-btn btn-cyan">
-            <span data-i18n="nav_profile">👤 MEU PERFIL SOCIAL</span>
+          <div class="dropdown-divider"></div>
+          <button type="button" id="nav-logout-btn" class="dropdown-item text-danger">
+            <span>🚪 Sair da Conta</span>
           </button>
         </div>
       </div>
+
+      <!-- Mobile Hamburger Toggle -->
+      <button type="button" id="btn-mobile-nav-toggle" class="mobile-nav-hamburger" title="Abrir Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer Overlay & Navigation -->
+  <div id="mobile-nav-drawer" class="mobile-nav-drawer">
+    <div class="mobile-drawer-header">
+      <div class="site-brand">
+        <img src="/assets/PZHub_LogoIcon-CDJcGwfb.svg" class="brand-logo-img" alt="PZHub Logo"
+          style="width: 22px; height: 22px;" />
+        <span class="brand-title-main" style="font-size: 13px;">PZHUB NAVEGAÇÃO</span>
+      </div>
+      <button type="button" id="btn-mobile-nav-close" class="mobile-drawer-close">✕</button>
+    </div>
+    <div class="mobile-drawer-links">
+      <button class="mobile-nav-tab active" data-view="workshop">📦 Catálogo de Modpacks</button>
+      <button class="mobile-nav-tab" data-view="dashboard">📊 Dashboard Geral</button>
+      <button class="mobile-nav-tab" data-view="studio">🛠️ Estúdio do Criador</button>
+      <button class="mobile-nav-tab" data-view="timeline">📡 Radar Social (Feed)</button>
+      <button class="mobile-nav-tab" data-view="admin" id="mobile-nav-admin-tab"
+        style="display: none; color: var(--accent-red);">👑 Moderação & Staff</button>
+    </div>
+    <div class="mobile-drawer-footer">
+      <a href="https://www.dropbox.com/scl/fi/u1zxwky8utdzwdv4spv91/PZHub_Setup.exe?rlkey=nguj8499hj314a1f5rcsxkwdu&st=pcntmhga&dl=0"
+        class="tarkov-btn btn-amber" style="width: 100%; justify-content: center; font-size: 11px;">
+        ⬇️ BAIXAR PZHUB DESKTOP (.EXE)
+      </a>
+    </div>
+  </div>
+  <div id="mobile-nav-backdrop" class="mobile-nav-backdrop"></div>
+
+  <!-- 2. HERO OPERATIONAL BANNER -->
+  <div class="site-hero-wrap">
+    <div class="tarkov-hero-banner">
+      <div class="hero-corner corner-tl"></div>
+      <div class="hero-corner corner-tr"></div>
+      <div class="hero-corner corner-bl"></div>
+      <div class="hero-corner corner-br"></div>
+
+      <div class="hero-tag">PROJECT ZOMBOID // BUILD 42 & 41 ECOSYSTEM</div>
+      <h1 class="hero-title" data-i18n="hero_title">ECOSSISTEMA SOCIAL & TÁTICO DE MODPACKS</h1>
+      <p class="hero-desc" data-i18n="hero_desc">
+        Publique suas coleções de mods com 1 clique, siga seus criadores favoritos, interaja no mural de recados e
+        sincronize instantaneamente com o aplicativo desktop <strong>PZHub</strong>.
+      </p>
+
+      <div class="hero-cta-group">
+        <!-- Download Software CTA -->
+        <a href="https://www.dropbox.com/scl/fi/u1zxwky8utdzwdv4spv91/PZHub_Setup.exe?rlkey=nguj8499hj314a1f5rcsxkwdu&st=pcntmhga&dl=0"
+          id="hero-btn-download-app" class="tarkov-btn btn-download-glow" target="_blank">
+          <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: currentColor;">
+            <path
+              d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z" />
+          </svg>
+          <span data-i18n="btn_download_software">⬇️ BAIXAR PZHUB DESKTOP (.EXE)</span>
+        </a>
+
+        <a href="#studio" class="tarkov-btn btn-amber">
+          <span data-i18n="nav_builder">+ CRIAR NOVO MODPACK</span>
+        </a>
+        <a href="#workshop" class="tarkov-btn">
+          <span data-i18n="nav_workshop">EXPLORAR CATÁLOGO</span>
+        </a>
+        <button id="hero-btn-my-profile" class="tarkov-btn btn-cyan">
+          <span data-i18n="nav_profile">👤 MEU PERFIL SOCIAL</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 1: CATÁLOGO DA COMUNIDADE (WORKSHOP)                            -->
+  <!-- ===================================================================== -->
+  <section id="view-workshop" class="site-view active">
+    <div class="workshop-controls-bar">
+      <!-- Category Filters -->
+      <div class="category-tabs-group" style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+        <button class="ws-category-btn active" data-category="all" data-i18n="ws_category_all">TODOS OS
+          MODPACKS</button>
+        <button class="ws-category-btn" data-category="Military">MILITAR</button>
+        <button class="ws-category-btn" data-category="Weapons">ARMAS</button>
+        <button class="ws-category-btn" data-category="Vehicles">VEÍCULOS</button>
+        <button class="ws-category-btn" data-category="Hardmode">HARDCORE</button>
+        <button class="ws-category-btn" data-category="Building">CONSTRUÇÃO</button>
+        <button class="ws-category-btn" data-category="QoL">QOL</button>
+        <button class="ws-category-btn" data-category="Multiplayer">MULTIPLAYER</button>
+        <select id="ws-more-categories-select" class="tarkov-select"
+          style="padding: 4px 8px; font-size: 11px; width: 150px; height: 28px;">
+          <option value="">+ MAIS CATEGORIAS...</option>
+        </select>
+      </div>
+
+      <!-- Search & Popularity Sort -->
+      <div class="workshop-search-group">
+        <input type="text" id="ws-search-input" class="tarkov-input-sm" placeholder="Buscar modpack..."
+          style="width: 220px;" />
+        <select id="ws-sort-select" class="tarkov-select">
+          <option value="popular">🔥 Mais Populares (Relevância)</option>
+          <option value="likes">⭐ Mais Votados (Likes)</option>
+          <option value="downloads">🚀 Mais Baixados</option>
+          <option value="recent">⚡ Atualizados Recentemente</option>
+        </select>
+      </div>
     </div>
 
-    <!-- ===================================================================== -->
-    <!-- VIEW 1: CATÁLOGO DA COMUNIDADE (WORKSHOP)                            -->
-    <!-- ===================================================================== -->
-    <section id="view-workshop" class="site-view active">
-      <div class="workshop-controls-bar">
-        <!-- Category Filters -->
-        <div class="category-tabs-group" style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-          <button class="ws-category-btn active" data-category="all" data-i18n="ws_category_all">TODOS OS MODPACKS</button>
-          <button class="ws-category-btn" data-category="Military">MILITAR</button>
-          <button class="ws-category-btn" data-category="Weapons">ARMAS</button>
-          <button class="ws-category-btn" data-category="Vehicles">VEÍCULOS</button>
-          <button class="ws-category-btn" data-category="Hardmode">HARDCORE</button>
-          <button class="ws-category-btn" data-category="Building">CONSTRUÇÃO</button>
-          <button class="ws-category-btn" data-category="QoL">QOL</button>
-          <button class="ws-category-btn" data-category="Multiplayer">MULTIPLAYER</button>
-          <select id="ws-more-categories-select" class="tarkov-select" style="padding: 4px 8px; font-size: 11px; width: 150px; height: 28px;">
-            <option value="">+ MAIS CATEGORIAS...</option>
-          </select>
-        </div>
+    <div style="margin-bottom: 16px; font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);">
+      <span id="workshop-total-count">CARREGANDO MODPACKS...</span>
+    </div>
 
-        <!-- Search & Popularity Sort -->
-        <div class="workshop-search-group">
-          <input type="text" id="ws-search-input" class="tarkov-input-sm" placeholder="Buscar modpack..." style="width: 220px;" />
-          <select id="ws-sort-select" class="tarkov-select">
-            <option value="popular">🔥 Mais Populares (Relevância)</option>
-            <option value="likes">⭐ Mais Votados (Likes)</option>
-            <option value="downloads">🚀 Mais Baixados</option>
-            <option value="recent">⚡ Atualizados Recentemente</option>
-          </select>
-        </div>
+    <!-- Feed Grid -->
+    <div id="workshop-feed-container" class="workshop-grid">
+      <!-- Renderizado dinamicamente pelo workshop.js -->
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 2: DASHBOARD GERAL DE MODS & MODPACKS                            -->
+  <!-- ===================================================================== -->
+  <section id="view-dashboard" class="site-view">
+    <div class="view-header-strip">
+      <div class="view-title-group">
+        <span class="view-sub">CENTRAL DE DADOS & TELEMETRIA</span>
+        <h2 class="view-title">DASHBOARD GERAL DE MODS E PACOTES</h2>
+      </div>
+    </div>
+
+    <div class="dashboard-stats-grid">
+      <div class="profile-stat-box">
+        <span class="stat-label">MODPACKS ATIVOS</span>
+        <span class="stat-value text-amber">0</span>
+      </div>
+      <div class="profile-stat-box">
+        <span class="stat-label">MODS CATALOGADOS</span>
+        <span class="stat-value text-cyan">0 mods</span>
+      </div>
+      <div class="profile-stat-box">
+        <span class="stat-label">DOWNLOADS TOTAIS</span>
+        <span class="stat-value text-emerald">0</span>
+      </div>
+      <div class="profile-stat-box">
+        <span class="stat-label">AVALIAÇÕES & LIKES</span>
+        <span class="stat-value text-red">❤️ 0</span>
+      </div>
+    </div>
+
+    <div class="admin-table-wrapper" style="margin-top: 24px;">
+      <h3 style="color: #fff; font-size: 13px; margin: 16px 16px 10px; letter-spacing: 1px;">TODOS OS MODPACKS
+        CADASTRADOS PELA COMUNIDADE</h3>
+      <table class="tarkov-table">
+        <thead>
+          <tr>
+            <th>MODPACK</th>
+            <th>CRIADOR</th>
+            <th>BUILD</th>
+            <th>CATEGORIA</th>
+            <th>MODS</th>
+            <th>DOWNLOADS</th>
+            <th>LIKES</th>
+            <th>AÇÃO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Renderizado dinamicamente -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 3: PERFIL SOCIAL DO USUÁRIO (ESTILO X / STEAM SHOWCASE)          -->
+  <!-- ===================================================================== -->
+  <section id="view-profile" class="site-view">
+    <!-- Renderizado dinamicamente pelo profile.js -->
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 4: ESTÚDIO DO CRIADOR (STUDIO / MEUS UPLOADS)                    -->
+  <!-- ===================================================================== -->
+  <section id="view-studio" class="site-view">
+    <div class="view-header-strip">
+      <div class="view-title-group">
+        <span class="view-sub">PAINEL DO CRIADOR</span>
+        <h2 class="view-title">MEUS UPLOADS & CONSTRUTOR DE MODPACKS</h2>
+      </div>
+    </div>
+
+    <!-- Meus Modpacks Publicados -->
+    <div style="margin-bottom: 30px;">
+      <h3 style="color: #fff; font-size: 13px; margin-bottom: 12px; letter-spacing: 1px;">MEUS PACOTES PUBLICADOS</h3>
+      <div id="creator-my-uploads-container">
+        <!-- Renderizado dinamicamente pelo modpackBuilder.js -->
+      </div>
+    </div>
+
+    <!-- Formulário do Construtor -->
+    <div class="builder-card" id="builder-form-card">
+      <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--panel-border); padding-bottom: 12px;">
+        <h3 id="builder-form-title"
+          style="color: var(--accent-amber); font-size: 13px; letter-spacing: 1px; text-transform: uppercase;">
+          CONSTRUTOR DE NOVO MODPACK</h3>
+        <button id="btn-cancel-edit" class="tarkov-btn"
+          style="display: none; padding: 4px 10px; font-size: 10px;">CANCELAR EDIÇÃO</button>
       </div>
 
-      <div style="margin-bottom: 16px; font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);">
-        <span id="workshop-total-count">CARREGANDO MODPACKS...</span>
-      </div>
-
-      <!-- Feed Grid -->
-      <div id="workshop-feed-container" class="workshop-grid">
-        <!-- Renderizado dinamicamente pelo workshop.js -->
-      </div>
-    </section>
-
-    <!-- ===================================================================== -->
-    <!-- VIEW 2: DASHBOARD GERAL DE MODS & MODPACKS                            -->
-    <!-- ===================================================================== -->
-    <section id="view-dashboard" class="site-view">
-      <div class="view-header-strip">
-        <div class="view-title-group">
-          <span class="view-sub">CENTRAL DE DADOS & TELEMETRIA</span>
-          <h2 class="view-title">DASHBOARD GERAL DE MODS E PACOTES</h2>
-        </div>
-      </div>
-
-      <div class="dashboard-stats-grid">
-        <div class="profile-stat-box">
-          <span class="stat-label">MODPACKS ATIVOS</span>
-          <span class="stat-value text-amber">0</span>
-        </div>
-        <div class="profile-stat-box">
-          <span class="stat-label">MODS CATALOGADOS</span>
-          <span class="stat-value text-cyan">0 mods</span>
-        </div>
-        <div class="profile-stat-box">
-          <span class="stat-label">DOWNLOADS TOTAIS</span>
-          <span class="stat-value text-emerald">0</span>
-        </div>
-        <div class="profile-stat-box">
-          <span class="stat-label">AVALIAÇÕES & LIKES</span>
-          <span class="stat-value text-red">❤️ 0</span>
-        </div>
-      </div>
-
-      <div class="admin-table-wrapper" style="margin-top: 24px;">
-        <h3 style="color: #fff; font-size: 13px; margin: 16px 16px 10px; letter-spacing: 1px;">TODOS OS MODPACKS CADASTRADOS PELA COMUNIDADE</h3>
-        <table class="tarkov-table">
-          <thead>
-            <tr>
-              <th>MODPACK</th>
-              <th>CRIADOR</th>
-              <th>BUILD</th>
-              <th>CATEGORIA</th>
-              <th>MODS</th>
-              <th>DOWNLOADS</th>
-              <th>LIKES</th>
-              <th>AÇÃO</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Renderizado dinamicamente -->
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- ===================================================================== -->
-    <!-- VIEW 3: PERFIL SOCIAL DO USUÁRIO (ESTILO X / STEAM SHOWCASE)          -->
-    <!-- ===================================================================== -->
-    <section id="view-profile" class="site-view">
-      <!-- Renderizado dinamicamente pelo profile.js -->
-    </section>
-
-    <!-- ===================================================================== -->
-    <!-- VIEW 4: ESTÚDIO DO CRIADOR (STUDIO / MEUS UPLOADS)                    -->
-    <!-- ===================================================================== -->
-    <section id="view-studio" class="site-view">
-      <div class="view-header-strip">
-        <div class="view-title-group">
-          <span class="view-sub">PAINEL DO CRIADOR</span>
-          <h2 class="view-title">MEUS UPLOADS & CONSTRUTOR DE MODPACKS</h2>
-        </div>
-      </div>
-
-      <!-- Meus Modpacks Publicados -->
-      <div style="margin-bottom: 30px;">
-        <h3 style="color: #fff; font-size: 13px; margin-bottom: 12px; letter-spacing: 1px;">MEUS PACOTES PUBLICADOS</h3>
-        <div id="creator-my-uploads-container">
-          <!-- Renderizado dinamicamente pelo modpackBuilder.js -->
-        </div>
-      </div>
-
-      <!-- Formulário do Construtor -->
-      <div class="builder-card" id="builder-form-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--panel-border); padding-bottom: 12px;">
-          <h3 id="builder-form-title" style="color: var(--accent-amber); font-size: 13px; letter-spacing: 1px; text-transform: uppercase;">CONSTRUTOR DE NOVO MODPACK</h3>
-          <button id="btn-cancel-edit" class="tarkov-btn" style="display: none; padding: 4px 10px; font-size: 10px;">CANCELAR EDIÇÃO</button>
-        </div>
-
-        <form id="builder-form">
-          <div class="builder-grid-2">
-            <div class="form-group">
-              <label class="form-label">Nome Oficial do Modpack *</label>
-              <input type="text" id="builder-pack-name" class="tarkov-input" placeholder="Ex: Operação Knox Militar B42" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Versão Inicial *</label>
-              <input type="text" id="builder-pack-version" class="tarkov-input" value="1.0.0" required />
-            </div>
-          </div>
-
-          <div class="builder-grid-2">
-            <div class="form-group">
-              <label class="form-label" data-i18n="builder_cat_label">Categoria Principal</label>
-              <select id="builder-pack-category" class="tarkov-select">
-                <optgroup label="Elementos & Mecânicas">
-                  <option value="Military">Military (Militar & Tático)</option>
-                  <option value="Weapons">Weapons (Armas de Fogo e Brancas)</option>
-                  <option value="Vehicles">Vehicles (Veículos & Transporte)</option>
-                  <option value="Building">Building (Construção & Estruturas)</option>
-                  <option value="Clothing/Armor">Clothing/Armor (Roupas & Armaduras)</option>
-                  <option value="Food">Food (Comidas & Culinária)</option>
-                  <option value="Farming">Farming (Agricultura & Plantação)</option>
-                  <option value="Animals">Animals (Animais & Criação)</option>
-                  <option value="Items">Items (Itens & Equipamentos)</option>
-                  <option value="Literature">Literature (Literatura & Livros)</option>
-                  <option value="Map">Map (Mapas & Cidades Adicionais)</option>
-                  <option value="Audio">Audio (Áudio & Efeitos Sonoros)</option>
-                </optgroup>
-                <optgroup label="Estilo & Gameplay">
-                  <option value="Hardmode">Hardmode (Sobrevivência Hardcore)</option>
-                  <option value="QoL">QoL (Quality of Life / Qualidade de Vida)</option>
-                  <option value="Multiplayer">Multiplayer (Compatível/Focado em Servidores)</option>
-                  <option value="Realistic">Realistic (Realismo & Imersão)</option>
-                  <option value="Balance">Balance (Ajustes de Balanceamento)</option>
-                  <option value="Silly/Fun">Silly/Fun (Mods Cômicos / Diversão)</option>
-                </optgroup>
-                <optgroup label="Técnica & Estrutura">
-                  <option value="Framework">Framework (Bibliotecas & Bases)</option>
-                  <option value="Interface">Interface (UI / Menus / HUD)</option>
-                  <option value="Language/Translation">Language/Translation (Traduções)</option>
-                  <option value="Models">Models (Modelos 3D Customizados)</option>
-                  <option value="Textures">Textures (Texturas Visuais)</option>
-                  <option value="Skills">Skills (Habilidades & Níveis)</option>
-                  <option value="Traits">Traits (Traços de Personagem)</option>
-                  <option value="Pop Culture">Pop Culture (Filmes & Séries)</option>
-                  <option value="WIP">WIP (Work in Progress / Em Desenvolvimento)</option>
-                  <option value="Misc">Misc (Miscelânea / Outros)</option>
-                </optgroup>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Compatibilidade Zomboid</label>
-              <select id="builder-pack-zomboid-ver" class="tarkov-select">
-                <option value="42.0+">Build 42.0+ (Recomendado)</option>
-                <option value="41.78+">Build 41.78 Legacy</option>
-              </select>
-            </div>
-          </div>
-
+      <form id="builder-form">
+        <div class="builder-grid-2">
           <div class="form-group">
-            <label class="form-label">Descrição Completa / Manifesto *</label>
-            <textarea id="builder-pack-desc" class="tarkov-textarea" placeholder="Descreva o propósito da coleção, lore e instruções..." rows="3" required></textarea>
+            <label class="form-label">Nome Oficial do Modpack *</label>
+            <input type="text" id="builder-pack-name" class="tarkov-input" placeholder="Ex: Operação Knox Militar B42"
+              required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Versão Inicial *</label>
+            <input type="text" id="builder-pack-version" class="tarkov-input" value="1.0.0" required />
+          </div>
+        </div>
+
+        <div class="builder-grid-2">
+          <div class="form-group">
+            <label class="form-label" data-i18n="builder_cat_label">Categoria Principal</label>
+            <select id="builder-pack-category" class="tarkov-select">
+              <optgroup label="Elementos & Mecânicas">
+                <option value="Military">Military (Militar & Tático)</option>
+                <option value="Weapons">Weapons (Armas de Fogo e Brancas)</option>
+                <option value="Vehicles">Vehicles (Veículos & Transporte)</option>
+                <option value="Building">Building (Construção & Estruturas)</option>
+                <option value="Clothing/Armor">Clothing/Armor (Roupas & Armaduras)</option>
+                <option value="Food">Food (Comidas & Culinária)</option>
+                <option value="Farming">Farming (Agricultura & Plantação)</option>
+                <option value="Animals">Animals (Animais & Criação)</option>
+                <option value="Items">Items (Itens & Equipamentos)</option>
+                <option value="Literature">Literature (Literatura & Livros)</option>
+                <option value="Map">Map (Mapas & Cidades Adicionais)</option>
+                <option value="Audio">Audio (Áudio & Efeitos Sonoros)</option>
+              </optgroup>
+              <optgroup label="Estilo & Gameplay">
+                <option value="Hardmode">Hardmode (Sobrevivência Hardcore)</option>
+                <option value="QoL">QoL (Quality of Life / Qualidade de Vida)</option>
+                <option value="Multiplayer">Multiplayer (Compatível/Focado em Servidores)</option>
+                <option value="Realistic">Realistic (Realismo & Imersão)</option>
+                <option value="Balance">Balance (Ajustes de Balanceamento)</option>
+                <option value="Silly/Fun">Silly/Fun (Mods Cômicos / Diversão)</option>
+              </optgroup>
+              <optgroup label="Técnica & Estrutura">
+                <option value="Framework">Framework (Bibliotecas & Bases)</option>
+                <option value="Interface">Interface (UI / Menus / HUD)</option>
+                <option value="Language/Translation">Language/Translation (Traduções)</option>
+                <option value="Models">Models (Modelos 3D Customizados)</option>
+                <option value="Textures">Textures (Texturas Visuais)</option>
+                <option value="Skills">Skills (Habilidades & Níveis)</option>
+                <option value="Traits">Traits (Traços de Personagem)</option>
+                <option value="Pop Culture">Pop Culture (Filmes & Séries)</option>
+                <option value="WIP">WIP (Work in Progress / Em Desenvolvimento)</option>
+                <option value="Misc">Misc (Miscelânea / Outros)</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Compatibilidade Zomboid</label>
+            <select id="builder-pack-zomboid-ver" class="tarkov-select">
+              <option value="42.0+">Build 42.0+ (Recomendado)</option>
+              <option value="41.78+">Build 41.78 Legacy</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Descrição Completa / Manifesto *</label>
+          <textarea id="builder-pack-desc" class="tarkov-textarea"
+            placeholder="Descreva o propósito da coleção, lore e instruções..." rows="3" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Imagem de Capa (Banner HD)</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="builder-pack-image" class="tarkov-input"
+              placeholder="https://exemplo.com/capa.jpg ou envie um arquivo..." style="flex: 1;" />
+            <label class="tarkov-btn"
+              style="cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; padding: 6px 12px; font-size: 11px;">
+              <span>📷 AJUSTAR & ENVIAR</span>
+              <input type="file" id="input-upload-pack-cover" accept="image/*" style="display: none;" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Seção de Adicionar Mods ao Pacote -->
+        <div class="builder-mods-builder-section">
+          <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <h4 class="builder-section-heading" style="font-size: 12px; letter-spacing: 1px;">MODS COMPONENTES DO PACOTE
+            </h4>
+            <span style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-amber);">⚡ Sincronização
+              Automática com PZHub Desktop</span>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Imagem de Capa (Banner HD)</label>
-            <div style="display: flex; gap: 8px;">
-              <input type="text" id="builder-pack-image" class="tarkov-input" placeholder="https://exemplo.com/capa.jpg ou envie um arquivo..." style="flex: 1;" />
-              <label class="tarkov-btn" style="cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; padding: 6px 12px; font-size: 11px;">
-                <span>📷 AJUSTAR & ENVIAR</span>
-                <input type="file" id="input-upload-pack-cover" accept="image/*" style="display: none;" />
+          <!-- Seletor do Tipo de Origem do Mod -->
+          <div style="margin-bottom: 12px;">
+            <label class="form-label" style="font-size: 10px;">Tipo de Origem do Mod *</label>
+            <select id="builder-mod-type" class="tarkov-select" style="width: 100%; max-width: 380px;">
+              <option value="workshop">🌐 Steam Workshop (Oficina Oficial)</option>
+              <option value="direct_download">📦 Download Direto (.ZIP / Servidor)</option>
+            </select>
+          </div>
+
+          <!-- Campos Dinâmicos por Tipo -->
+          <div id="builder-mod-fields-row" class="add-mod-inline-row"
+            style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+
+            <!-- 1. Campo Nome do Mod -->
+            <div style="flex: 2; min-width: 180px;">
+              <label class="form-label" style="font-size: 10px;">Nome do Mod *</label>
+              <input type="text" id="builder-mod-name" class="tarkov-input"
+                placeholder="Ex: Filibuster Rhymes Cars B42" />
+            </div>
+
+            <!-- 2. Campo Específico: Steam Workshop ID / Link Automático -->
+            <div id="field-group-workshop" style="flex: 2; min-width: 220px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label class="form-label" style="font-size: 10px; margin: 0;">Link do Mod na Steam ou ID *</label>
+                <span id="builder-mod-ws-feedback" class="steam-extraction-badge" style="display: none;"></span>
+              </div>
+              <input type="text" id="builder-mod-ws-id" class="tarkov-input"
+                placeholder="Cole o link da Steam (https://steamcommunity.com/...) ou o ID" />
+            </div>
+
+            <!-- 3. Campo Específico: Direct Download (.ZIP) -->
+            <div id="field-group-direct-url" style="display: none; flex: 2; min-width: 200px;">
+              <label class="form-label" style="font-size: 10px;">URL Direta do .ZIP *</label>
+              <input type="url" id="builder-mod-direct-url" class="tarkov-input"
+                placeholder="https://servidor.com/mods/mod.zip" />
+            </div>
+            <div id="field-group-direct-folder" style="display: none; flex: 1; min-width: 140px;">
+              <label class="form-label" style="font-size: 10px;">Pasta em Zomboid/mods/ *</label>
+              <input type="text" id="builder-mod-folder-name" class="tarkov-input" placeholder="Ex: MeuModFolder" />
+            </div>
+
+            <!-- Checkbox Obrigatório -->
+            <div style="display: flex; align-items: center; gap: 6px; padding-bottom: 8px;">
+              <label
+                style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-muted);">
+                <input type="checkbox" id="builder-mod-required" checked /> Obrigatório
               </label>
             </div>
+
+            <!-- Botão Adicionar -->
+            <div>
+              <button type="button" id="btn-builder-add-mod" class="tarkov-btn btn-amber"
+                style="padding: 10px 16px; white-space: nowrap;">
+                + ADICIONAR MOD
+              </button>
+            </div>
           </div>
 
-          <!-- Seção de Adicionar Mods ao Pacote -->
-          <div class="builder-mods-builder-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-              <h4 class="builder-section-heading" style="font-size: 12px; letter-spacing: 1px;">MODS COMPONENTES DO PACOTE</h4>
-              <span style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-amber);">⚡ Sincronização Automática com PZHub Desktop</span>
+          <!-- Lista de Mods Adicionados -->
+          <div id="builder-mods-items-container" style="margin-top: 14px;">
+            <!-- Renderizado dinamicamente -->
+          </div>
+        </div>
+
+        <div class="builder-actions-row">
+          <button type="button" id="btn-builder-save-local" class="tarkov-btn">COPIAR JSON</button>
+          <button type="button" id="btn-builder-publish" class="tarkov-btn btn-amber" style="padding: 10px 22px;">🚀
+            SALVAR E PUBLICAR MODPACK</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 5: PAINEL ADMINISTRATIVO & MODERAÇÃO                             -->
+  <!-- ===================================================================== -->
+  <section id="view-admin" class="site-view">
+    <!-- Renderizado dinamicamente pelo admin.js -->
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 6: RADAR SOCIAL & TIMELINE (X / TWITTER STYLE)                  -->
+  <!-- ===================================================================== -->
+  <section id="view-timeline" class="site-view">
+    <div class="timeline-layout-container">
+      <!-- Coluna Principal (Feed & Compositor) -->
+      <main class="timeline-main-column">
+        <!-- Feed Tabs (Para Você vs Seguindo) -->
+        <div class="timeline-feed-tabs">
+          <button id="tab-feed-discovery" class="feed-tab active">
+            <span>🌍 PARA VOCÊ (DISCOVERY)</span>
+          </button>
+          <button id="tab-feed-following" class="feed-tab">
+            <span>👥 SEGUINDO</span>
+          </button>
+        </div>
+
+        <!-- Compositor de Post Estilo X -->
+        <div class="timeline-compose-card">
+          <div class="compose-avatar-box">
+            <img id="compose-user-avatar"
+              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80"
+              alt="Avatar" />
+          </div>
+
+          <div class="compose-body-box">
+            <textarea id="timeline-compose-textarea" class="compose-textarea"
+              placeholder="Transmita sua mensagem para a frequência de Knox County... (#Hashtag ou @menção)"
+              maxlength="280" rows="3"></textarea>
+
+            <!-- Miniaturas de Anexos (Fotos & YouTube) -->
+            <div id="timeline-compose-previews" class="compose-previews-strip" style="display: none;"></div>
+
+            <!-- Input para Link do YouTube -->
+            <div id="timeline-youtube-input-box" class="compose-youtube-drawer" style="display: none;">
+              <input type="url" id="input-timeline-youtube-url" class="tarkov-input"
+                placeholder="Cole o link do YouTube (ex: https://youtu.be/... ou https://youtube.com/watch?v=...)" />
+              <button type="button" id="btn-attach-youtube-confirm" class="tarkov-btn btn-amber">EMBEDDAR VÍDEO</button>
+              <button type="button" id="btn-cancel-youtube" class="tarkov-btn">CANCELAR</button>
             </div>
 
-            <!-- Seletor do Tipo de Origem do Mod -->
-            <div style="margin-bottom: 12px;">
-              <label class="form-label" style="font-size: 10px;">Tipo de Origem do Mod *</label>
-              <select id="builder-mod-type" class="tarkov-select" style="width: 100%; max-width: 380px;">
-                <option value="workshop">🌐 Steam Workshop (Oficina Oficial)</option>
-                <option value="direct_download">📦 Download Direto (.ZIP / Servidor)</option>
-              </select>
-            </div>
+            <div class="compose-actions-bar">
+              <div class="compose-tools-left">
+                <button type="button" id="btn-add-timeline-media" class="compose-tool-btn"
+                  title="Anexar Fotos (Grid até 4)">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5-7l-3 3.72L9 13l-3 4h12l-4-5z" />
+                  </svg>
+                  <span>FOTOS</span>
+                  <input type="file" id="input-timeline-media-file" accept="image/*" style="display: none;" />
+                </button>
 
-            <!-- Campos Dinâmicos por Tipo -->
-            <div id="builder-mod-fields-row" class="add-mod-inline-row" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
-              
-              <!-- 1. Campo Nome do Mod -->
-              <div style="flex: 2; min-width: 180px;">
-                <label class="form-label" style="font-size: 10px;">Nome do Mod *</label>
-                <input type="text" id="builder-mod-name" class="tarkov-input" placeholder="Ex: Filibuster Rhymes Cars B42" />
+                <button type="button" id="btn-add-timeline-youtube" class="compose-tool-btn"
+                  title="Embeddar Vídeo do YouTube (Autoplay no hover)">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="M21.58 7.19c-.23-.86-.91-1.54-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42c.86-.23 1.54-.91 1.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15V9l5.2 3-5.2 3z" />
+                  </svg>
+                  <span>VÍDEO YOUTUBE</span>
+                </button>
               </div>
 
-              <!-- 2. Campo Específico: Steam Workshop ID / Link Automático -->
-              <div id="field-group-workshop" style="flex: 2; min-width: 220px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                  <label class="form-label" style="font-size: 10px; margin: 0;">Link do Mod na Steam ou ID *</label>
-                  <span id="builder-mod-ws-feedback" class="steam-extraction-badge" style="display: none;"></span>
-                </div>
-                <input type="text" id="builder-mod-ws-id" class="tarkov-input" placeholder="Cole o link da Steam (https://steamcommunity.com/...) ou o ID" />
-              </div>
-
-              <!-- 3. Campo Específico: Direct Download (.ZIP) -->
-              <div id="field-group-direct-url" style="display: none; flex: 2; min-width: 200px;">
-                <label class="form-label" style="font-size: 10px;">URL Direta do .ZIP *</label>
-                <input type="url" id="builder-mod-direct-url" class="tarkov-input" placeholder="https://servidor.com/mods/mod.zip" />
-              </div>
-              <div id="field-group-direct-folder" style="display: none; flex: 1; min-width: 140px;">
-                <label class="form-label" style="font-size: 10px;">Pasta em Zomboid/mods/ *</label>
-                <input type="text" id="builder-mod-folder-name" class="tarkov-input" placeholder="Ex: MeuModFolder" />
-              </div>
-
-              <!-- Checkbox Obrigatório -->
-              <div style="display: flex; align-items: center; gap: 6px; padding-bottom: 8px;">
-                <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-muted);">
-                  <input type="checkbox" id="builder-mod-required" checked /> Obrigatório
-                </label>
-              </div>
-
-              <!-- Botão Adicionar -->
-              <div>
-                <button type="button" id="btn-builder-add-mod" class="tarkov-btn btn-amber" style="padding: 10px 16px; white-space: nowrap;">
-                  + ADICIONAR MOD
+              <div class="compose-tools-right">
+                <span id="timeline-char-counter" class="char-counter">280</span>
+                <button type="button" id="btn-timeline-publish" class="tarkov-btn btn-amber">
+                  <span>🚀 TRANSMITIR</span>
                 </button>
               </div>
             </div>
-
-            <!-- Lista de Mods Adicionados -->
-            <div id="builder-mods-items-container" style="margin-top: 14px;">
-              <!-- Renderizado dinamicamente -->
-            </div>
           </div>
+        </div>
 
-          <div class="builder-actions-row">
-            <button type="button" id="btn-builder-save-local" class="tarkov-btn">COPIAR JSON</button>
-            <button type="button" id="btn-builder-publish" class="tarkov-btn btn-amber" style="padding: 10px 22px;">🚀 SALVAR E PUBLICAR MODPACK</button>
+        <!-- Feed Stream de Posts -->
+        <div id="timeline-feed-stream" class="timeline-stream-container">
+          <!-- Renderizado dinamicamente pelo timeline.js -->
+        </div>
+      </main>
+
+      <!-- Coluna Lateral Direita (Trending Topics & Sugestões) -->
+      <aside class="timeline-sidebar-column">
+        <!-- Widget: Tópicos de Knox County -->
+        <div class="tarkov-widget-card">
+          <h3 class="widget-title">🔥 TÓPICOS EM ALTA (KNOX)</h3>
+          <div id="timeline-trending-container" class="trending-list-box">
+            <!-- Renderizado dinamicamente -->
           </div>
-        </form>
-      </div>
-    </section>
+        </div>
 
-    <!-- ===================================================================== -->
-    <!-- VIEW 5: PAINEL ADMINISTRATIVO & MODERAÇÃO                             -->
-    <!-- ===================================================================== -->
-    <section id="view-admin" class="site-view">
-      <!-- Renderizado dinamicamente pelo admin.js -->
-    </section>
-
-    <!-- ===================================================================== -->
-    <!-- VIEW 6: RADAR SOCIAL & TIMELINE (X / TWITTER STYLE)                  -->
-    <!-- ===================================================================== -->
-    <section id="view-timeline" class="site-view">
-      <div class="timeline-layout-container">
-        <!-- Coluna Principal (Feed & Compositor) -->
-        <main class="timeline-main-column">
-          <!-- Feed Tabs (Para Você vs Seguindo) -->
-          <div class="timeline-feed-tabs">
-            <button id="tab-feed-discovery" class="feed-tab active">
-              <span>🌍 PARA VOCÊ (DISCOVERY)</span>
-            </button>
-            <button id="tab-feed-following" class="feed-tab">
-              <span>👥 SEGUINDO</span>
-            </button>
+        <!-- Widget: Quem Seguir -->
+        <div class="tarkov-widget-card">
+          <h3 class="widget-title">👥 OPERADORES RECOMENDADOS</h3>
+          <div id="timeline-suggestions-container" class="suggestions-list-box">
+            <!-- Renderizado dinamicamente -->
           </div>
+        </div>
+      </aside>
+    </div>
+  </section>
 
-          <!-- Compositor de Post Estilo X -->
-          <div class="timeline-compose-card">
-            <div class="compose-avatar-box">
-              <img id="compose-user-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80" alt="Avatar" />
-            </div>
+  <!-- ===================================================================== -->
+  <!-- MODAL: LIGHTBOX DE IMAGENS EM TELA CHEIA (TIMELINE)                   -->
+  <!-- ===================================================================== -->
+  <div id="timeline-lightbox-modal" class="tarkov-modal-backdrop">
+    <div class="lightbox-modal-content">
+      <button id="lightbox-close-btn" class="lightbox-close-btn" title="Fechar (Esc)">✕</button>
+      <button id="lightbox-prev-btn" class="lightbox-nav-btn prev-btn" title="Anterior">❮</button>
+      <button id="lightbox-next-btn" class="lightbox-nav-btn next-btn" title="Próxima">❯</button>
+      <img id="lightbox-main-img" src="" alt="Visualização em alta resolução" />
+      <div id="lightbox-counter" class="lightbox-counter">1 / 1</div>
+    </div>
+  </div>
 
-            <div class="compose-body-box">
-              <textarea 
-                id="timeline-compose-textarea" 
-                class="compose-textarea" 
-                placeholder="Transmita sua mensagem para a frequência de Knox County... (#Hashtag ou @menção)"
-                maxlength="280"
-                rows="3"
-              ></textarea>
-
-              <!-- Miniaturas de Anexos (Fotos & YouTube) -->
-              <div id="timeline-compose-previews" class="compose-previews-strip" style="display: none;"></div>
-
-              <!-- Input para Link do YouTube -->
-              <div id="timeline-youtube-input-box" class="compose-youtube-drawer" style="display: none;">
-                <input type="url" id="input-timeline-youtube-url" class="tarkov-input" placeholder="Cole o link do YouTube (ex: https://youtu.be/... ou https://youtube.com/watch?v=...)" />
-                <button type="button" id="btn-attach-youtube-confirm" class="tarkov-btn btn-amber">EMBEDDAR VÍDEO</button>
-                <button type="button" id="btn-cancel-youtube" class="tarkov-btn">CANCELAR</button>
-              </div>
-
-              <div class="compose-actions-bar">
-                <div class="compose-tools-left">
-                  <button type="button" id="btn-add-timeline-media" class="compose-tool-btn" title="Anexar Fotos (Grid até 4)">
-                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5-7l-3 3.72L9 13l-3 4h12l-4-5z"/></svg>
-                    <span>FOTOS</span>
-                    <input type="file" id="input-timeline-media-file" accept="image/*" style="display: none;" />
-                  </button>
-
-                  <button type="button" id="btn-add-timeline-youtube" class="compose-tool-btn" title="Embeddar Vídeo do YouTube (Autoplay no hover)">
-                    <svg viewBox="0 0 24 24"><path d="M21.58 7.19c-.23-.86-.91-1.54-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42c.86-.23 1.54-.91 1.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15V9l5.2 3-5.2 3z"/></svg>
-                    <span>VÍDEO YOUTUBE</span>
-                  </button>
-                </div>
-
-                <div class="compose-tools-right">
-                  <span id="timeline-char-counter" class="char-counter">280</span>
-                  <button type="button" id="btn-timeline-publish" class="tarkov-btn btn-amber">
-                    <span>🚀 TRANSMITIR</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Feed Stream de Posts -->
-          <div id="timeline-feed-stream" class="timeline-stream-container">
-            <!-- Renderizado dinamicamente pelo timeline.js -->
-          </div>
-        </main>
-
-        <!-- Coluna Lateral Direita (Trending Topics & Sugestões) -->
-        <aside class="timeline-sidebar-column">
-          <!-- Widget: Tópicos de Knox County -->
-          <div class="tarkov-widget-card">
-            <h3 class="widget-title">🔥 TÓPICOS EM ALTA (KNOX)</h3>
-            <div id="timeline-trending-container" class="trending-list-box">
-              <!-- Renderizado dinamicamente -->
-            </div>
-          </div>
-
-          <!-- Widget: Quem Seguir -->
-          <div class="tarkov-widget-card">
-            <h3 class="widget-title">👥 OPERADORES RECOMENDADOS</h3>
-            <div id="timeline-suggestions-container" class="suggestions-list-box">
-              <!-- Renderizado dinamicamente -->
-            </div>
-          </div>
-        </aside>
-      </div>
-    </section>
-
-    <!-- ===================================================================== -->
-    <!-- MODAL: LIGHTBOX DE IMAGENS EM TELA CHEIA (TIMELINE)                   -->
-    <!-- ===================================================================== -->
-    <div id="timeline-lightbox-modal" class="tarkov-modal-backdrop">
-      <div class="lightbox-modal-content">
-        <button id="lightbox-close-btn" class="lightbox-close-btn" title="Fechar (Esc)">✕</button>
-        <button id="lightbox-prev-btn" class="lightbox-nav-btn prev-btn" title="Anterior">❮</button>
-        <button id="lightbox-next-btn" class="lightbox-nav-btn next-btn" title="Próxima">❯</button>
-        <img id="lightbox-main-img" src="" alt="Visualização em alta resolução" />
-        <div id="lightbox-counter" class="lightbox-counter">1 / 1</div>
+  <!-- ===================================================================== -->
+  <!-- MODAL: BLOQUEIO DE ACESSO AO FEED SOCIAL (AUTH REQUIRED)              -->
+  <!-- ===================================================================== -->
+  <div id="timeline-auth-lock-modal" class="tarkov-modal-backdrop">
+    <div class="tarkov-modal-card"
+      style="max-width: 520px; text-align: center; border-color: rgba(229, 142, 38, 0.4); box-shadow: 0 0 40px rgba(0,0,0,0.9), 0 0 20px rgba(229, 142, 38, 0.2); position: relative;">
+      <button id="timeline-auth-lock-close" class="modal-close-icon"
+        style="position: absolute; top: 12px; right: 12px;">✕</button>
+      <div style="font-size: 38px; margin-bottom: 8px;">🔒</div>
+      <span class="tarkov-tag badge-amber" style="margin-bottom: 8px;">TRANSMISSÃO CRIPTOGRAFADA // KNOX CO.</span>
+      <h2 style="font-size: 17px; font-weight: 800; color: #fff; letter-spacing: 1px; margin: 8px 0 12px 0;">ACESSO
+        RESTRITO AO RADAR SOCIAL</h2>
+      <p
+        style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; text-align: left; background: rgba(0,0,0,0.35); padding: 14px; border: 1px solid var(--panel-border); border-radius: 4px;">
+        As transmissões desta frequência de rádio contêm fotos de bases, discussões táticas e coordenadas estratégicas
+        da comunidade Project Zomboid.
+        <br><br>
+        Para evitar transmissões fantasmas e garantir a segurança das facções, <strong>é obrigatório estar conectado com
+          seu perfil de Operador</strong> para visualizar as postagens e publicar no feed.
+      </p>
+      <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <button id="modal-btn-feed-login" class="tarkov-btn btn-amber"
+          style="flex: 1; min-width: 160px; padding: 10px 16px;">
+          <span>ENTRAR NA FREQUÊNCIA</span>
+        </button>
+        <button id="modal-btn-feed-register" class="tarkov-btn btn-cyan"
+          style="flex: 1; min-width: 160px; padding: 10px 16px;">
+          <span>CRIAR CONTA GRÁTIS</span>
+        </button>
       </div>
     </div>
+  </div>
 
-    <!-- ===================================================================== -->
-    <!-- MODAL: BLOQUEIO DE ACESSO AO FEED SOCIAL (AUTH REQUIRED)              -->
-    <!-- ===================================================================== -->
-    <div id="timeline-auth-lock-modal" class="tarkov-modal-backdrop">
-      <div class="tarkov-modal-card" style="max-width: 520px; text-align: center; border-color: rgba(229, 142, 38, 0.4); box-shadow: 0 0 40px rgba(0,0,0,0.9), 0 0 20px rgba(229, 142, 38, 0.2); position: relative;">
-        <button id="timeline-auth-lock-close" class="modal-close-icon" style="position: absolute; top: 12px; right: 12px;">✕</button>
-        <div style="font-size: 38px; margin-bottom: 8px;">🔒</div>
-        <span class="tarkov-tag badge-amber" style="margin-bottom: 8px;">TRANSMISSÃO CRIPTOGRAFADA // KNOX CO.</span>
-        <h2 style="font-size: 17px; font-weight: 800; color: #fff; letter-spacing: 1px; margin: 8px 0 12px 0;">ACESSO RESTRITO AO RADAR SOCIAL</h2>
-        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; text-align: left; background: rgba(0,0,0,0.35); padding: 14px; border: 1px solid var(--panel-border); border-radius: 4px;">
-          As transmissões desta frequência de rádio contêm fotos de bases, discussões táticas e coordenadas estratégicas da comunidade Project Zomboid.
-          <br><br>
-          Para evitar transmissões fantasmas e garantir a segurança das facções, <strong>é obrigatório estar conectado com seu perfil de Operador</strong> para visualizar as postagens e publicar no feed.
-        </p>
-        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-          <button id="modal-btn-feed-login" class="tarkov-btn btn-amber" style="flex: 1; min-width: 160px; padding: 10px 16px;">
-            <span>ENTRAR NA FREQUÊNCIA</span>
-          </button>
-          <button id="modal-btn-feed-register" class="tarkov-btn btn-cyan" style="flex: 1; min-width: 160px; padding: 10px 16px;">
-            <span>CRIAR CONTA GRÁTIS</span>
-          </button>
+  <!-- ===================================================================== -->
+  <!-- MODAL: DETALHES DO MODPACK (4 ABAS)                                   -->
+  <!-- ===================================================================== -->
+  <div id="modpack-details-modal" class="tarkov-modal-backdrop">
+    <div class="tarkov-modal-card md-large-modal">
+      <div class="md-modal-hero">
+        <img id="md-modal-banner" src="" class="md-modal-hero-img" alt="Capa" />
+        <div class="md-modal-hero-overlay"></div>
+        <button id="md-modal-close-btn" class="modal-close-icon">✕</button>
+
+        <div class="md-modal-hero-content">
+          <h2 id="md-modal-title" class="md-modal-title">MODPACK</h2>
+          <div class="md-modal-meta-strip">
+            <span id="md-modal-author">Autor</span>
+            <span id="md-modal-downloads">0 Downloads</span>
+            <span id="md-modal-likes">❤️ 0 Likes</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- ===================================================================== -->
-    <!-- MODAL: DETALHES DO MODPACK (4 ABAS)                                   -->
-    <!-- ===================================================================== -->
-    <div id="modpack-details-modal" class="tarkov-modal-backdrop">
-      <div class="tarkov-modal-card md-large-modal">
-        <div class="md-modal-hero">
-          <img id="md-modal-banner" src="" class="md-modal-hero-img" alt="Capa" />
-          <div class="md-modal-hero-overlay"></div>
-          <button id="md-modal-close-btn" class="modal-close-icon">✕</button>
+      <!-- Abas do Modal -->
+      <div class="md-modal-tabs-strip">
+        <button class="md-tab-btn active" data-tab="tab-ws-overview">📋 VISÃO GERAL</button>
+        <button class="md-tab-btn" data-tab="tab-ws-changelogs">🔄 CHANGELOGS</button>
+        <button class="md-tab-btn" data-tab="tab-ws-comments">💬 COMENTÁRIOS</button>
+        <button class="md-tab-btn" data-tab="tab-ws-credits">👥 CRÉDITOS & REPORT</button>
+      </div>
 
-          <div class="md-modal-hero-content">
-            <h2 id="md-modal-title" class="md-modal-title">MODPACK</h2>
-            <div class="md-modal-meta-strip">
-              <span id="md-modal-author">Autor</span>
-              <span id="md-modal-downloads">0 Downloads</span>
-              <span id="md-modal-likes">❤️ 0 Likes</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Abas do Modal -->
-        <div class="md-modal-tabs-strip">
-          <button class="md-tab-btn active" data-tab="tab-ws-overview">📋 VISÃO GERAL</button>
-          <button class="md-tab-btn" data-tab="tab-ws-changelogs">🔄 CHANGELOGS</button>
-          <button class="md-tab-btn" data-tab="tab-ws-comments">💬 COMENTÁRIOS</button>
-          <button class="md-tab-btn" data-tab="tab-ws-credits">👥 CRÉDITOS & REPORT</button>
-        </div>
-
-        <div id="md-modal-tab-content" class="md-modal-body">
-          <!-- Conteúdo dinâmico das abas -->
-        </div>
+      <div id="md-modal-tab-content" class="md-modal-body">
+        <!-- Conteúdo dinâmico das abas -->
       </div>
     </div>
+  </div>
 
-    <!-- ===================================================================== -->
-    <!-- MODAL: AUTENTICAÇÃO TÁTICA                                            -->
-    <!-- ===================================================================== -->
-    <div id="auth-modal" class="tarkov-modal-backdrop">
-      <div class="tarkov-modal-card">
-        <div class="modal-header">
-          <h3 id="auth-modal-title" class="modal-title">AUTENTICAÇÃO TÁTICA</h3>
-          <button id="auth-modal-close" class="modal-close-icon">✕</button>
+  <!-- ===================================================================== -->
+  <!-- MODAL: AUTENTICAÇÃO TÁTICA                                            -->
+  <!-- ===================================================================== -->
+  <div id="auth-modal" class="tarkov-modal-backdrop">
+    <div class="tarkov-modal-card">
+      <div class="modal-header">
+        <h3 id="auth-modal-title" class="modal-title">AUTENTICAÇÃO TÁTICA</h3>
+        <button id="auth-modal-close" class="modal-close-icon">✕</button>
+      </div>
+
+      <form id="auth-form" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+        <div class="form-group" id="auth-username-group" style="display: none;">
+          <label class="form-label">Nome de Operador (Username)</label>
+          <input type="text" id="auth-username" class="tarkov-input" placeholder="Ex: Rick_Grimes"
+            autocomplete="username" />
         </div>
 
-        <form id="auth-form" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
-          <div class="form-group" id="auth-username-group" style="display: none;">
-            <label class="form-label">Nome de Operador (Username)</label>
-            <input type="text" id="auth-username" class="tarkov-input" placeholder="Ex: Rick_Grimes" autocomplete="username" />
+        <div class="form-group">
+          <label class="form-label">E-mail de Operações</label>
+          <input type="email" id="auth-email" class="tarkov-input" placeholder="operador@pzhub.com" autocomplete="email"
+            required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Senha de Acesso</label>
+          <input type="password" id="auth-password" class="tarkov-input" placeholder="••••••••"
+            autocomplete="current-password" required />
+        </div>
+
+        <span id="auth-status-msg"
+          style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-amber);"></span>
+
+        <button type="submit" id="auth-submit-btn" class="tarkov-btn btn-amber"
+          style="width: 100%; justify-content: center; padding: 10px;">
+          ENTRAR NO PZHUB
+        </button>
+
+        <button type="button" id="btn-toggle-auth-mode" class="tarkov-btn-subtle"
+          style="background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; text-align: center;">
+          Não tem conta? Cadastre-se como Criador
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: AJUSTE DE IMAGEM & COMPRESSÃO TÁTICA (CROPPER / PAN & ZOOM)   -->
+  <!-- ===================================================================== -->
+  <div id="image-cropper-modal" class="tarkov-modal-backdrop">
+    <div class="tarkov-modal-card cropper-modal-card">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--accent-amber); font-size: 14px;">✂️</span>
+          <h3 id="cropper-modal-title" class="modal-title">AJUSTE & ENQUADRAMENTO TÁTICO</h3>
+        </div>
+        <button id="cropper-modal-close" class="modal-close-icon">✕</button>
+      </div>
+
+      <div class="cropper-modal-body">
+        <!-- Dica de Operação -->
+        <div class="cropper-hint-bar">
+          <span>🖱️ Clique e arraste para posicionar • Use a rodinha do mouse para dar zoom</span>
+        </div>
+
+        <!-- Viewport do Recorte -->
+        <div id="cropper-viewport" class="cropper-viewport">
+          <canvas id="cropper-canvas" class="cropper-canvas"></canvas>
+
+          <div class="cropper-overlay-backdrop"></div>
+
+          <div id="cropper-crop-box" class="cropper-crop-box">
+            <div class="crop-corner tl"></div>
+            <div class="crop-corner tr"></div>
+            <div class="crop-corner bl"></div>
+            <div class="crop-corner br"></div>
+
+            <div class="crop-grid-line h1"></div>
+            <div class="crop-grid-line h2"></div>
+            <div class="crop-grid-line v1"></div>
+            <div class="crop-grid-line v2"></div>
+          </div>
+        </div>
+
+        <!-- Barra de Controles de Zoom e Rotação -->
+        <div class="cropper-controls-strip">
+          <div class="cropper-zoom-group">
+            <button type="button" id="btn-cropper-zoom-out" class="tarkov-btn-mini" title="Diminuir Zoom">➖</button>
+            <input type="range" id="cropper-zoom-slider" class="tarkov-range" min="0" max="100" value="25" />
+            <button type="button" id="btn-cropper-zoom-in" class="tarkov-btn-mini" title="Aumentar Zoom">➕</button>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">E-mail de Operações</label>
-            <input type="email" id="auth-email" class="tarkov-input" placeholder="operador@pzhub.com" autocomplete="email" required />
+          <div style="display: flex; gap: 8px;">
+            <button type="button" id="btn-cropper-rotate" class="tarkov-btn-mini" title="Girar 90 graus">⟲ GIRAR
+              90°</button>
+            <button type="button" id="btn-cropper-reset" class="tarkov-btn-mini" title="Restaurar posição original">↺
+              CENTRALIZAR</button>
           </div>
+        </div>
 
-          <div class="form-group">
-            <label class="form-label">Senha de Acesso</label>
-            <input type="password" id="auth-password" class="tarkov-input" placeholder="••••••••" autocomplete="current-password" required />
+        <!-- Telemetria de Compressão Inteligente -->
+        <div class="cropper-telemetry-bar">
+          <div class="telemetry-item">
+            <span class="t-label">ARQUIVO ORIGINAL:</span>
+            <span class="t-val" id="cropper-orig-size">0 KB</span>
           </div>
+          <div class="telemetry-arrow">➔</div>
+          <div class="telemetry-item">
+            <span class="t-label">ESTIMADO PÓS-COMPRESSÃO:</span>
+            <span class="t-val text-emerald" id="cropper-opt-size">~85 KB (WebP HD)</span>
+          </div>
+        </div>
+      </div>
 
-          <span id="auth-status-msg" style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-amber);"></span>
-
-          <button type="submit" id="auth-submit-btn" class="tarkov-btn btn-amber" style="width: 100%; justify-content: center; padding: 10px;">
-            ENTRAR NO PZHUB
-          </button>
-
-          <button type="button" id="btn-toggle-auth-mode" class="tarkov-btn-subtle" style="background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; text-align: center;">
-            Não tem conta? Cadastre-se como Criador
-          </button>
-        </form>
+      <div class="cropper-modal-footer">
+        <button type="button" id="btn-cropper-cancel" class="tarkov-btn">CANCELAR</button>
+        <button type="button" id="btn-cropper-apply" class="tarkov-btn btn-amber" style="padding: 8px 24px;">
+          🚀 CONFIRMAR & APLICAR
+        </button>
       </div>
     </div>
+  </div>
 
-    <!-- ===================================================================== -->
-    <!-- MODAL: AJUSTE DE IMAGEM & COMPRESSÃO TÁTICA (CROPPER / PAN & ZOOM)   -->
-    <!-- ===================================================================== -->
-    <div id="image-cropper-modal" class="tarkov-modal-backdrop">
-      <div class="tarkov-modal-card cropper-modal-card">
-        <div class="modal-header">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="color: var(--accent-amber); font-size: 14px;">✂️</span>
-            <h3 id="cropper-modal-title" class="modal-title">AJUSTE & ENQUADRAMENTO TÁTICO</h3>
-          </div>
-          <button id="cropper-modal-close" class="modal-close-icon">✕</button>
+  <!-- ===================================================================== -->
+  <!-- MODAL: PAINEL COMPLETO DE EDIÇÃO & CUSTOMIZAÇÃO DE PERFIL            -->
+  <!-- ===================================================================== -->
+  <div id="profile-edit-modal" class="tarkov-modal-backdrop">
+    <div class="tarkov-modal-card profile-edit-modal-card">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--accent-amber); font-size: 15px;">⚙️</span>
+          <h3 class="modal-title">CUSTOMIZAÇÃO DE PERFIL // REGISTRO DO OPERADOR</h3>
         </div>
-
-        <div class="cropper-modal-body">
-          <!-- Dica de Operação -->
-          <div class="cropper-hint-bar">
-            <span>🖱️ Clique e arraste para posicionar • Use a rodinha do mouse para dar zoom</span>
-          </div>
-
-          <!-- Viewport do Recorte -->
-          <div id="cropper-viewport" class="cropper-viewport">
-            <canvas id="cropper-canvas" class="cropper-canvas"></canvas>
-            
-            <div class="cropper-overlay-backdrop"></div>
-
-            <div id="cropper-crop-box" class="cropper-crop-box">
-              <div class="crop-corner tl"></div>
-              <div class="crop-corner tr"></div>
-              <div class="crop-corner bl"></div>
-              <div class="crop-corner br"></div>
-              
-              <div class="crop-grid-line h1"></div>
-              <div class="crop-grid-line h2"></div>
-              <div class="crop-grid-line v1"></div>
-              <div class="crop-grid-line v2"></div>
-            </div>
-          </div>
-
-          <!-- Barra de Controles de Zoom e Rotação -->
-          <div class="cropper-controls-strip">
-            <div class="cropper-zoom-group">
-              <button type="button" id="btn-cropper-zoom-out" class="tarkov-btn-mini" title="Diminuir Zoom">➖</button>
-              <input type="range" id="cropper-zoom-slider" class="tarkov-range" min="0" max="100" value="25" />
-              <button type="button" id="btn-cropper-zoom-in" class="tarkov-btn-mini" title="Aumentar Zoom">➕</button>
-            </div>
-
-            <div style="display: flex; gap: 8px;">
-              <button type="button" id="btn-cropper-rotate" class="tarkov-btn-mini" title="Girar 90 graus">⟲ GIRAR 90°</button>
-              <button type="button" id="btn-cropper-reset" class="tarkov-btn-mini" title="Restaurar posição original">↺ CENTRALIZAR</button>
-            </div>
-          </div>
-
-          <!-- Telemetria de Compressão Inteligente -->
-          <div class="cropper-telemetry-bar">
-            <div class="telemetry-item">
-              <span class="t-label">ARQUIVO ORIGINAL:</span>
-              <span class="t-val" id="cropper-orig-size">0 KB</span>
-            </div>
-            <div class="telemetry-arrow">➔</div>
-            <div class="telemetry-item">
-              <span class="t-label">ESTIMADO PÓS-COMPRESSÃO:</span>
-              <span class="t-val text-emerald" id="cropper-opt-size">~85 KB (WebP HD)</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="cropper-modal-footer">
-          <button type="button" id="btn-cropper-cancel" class="tarkov-btn">CANCELAR</button>
-          <button type="button" id="btn-cropper-apply" class="tarkov-btn btn-amber" style="padding: 8px 24px;">
-            🚀 CONFIRMAR & APLICAR
-          </button>
-        </div>
+        <button id="profile-edit-modal-close" class="modal-close-icon">✕</button>
       </div>
-    </div>
 
-    <!-- ===================================================================== -->
-    <!-- MODAL: PAINEL COMPLETO DE EDIÇÃO & CUSTOMIZAÇÃO DE PERFIL            -->
-    <!-- ===================================================================== -->
-    <div id="profile-edit-modal" class="tarkov-modal-backdrop">
-      <div class="tarkov-modal-card profile-edit-modal-card">
-        <div class="modal-header">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="color: var(--accent-amber); font-size: 15px;">⚙️</span>
-            <h3 class="modal-title">CUSTOMIZAÇÃO DE PERFIL // REGISTRO DO OPERADOR</h3>
-          </div>
-          <button id="profile-edit-modal-close" class="modal-close-icon">✕</button>
-        </div>
-
-        <form id="profile-edit-form" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
-          <!-- 1. Pré-visualização rápida de Avatar e Banner -->
-          <div class="profile-edit-media-row" style="display: flex; gap: 16px; align-items: center; background: rgba(0,0,0,0.4); padding: 12px 16px; border: 1px solid var(--panel-border); border-radius: var(--radius-sm);">
-            <div style="position: relative;">
-              <img id="edit-preview-avatar" src="" style="width: 54px; height: 54px; border-radius: 50%; border: 2px solid var(--accent-amber); object-fit: cover;" alt="Avatar" />
-              <label class="tarkov-btn-mini" style="position: absolute; bottom: -4px; right: -4px; padding: 2px 5px; font-size: 9px; cursor: pointer;" title="Alterar Foto">
-                📷
-                <input type="file" id="edit-modal-avatar-upload" accept="image/*" style="display: none;" />
-              </label>
-            </div>
-            <div style="flex: 1;">
-              <span style="font-size: 12px; color: #fff; font-weight: bold;">Foto e Banner do Sobrevivente</span>
-              <p style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">Imagens enquadradas e comprimidas automaticamente em WebP HD.</p>
-            </div>
-            <label class="tarkov-btn" style="cursor: pointer; padding: 6px 12px; font-size: 11px;">
-              <span>🖼️ EDITAR BANNER</span>
-              <input type="file" id="edit-modal-banner-upload" accept="image/*" style="display: none;" />
+      <form id="profile-edit-form" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+        <!-- 1. Pré-visualização rápida de Avatar e Banner -->
+        <div class="profile-edit-media-row"
+          style="display: flex; gap: 16px; align-items: center; background: rgba(0,0,0,0.4); padding: 12px 16px; border: 1px solid var(--panel-border); border-radius: var(--radius-sm);">
+          <div style="position: relative;">
+            <img id="edit-preview-avatar" src=""
+              style="width: 54px; height: 54px; border-radius: 50%; border: 2px solid var(--accent-amber); object-fit: cover;"
+              alt="Avatar" />
+            <label class="tarkov-btn-mini"
+              style="position: absolute; bottom: -4px; right: -4px; padding: 2px 5px; font-size: 9px; cursor: pointer;"
+              title="Alterar Foto">
+              📷
+              <input type="file" id="edit-modal-avatar-upload" accept="image/*" style="display: none;" />
             </label>
           </div>
-
-          <!-- 2. Informações de Identidade -->
-          <div class="builder-grid-2">
-            <div class="form-group">
-              <label class="form-label">Nome de Exibição (Display Name) *</label>
-              <input type="text" id="edit-profile-display-name" class="tarkov-input" placeholder="Ex: Capitão Miller [VICCS]" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Nome de Operador (Handle / Identificador)</label>
-              <input type="text" id="edit-profile-username" class="tarkov-input" disabled style="opacity: 0.6; cursor: not-allowed;" />
-            </div>
+          <div style="flex: 1;">
+            <span style="font-size: 12px; color: #fff; font-weight: bold;">Foto e Banner do Sobrevivente</span>
+            <p style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">Imagens enquadradas e comprimidas
+              automaticamente em WebP HD.</p>
           </div>
+          <label class="tarkov-btn" style="cursor: pointer; padding: 6px 12px; font-size: 11px;">
+            <span>🖼️ EDITAR BANNER</span>
+            <input type="file" id="edit-modal-banner-upload" accept="image/*" style="display: none;" />
+          </label>
+        </div>
 
-          <!-- 3. Biografia Tática -->
+        <!-- 2. Informações de Identidade -->
+        <div class="builder-grid-2">
           <div class="form-group">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-              <label class="form-label" style="margin-bottom: 0;">Biografia Tática do Sobrevivente</label>
-              <span id="edit-bio-counter" style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">0 / 280</span>
-            </div>
-            <textarea id="edit-profile-bio" class="tarkov-textarea" placeholder="Descreva sua lore, especialidade em combate, horas de Knox County..." rows="3" maxlength="280"></textarea>
+            <label class="form-label">Nome de Exibição (Display Name) *</label>
+            <input type="text" id="edit-profile-display-name" class="tarkov-input"
+              placeholder="Ex: Capitão Miller [VICCS]" required />
           </div>
-
-          <!-- 4. Insígnias & Patentes Selecionáveis (Badges) -->
           <div class="form-group">
-            <label class="form-label">Especialidades & Insígnias de Sobrevivente</label>
-            <div class="badge-selection-chips" id="edit-profile-badges-container" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
-              <!-- Gerado dinamicamente com chips táteis -->
-            </div>
+            <label class="form-label">Nome de Operador (Handle / Identificador)</label>
+            <input type="text" id="edit-profile-username" class="tarkov-input" disabled
+              style="opacity: 0.6; cursor: not-allowed;" />
           </div>
+        </div>
 
-          <span id="profile-edit-status-msg" style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-amber);"></span>
-
-          <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--panel-border); padding-top: 14px;">
-            <button type="button" id="btn-cancel-profile-edit" class="tarkov-btn">CANCELAR</button>
-            <button type="submit" id="btn-save-profile-edit" class="tarkov-btn btn-amber" style="padding: 10px 24px;">
-              💾 SALVAR ALTERAÇÕES NO SUPABASE
-            </button>
+        <!-- 3. Biografia Tática -->
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label class="form-label" style="margin-bottom: 0;">Biografia Tática do Sobrevivente</label>
+            <span id="edit-bio-counter"
+              style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">0 / 280</span>
           </div>
-        </form>
-      </div>
+          <textarea id="edit-profile-bio" class="tarkov-textarea"
+            placeholder="Descreva sua lore, especialidade em combate, horas de Knox County..." rows="3"
+            maxlength="280"></textarea>
+        </div>
+
+        <!-- 4. Insígnias & Patentes Selecionáveis (Badges) -->
+        <div class="form-group">
+          <label class="form-label">Especialidades & Insígnias de Sobrevivente</label>
+          <div class="badge-selection-chips" id="edit-profile-badges-container"
+            style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
+            <!-- Gerado dinamicamente com chips táteis -->
+          </div>
+        </div>
+
+        <span id="profile-edit-status-msg"
+          style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-amber);"></span>
+
+        <div
+          style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--panel-border); padding-top: 14px;">
+          <button type="button" id="btn-cancel-profile-edit" class="tarkov-btn">CANCELAR</button>
+          <button type="submit" id="btn-save-profile-edit" class="tarkov-btn btn-amber" style="padding: 10px 24px;">
+            💾 SALVAR ALTERAÇÕES NO SUPABASE
+          </button>
+        </div>
+      </form>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>
