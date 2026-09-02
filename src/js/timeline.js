@@ -1,8 +1,6 @@
 /**
  * PZHub - Tactical Radar Social & Timeline Module (X / Twitter Style)
- * Timeline completa com posts, grid de fotos estilo Instagram (1 a 4 imagens),
- * embeds de vídeo do YouTube sem HUD e com autoplay no hover, comentários expansíveis,
- * feed "Para Você" vs "Seguindo", e sincronização total de curtidas e follows.
+ * 100% Conectado ao Supabase Backend em Produção (Sem Placeholders/Mocks)
  */
 
 import { supabase, isConfigured } from './supabaseClient.js';
@@ -16,48 +14,6 @@ let attachedYoutubeId = null;
 let activeSearchTag = '';
 let currentLightboxImages = [];
 let currentLightboxIndex = 0;
-
-// Posts demonstrativos padrão para fallback offline imediato
-const DEFAULT_TIMELINE_POSTS = [
-  {
-    id: "post-seed-1",
-    author_name: "VICCS Tactical Command",
-    author_username: "viccs",
-    author_avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80",
-    author_role: "admin",
-    content: "🚨 ATENÇÃO SOBREVIVENTES DE KNOX COUNTY! O modpack militar oficial B42 foi atualizado para v1.4.0 com suporte nativo ao Live Radar do PZHub Desktop e novos blindados pesados dos anos 90. #Build42 #VICCSTactical #KnoxCounty",
-    media_urls: [
-      "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1519074069444-1ba4ea16e6f4?auto=format&fit=crop&w=1200&q=80"
-    ],
-    youtube_id: "dQw4w9WgXcQ",
-    likes_count: 42,
-    reposts_count: 12,
-    comments_count: 5,
-    tags: ["Build42", "VICCSTactical", "KnoxCounty"],
-    created_at: new Date(Date.now() - 1000 * 60 * 35).toISOString()
-  },
-  {
-    id: "post-seed-2",
-    author_name: "Capitão Miller [VICCS]",
-    author_username: "miller_sniper",
-    author_avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=256&q=80",
-    author_role: "creator",
-    content: "Acabamos de fortificar o armazém industrial ao norte de Muldraugh! Mais de 40 caixotes de suprimentos e rota de fuga limpa pela ferrovia. Quem precisar de munição cal. 12 pode sintonizar na freq 92.4 MHz. #BaseBuilding #Muldraugh #Survival",
-    media_urls: [
-      "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1519074069444-1ba4ea16e6f4?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80"
-    ],
-    youtube_id: null,
-    likes_count: 88,
-    reposts_count: 19,
-    comments_count: 14,
-    tags: ["BaseBuilding", "Muldraugh", "Survival"],
-    created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString()
-  }
-];
 
 export async function initTimeline() {
   const composeTextarea = document.getElementById('timeline-compose-textarea');
@@ -84,7 +40,7 @@ export async function initTimeline() {
     });
   }
 
-  // 2. Anexo de Mídia (Imagens)
+  // 2. Anexo de Mídia (Imagens com Modal de Enquadramento e Compressor)
   if (addMediaBtn && mediaFileInput) {
     addMediaBtn.addEventListener('click', () => {
       if (attachedMediaList.length >= 4) {
@@ -174,10 +130,9 @@ export async function initTimeline() {
   // 6. Configurar Lightbox Modal de Imagem em Tela Cheia
   setupLightboxModal();
 
-  // Carrega posts do Supabase
+  // Carrega dados 100% reais do Supabase
   await loadTimelinePosts();
-  renderTrendingSidebar();
-  renderFollowSuggestionsSidebar();
+  await renderFollowSuggestionsSidebar();
 }
 
 export function extractYoutubeId(url) {
@@ -244,9 +199,11 @@ export async function loadTimelinePosts() {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && Array.isArray(data) && data.length > 0) {
+      if (!error && Array.isArray(data)) {
         postsList = data;
+        localStorage.setItem('PZHUB_TIMELINE_POSTS', JSON.stringify(postsList));
         renderTimelineFeed();
+        renderTrendingSidebar();
         return;
       }
     } catch (e) {
@@ -254,19 +211,11 @@ export async function loadTimelinePosts() {
     }
   }
 
-  // Fallback Local
-  const saved = localStorage.getItem('PZHUB_TIMELINE_POSTS');
-  if (saved) {
-    try {
-      postsList = JSON.parse(saved);
-    } catch(e) {
-      postsList = DEFAULT_TIMELINE_POSTS;
-    }
-  } else {
-    postsList = DEFAULT_TIMELINE_POSTS;
-  }
-
+  // Fallback 100% limpo (sem posts fake)
+  postsList = [];
+  localStorage.removeItem('PZHUB_TIMELINE_POSTS');
   renderTimelineFeed();
+  renderTrendingSidebar();
 }
 
 async function handlePublishTimelinePost() {
@@ -337,7 +286,8 @@ async function handlePublishTimelinePost() {
   attachedMediaList = [];
   attachedYoutubeId = null;
   renderComposeMediaPreviews();
-  document.getElementById('timeline-char-counter').textContent = '280';
+  const counterEl = document.getElementById('timeline-char-counter');
+  if (counterEl) counterEl.textContent = '280';
 
   renderTimelineFeed();
   renderTrendingSidebar();
@@ -348,7 +298,6 @@ export function renderTimelineFeed() {
   if (!container) return;
 
   const currentUser = getCurrentUser();
-  const currentProfile = getCurrentUserProfile();
 
   let filtered = [...postsList];
 
@@ -376,9 +325,10 @@ export function renderTimelineFeed() {
 
   if (filtered.length === 0) {
     container.innerHTML = `
-      <div class="tarkov-empty-state" style="padding: 50px 20px; background: rgba(0,0,0,0.4); border: 1px dashed var(--panel-border); border-radius: 4px;">
-        <div class="tarkov-empty-title" style="color: var(--text-muted);">NENHUMA TRANSMISSÃO ENCONTRADA</div>
-        <div class="tarkov-empty-desc">Seja o primeiro operador a publicar uma mensagem ou imagem neste canal de rádio.</div>
+      <div class="tarkov-empty-state" style="padding: 60px 20px; background: rgba(0,0,0,0.4); border: 1px dashed var(--panel-border); border-radius: 4px; text-align: center;">
+        <svg viewBox="0 0 24 24" style="width: 48px; height: 48px; fill: var(--text-dim); margin-bottom: 12px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        <div class="tarkov-empty-title" style="color: var(--text-main); font-size: 14px; font-weight: bold; letter-spacing: 1px;">NENHUMA TRANSMISSÃO NA FREQUÊNCIA</div>
+        <div class="tarkov-empty-desc" style="color: var(--text-dim); font-size: 12px; margin-top: 6px; max-width: 440px; margin-left: auto; margin-right: auto;">Seja o primeiro operador a publicar uma mensagem, foto de base ou vídeo na rede de Knox County.</div>
       </div>
     `;
     return;
@@ -398,10 +348,10 @@ export function renderTimelineFeed() {
       .replace(/#(\w+)/g, '<span class="timeline-hashtag" data-tag="$1">#$1</span>')
       .replace(/@(\w+)/g, '<a href="#profile/$1" class="timeline-mention">@$1</a>');
 
-    // Renderização do Grid de Mídia (1 a 4 fotos)
-    const photoGridHtml = renderPostPhotoGrid(post.media_urls || [], post.id);
+    // Renderização do Grid de Mídia (1 a 4 fotos) se houver fotos reais anexadas
+    const photoGridHtml = renderPostPhotoGrid(post.media_urls, post.id);
 
-    // Renderização do Embed do YouTube (Clean, sem HUD, com Autoplay no Hover)
+    // Renderização do Embed do YouTube se houver ID válido
     const youtubeHtml = post.youtube_id ? renderYoutubeEmbed(post.youtube_id, post.id) : '';
 
     return `
@@ -424,14 +374,16 @@ export function renderTimelineFeed() {
           </div>
 
           <!-- Conteúdo do Post -->
-          <div class="tweet-content">
-            <p class="tweet-text">${formattedContent}</p>
-          </div>
+          ${formattedContent ? `
+            <div class="tweet-content">
+              <p class="tweet-text">${formattedContent}</p>
+            </div>
+          ` : ''}
 
           <!-- Grid de Fotos / Carrossel -->
           ${photoGridHtml}
 
-          <!-- Player YouTube Tático (Sem HUD / Autoplay no Hover) -->
+          <!-- Player YouTube Tático -->
           ${youtubeHtml}
 
           <!-- Barra de Ações Estilo X (Twitter) -->
@@ -475,14 +427,14 @@ export function renderTimelineFeed() {
 }
 
 function renderPostPhotoGrid(mediaUrls, postId) {
-  if (!mediaUrls || mediaUrls.length === 0) return '';
+  if (!mediaUrls || !Array.isArray(mediaUrls) || mediaUrls.length === 0) return '';
   const count = mediaUrls.length;
 
   let gridClass = `photo-grid-${Math.min(count, 4)}`;
 
   const photosHtml = mediaUrls.map((url, idx) => `
     <div class="photo-cell" data-post-id="${postId}" data-photo-idx="${idx}" style="background-image: url('${url}');">
-      <img src="${url}" alt="Mídia ${idx + 1}" loading="lazy" style="display: none;" />
+      <img src="${url}" alt="Mídia ${idx + 1}" loading="lazy" onerror="this.parentElement.style.display='none';" />
     </div>
   `).join('');
 
@@ -494,6 +446,7 @@ function renderPostPhotoGrid(mediaUrls, postId) {
 }
 
 function renderYoutubeEmbed(youtubeId, postId) {
+  if (!youtubeId) return '';
   return `
     <div class="timeline-youtube-wrapper" data-yt-id="${youtubeId}">
       <div class="youtube-player-container">
@@ -509,7 +462,7 @@ function renderYoutubeEmbed(youtubeId, postId) {
         
         <div class="youtube-tactical-overlay">
           <div class="yt-play-icon-glow">▶</div>
-          <span class="yt-hover-tip">Passe o mouse para reprodução automática sem HUD</span>
+          <span class="yt-hover-tip">Passe o mouse para reprodução automática</span>
         </div>
 
         <div class="youtube-audio-toggle" title="Alternar Áudio">
@@ -773,19 +726,27 @@ export function renderTrendingSidebar() {
   const container = document.getElementById('timeline-trending-container');
   if (!container) return;
 
-  const topics = [
-    { tag: "Build42", desc: "Atualização de física & iluminação", count: "1.4k transmissões" },
-    { tag: "VICCSTactical", desc: "Blindados e equipamentos militares", count: "890 transmissões" },
-    { tag: "KnoxCounty", desc: "Rotas seguras e bases comunitárias", count: "650 transmissões" },
-    { tag: "MuldraughSafehouse", desc: "Pontos de encontro para esquadrões", count: "420 transmissões" },
-    { tag: "LootWestPoint", desc: "Armazéns e lojas de armas", count: "310 transmissões" }
-  ];
+  // Extrai tags 100% reais dos posts existentes no banco
+  const tagCounts = {};
+  postsList.forEach(p => {
+    (p.tags || []).forEach(t => {
+      if (t) tagCounts[t] = (tagCounts[t] || 0) + 1;
+    });
+  });
 
-  container.innerHTML = topics.map(t => `
-    <div class="trending-topic-item" data-tag="${t.tag}">
-      <span class="topic-sub">${t.desc}</span>
-      <strong class="topic-tag">#${t.tag}</strong>
-      <span class="topic-count">${t.count}</span>
+  const sortedTags = Object.entries(tagCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  if (sortedTags.length === 0) {
+    container.innerHTML = '<div style="color: var(--text-dim); font-size: 11px; padding: 6px;">Nenhum tópico em alta no momento. Crie posts com #hashtags para indexar.</div>';
+    return;
+  }
+
+  container.innerHTML = sortedTags.map(([tag, count]) => `
+    <div class="trending-topic-item" data-tag="${tag}">
+      <strong class="topic-tag">#${tag}</strong>
+      <span class="topic-count">${count} transmissão(ões)</span>
     </div>
   `).join('');
 
@@ -802,24 +763,28 @@ export async function renderFollowSuggestionsSidebar() {
   if (!container) return;
 
   let profiles = [];
+  const currentUser = getCurrentUser();
+
   if (isConfigured) {
     try {
-      const { data } = await supabase.from('profiles').select('id, username, display_name, avatar_url, role').limit(4);
-      if (data) profiles = data;
+      let query = supabase.from('profiles').select('id, username, display_name, avatar_url, role').limit(5);
+      if (currentUser?.id) {
+        query = query.neq('id', currentUser.id);
+      }
+      const { data } = await query;
+      if (data && Array.isArray(data)) profiles = data;
     } catch(e) {}
   }
 
   if (profiles.length === 0) {
-    profiles = [
-      { id: "viccs-official", username: "viccs", display_name: "VICCS Tactical Command", avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80", role: "admin" },
-      { id: "miller-sniper", username: "miller_sniper", display_name: "Capitão Miller [VICCS]", avatar_url: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=128&q=80", role: "creator" }
-    ];
+    container.innerHTML = '<div style="color: var(--text-dim); font-size: 11px; padding: 6px;">Nenhum outro operador registrado no momento.</div>';
+    return;
   }
 
   container.innerHTML = profiles.map(p => `
     <div class="suggestion-operator-card">
       <div style="display: flex; gap: 10px; align-items: center;">
-        <img src="${p.avatar_url}" class="suggestion-avatar" alt="${p.username}" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80'" />
+        <img src="${p.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80'}" class="suggestion-avatar" alt="${p.username}" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80'" />
         <div style="display: flex; flex-direction: column;">
           <a href="#profile/${p.username}" class="suggestion-name">${p.display_name || p.username}</a>
           <span class="suggestion-handle">@${p.username}</span>
@@ -830,7 +795,13 @@ export async function renderFollowSuggestionsSidebar() {
   `).join('');
 
   container.querySelectorAll('.btn-follow-suggestion').forEach(btn => {
-    btn.onclick = () => {
+    btn.onclick = async () => {
+      const profileId = btn.dataset.profileId;
+      if (currentUser && isConfigured) {
+        try {
+          await supabase.from('follows').insert([{ follower_id: currentUser.id, following_id: profileId }]);
+        } catch(e) {}
+      }
       btn.textContent = '✓ SEGUINDO';
       btn.style.borderColor = 'var(--accent-emerald)';
       btn.style.color = 'var(--accent-emerald)';
