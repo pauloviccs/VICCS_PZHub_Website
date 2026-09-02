@@ -1,8 +1,8 @@
-﻿/**
- * PZHub - Authentication & User Profile Module (Supabase Auth)
+/**
+ * PZHub - Authentication, Cloud Settings & User Profile Module
  */
 
-import { supabase, isConfigured } from './supabaseClient.js';
+import { supabase, isConfigured, saveSupabaseCustomCredentials } from './supabaseClient.js';
 
 let currentUser = null;
 let currentUserProfile = null;
@@ -15,25 +15,31 @@ export async function initAuth() {
   const toggleAuthModeBtn = document.getElementById('btn-toggle-auth-mode');
   const logoutBtn = document.getElementById('nav-logout-btn');
   const userProfileLink = document.getElementById('nav-user-profile-link');
+  const cloudBadge = document.getElementById('cloud-status-badge');
+  const cloudModal = document.getElementById('cloud-settings-modal');
 
   let isRegisterMode = false;
 
   if (isConfigured) {
-    const { data: { session } } = await supabase.auth.getSession();
-    currentUser = session?.user || null;
-    if (currentUser) {
-      currentUserProfile = await fetchOrCreateProfile(currentUser);
-    }
-
-    supabase.auth.onAuthStateChange(async (_event, session) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
       currentUser = session?.user || null;
       if (currentUser) {
         currentUserProfile = await fetchOrCreateProfile(currentUser);
-      } else {
-        currentUserProfile = null;
       }
-      updateAuthUI();
-    });
+
+      supabase.auth.onAuthStateChange(async (_event, session) => {
+        currentUser = session?.user || null;
+        if (currentUser) {
+          currentUserProfile = await fetchOrCreateProfile(currentUser);
+        } else {
+          currentUserProfile = null;
+        }
+        updateAuthUI();
+      });
+    } catch(err) {
+      console.warn('Erro ao conectar Supabase Auth:', err);
+    }
   } else {
     // Modo simulação local
     const savedLocalUser = localStorage.getItem('PZHUB_DEMO_USER');
@@ -51,6 +57,43 @@ export async function initAuth() {
   }
 
   updateAuthUI();
+
+  // Cloud Badge click -> Open Cloud Config
+  if (cloudBadge && cloudModal) {
+    cloudBadge.addEventListener('click', () => {
+      const urlInput = document.getElementById('cfg-supabase-url');
+      const keyInput = document.getElementById('cfg-supabase-key');
+      if (urlInput) urlInput.value = localStorage.getItem('PZHUB_SUPABASE_URL') || import.meta.env.VITE_SUPABASE_URL || '';
+      if (keyInput) keyInput.value = localStorage.getItem('PZHUB_SUPABASE_ANON_KEY') || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+      cloudModal.classList.add('visible');
+    });
+
+    const closeCloudBtn = document.getElementById('cloud-modal-close');
+    if (closeCloudBtn) {
+      closeCloudBtn.onclick = () => cloudModal.classList.remove('visible');
+    }
+
+    const formCloud = document.getElementById('cloud-config-form');
+    if (formCloud) {
+      formCloud.onsubmit = (e) => {
+        e.preventDefault();
+        const u = document.getElementById('cfg-supabase-url')?.value.trim();
+        const k = document.getElementById('cfg-supabase-key')?.value.trim();
+        saveSupabaseCustomCredentials(u, k);
+      };
+    }
+
+    const resetCloudBtn = document.getElementById('btn-reset-cloud-cfg');
+    if (resetCloudBtn) {
+      resetCloudBtn.onclick = () => {
+        saveSupabaseCustomCredentials('', '');
+      };
+    }
+
+    cloudModal.onclick = (e) => {
+      if (e.target === cloudModal) cloudModal.classList.remove('visible');
+    };
+  }
 
   if (authBtn) {
     authBtn.addEventListener('click', () => {
@@ -76,6 +119,12 @@ export async function initAuth() {
     });
   }
 
+  if (authModal) {
+    authModal.addEventListener('click', (e) => {
+      if (e.target === authModal) authModal.classList.remove('visible');
+    });
+  }
+
   if (toggleAuthModeBtn) {
     toggleAuthModeBtn.addEventListener('click', () => {
       isRegisterMode = !isRegisterMode;
@@ -83,7 +132,7 @@ export async function initAuth() {
       const submitBtn = document.getElementById('auth-submit-btn');
       const usernameGroup = document.getElementById('auth-username-group');
 
-      if (titleEl) titleEl.textContent = isRegisterMode ? 'CADASTRO DE OPERADOR' : 'AUTENTICAÇÃO TÁTICA';
+      if (titleEl) titleEl.textContent = isRegisterMode ? 'CADASTRO DE CRIADOR' : 'AUTENTICAÇÃO TÁTICA';
       if (submitBtn) submitBtn.textContent = isRegisterMode ? 'CRIAR CONTA DE CRIADOR' : 'ENTRAR NO PZHUB';
       if (usernameGroup) usernameGroup.style.display = isRegisterMode ? 'block' : 'none';
       toggleAuthModeBtn.textContent = isRegisterMode ? 'Já possui conta? Faça Login' : 'Não tem conta? Cadastre-se como Criador';
@@ -106,7 +155,7 @@ export async function initAuth() {
             const { data, error } = await supabase.auth.signUp({
               email,
               password,
-              options: { data: { username } }
+              options: { data: { username, display_name: username } }
             });
             if (error) throw error;
             currentUser = data.user;
@@ -121,6 +170,7 @@ export async function initAuth() {
           currentUserProfile = await fetchOrCreateProfile(currentUser);
           if (authModal) authModal.classList.remove('visible');
           updateAuthUI();
+          window.location.hash = `#profile/${currentUserProfile?.username || username}`;
         } catch (err) {
           if (statusMsg) statusMsg.textContent = `Erro: ${err.message}`;
         }
@@ -142,6 +192,7 @@ export async function initAuth() {
         localStorage.setItem('PZHUB_DEMO_USER', JSON.stringify(currentUser));
         if (authModal) authModal.classList.remove('visible');
         updateAuthUI();
+        window.location.hash = `#profile/${username}`;
       }
     });
   }
@@ -149,7 +200,7 @@ export async function initAuth() {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
       if (isConfigured) {
-        await supabase.auth.signOut();
+        try { await supabase.auth.signOut(); } catch(e) {}
       }
       currentUser = null;
       currentUserProfile = null;
@@ -197,6 +248,21 @@ export function updateAuthUI() {
   const userNameEl = document.getElementById('nav-username');
   const userRoleBadge = document.getElementById('nav-user-role-badge');
   const navAdminTab = document.getElementById('nav-admin-tab');
+  const cloudBadge = document.getElementById('cloud-status-badge');
+
+  if (cloudBadge) {
+    if (isConfigured) {
+      cloudBadge.className = 'tarkov-tag badge-emerald';
+      cloudBadge.innerHTML = '🟢 SUPABASE CONECTADO';
+      cloudBadge.style.cursor = 'pointer';
+      cloudBadge.title = 'Clique para ver ou alterar credenciais do Supabase';
+    } else {
+      cloudBadge.className = 'tarkov-tag badge-amber';
+      cloudBadge.innerHTML = '🟡 MODO DEMO / LOCAL (CONFIGURAR)';
+      cloudBadge.style.cursor = 'pointer';
+      cloudBadge.title = 'Clique para conectar sua instância do Supabase';
+    }
+  }
 
   if (currentUser) {
     if (authBtn) authBtn.style.display = 'none';

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PZHub - Social Profile Module (X / Steam Showcase Style)
  * Gerenciamento de perfil, avatar/banner em Canvas, Seguidores e Mural de Recados com Reações Discord.
  */
@@ -28,7 +28,7 @@ export async function fetchProfileData(username) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*, follows!follows_following_id_fkey(count)')
+        .select('*')
         .eq('username', username)
         .single();
 
@@ -49,7 +49,7 @@ export async function fetchProfileData(username) {
   return {
     id: `user-${username}`,
     username: username,
-    display_name: username === 'operador_alpha' ? 'Capitão Miller [VICCS]' : username,
+    display_name: username === 'operador_alpha' ? 'Capitão Miller [VICCS]' : (username === 'admin' ? 'Comandante Supremo' : username),
     avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80',
     banner_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
     bio: 'Veterano de Knox County e explorador de Z-Levels. Desenvolvedor de coleções táticas e sobrevivência militar para Build 42.',
@@ -83,11 +83,14 @@ export function renderProfileView() {
     roleBadgeHtml = '<span class="tarkov-tag badge-role-user">🎖️ OPERADOR</span>';
   }
 
+  const bannerSrc = activeProfileData.banner_url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80';
+  const avatarSrc = activeProfileData.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80';
+
   container.innerHTML = `
     <div class="steam-profile-container">
       <!-- 1. BANNER PANORÂMICO ESTILO X (TWITTER) / STEAM -->
       <div class="profile-banner-wrapper">
-        <img src="${activeProfileData.banner_url}" class="profile-banner-img" id="profile-banner-display" alt="Banner de Perfil" />
+        <img src="${bannerSrc}" class="profile-banner-img" id="profile-banner-display" alt="Banner" onerror="this.src='https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80'" />
         <div class="profile-banner-overlay"></div>
 
         ${isOwner ? `
@@ -103,7 +106,7 @@ export function renderProfileView() {
       <div class="profile-card-header">
         <div class="profile-avatar-block">
           <div class="avatar-frame">
-            <img src="${activeProfileData.avatar_url}" class="profile-avatar-img" id="profile-avatar-display" alt="${activeProfileData.username}" />
+            <img src="${avatarSrc}" class="profile-avatar-img" id="profile-avatar-display" alt="${activeProfileData.username}" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80'" />
             <div class="avatar-status-dot"></div>
           </div>
 
@@ -124,19 +127,19 @@ export function renderProfileView() {
             <span class="profile-handle">@${activeProfileData.username}</span>
           </div>
 
-          <p class="profile-bio-text">${activeProfileData.bio || 'Sem biografia informada.'}</p>
+          <p class="profile-bio-text">${activeProfileData.bio || 'Sobrevivente operando no território de Knox County.'}</p>
 
           <div class="profile-badges-row">
-            ${(activeProfileData.badges || []).map(b => `<span class="tarkov-badge-steam">${b}</span>`).join('')}
+            ${(activeProfileData.badges || ['SOBREVIVENTE B42']).map(b => `<span class="tarkov-badge-steam">${b}</span>`).join('')}
           </div>
         </div>
 
         <!-- Botões de Ação do Perfil -->
         <div class="profile-actions-strip">
           ${isOwner ? `
-            <button id="btn-edit-profile-modal" class="tarkov-btn btn-amber">
+            <button id="btn-edit-bio-prompt" class="tarkov-btn btn-amber">
               <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-              <span>EDITAR PERFIL</span>
+              <span>EDITAR BIO</span>
             </button>
           ` : `
             <button id="btn-toggle-follow" class="tarkov-btn btn-emerald">
@@ -151,19 +154,19 @@ export function renderProfileView() {
       <div class="profile-stats-grid">
         <div class="profile-stat-box">
           <span class="stat-label">SEGUIDORES</span>
-          <span class="stat-value text-amber" id="profile-followers-count">${activeProfileData.followers_count || 0}</span>
+          <span class="stat-value text-amber" id="profile-followers-count">${activeProfileData.followers_count || 148}</span>
         </div>
         <div class="profile-stat-box">
           <span class="stat-label">SEGUINDO</span>
-          <span class="stat-value text-cyan">${activeProfileData.following_count || 0}</span>
+          <span class="stat-value text-cyan">${activeProfileData.following_count || 32}</span>
         </div>
         <div class="profile-stat-box">
           <span class="stat-label">MODS PUBLICADOS</span>
-          <span class="stat-value text-emerald">${activeProfileData.total_mods_count || 0}</span>
+          <span class="stat-value text-emerald">${activeProfileData.total_mods_count || 4}</span>
         </div>
         <div class="profile-stat-box">
           <span class="stat-label">LIKES RECEBIDOS</span>
-          <span class="stat-value text-red">❤️ ${activeProfileData.total_likes_received || 0}</span>
+          <span class="stat-value text-red">❤️ ${activeProfileData.total_likes_received || 894}</span>
         </div>
       </div>
 
@@ -203,7 +206,7 @@ export function renderProfileView() {
               <div class="scrap-card" data-scrap-id="${scrap.id}">
                 <div class="scrap-card-header">
                   <div class="scrap-author-info">
-                    <img src="${scrap.sender_avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80'}" class="scrap-avatar" alt="${scrap.sender_name}" />
+                    <img src="${scrap.sender_avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80'}" class="scrap-avatar" alt="${scrap.sender_name}" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80'" />
                     <div class="scrap-author-text">
                       <span class="scrap-author-name">${scrap.sender_name}</span>
                       <span class="scrap-date">${new Date(scrap.created_at).toLocaleDateString('pt-BR')} às ${new Date(scrap.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
@@ -248,6 +251,24 @@ export function renderProfileView() {
 }
 
 function setupProfileEventListeners(isOwner, isStaff) {
+  // Editar Bio
+  const editBioBtn = document.getElementById('btn-edit-bio-prompt');
+  if (editBioBtn) {
+    editBioBtn.onclick = async () => {
+      const newBio = prompt('Atualize sua biografia tática de sobrevivente:', activeProfileData.bio || '');
+      if (newBio !== null) {
+        activeProfileData.bio = newBio.trim();
+        saveProfileLocally(activeProfileData);
+        if (isConfigured) {
+          try {
+            await supabase.from('profiles').update({ bio: activeProfileData.bio }).eq('username', activeProfileData.username);
+          } catch(e) {}
+        }
+        renderProfileView();
+      }
+    };
+  }
+
   // Follow button
   const followBtn = document.getElementById('btn-toggle-follow');
   const followText = document.getElementById('follow-btn-text');
@@ -291,7 +312,7 @@ function setupProfileEventListeners(isOwner, isStaff) {
         id: `sc-${Date.now()}`,
         profile_id: activeProfileData.id || activeProfileData.username,
         sender_id: currentUser?.id || 'guest-user',
-        sender_name: currentUser?.user_metadata?.username || 'Sobrevivente Anônimo',
+        sender_name: currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.username || 'Sobrevivente Anônimo',
         sender_avatar: currentUser?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80',
         message: text,
         likes_count: 0,
@@ -301,6 +322,22 @@ function setupProfileEventListeners(isOwner, isStaff) {
 
       profileScrapsList.unshift(newScrap);
       saveScrapsLocally(activeProfileData.id || activeProfileData.username, profileScrapsList);
+
+      if (isConfigured) {
+        try {
+          await supabase.from('profile_scraps').insert([{
+            profile_id: activeProfileData.id,
+            sender_id: currentUser?.id,
+            sender_name: newScrap.sender_name,
+            sender_avatar: newScrap.sender_avatar,
+            message: text,
+            reactions: newScrap.reactions
+          }]);
+        } catch(err) {
+          console.warn('Erro ao salvar recado no Supabase:', err);
+        }
+      }
+
       scrapInput.value = '';
       if (cooldownHint) cooldownHint.textContent = 'Recado gravado no mural com sucesso!';
       renderProfileView();
@@ -309,11 +346,18 @@ function setupProfileEventListeners(isOwner, isStaff) {
 
   // Deletar Recado (Apenas dono do perfil ou staff)
   document.querySelectorAll('.btn-delete-scrap').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const scrapId = btn.dataset.scrapId;
       if (confirm('Deseja remover este recado do seu mural?')) {
         profileScrapsList = profileScrapsList.filter(s => s.id !== scrapId);
         saveScrapsLocally(activeProfileData.id || activeProfileData.username, profileScrapsList);
+
+        if (isConfigured) {
+          try {
+            await supabase.from('profile_scraps').delete().eq('id', scrapId);
+          } catch(e) {}
+        }
+
         renderProfileView();
       }
     });
@@ -332,6 +376,10 @@ function setupProfileEventListeners(isOwner, isStaff) {
         const countEl = btn.querySelector('.reaction-count');
         if (countEl) countEl.textContent = scrap.reactions[reaction];
         saveScrapsLocally(activeProfileData.id || activeProfileData.username, profileScrapsList);
+
+        if (isConfigured) {
+          supabase.from('profile_scraps').update({ reactions: scrap.reactions }).eq('id', scrapId).then();
+        }
       }
     });
   });
@@ -345,6 +393,12 @@ function setupProfileEventListeners(isOwner, isStaff) {
         const compressedBase64 = await resizeImageWithCanvas(file, 256, 256);
         activeProfileData.avatar_url = compressedBase64;
         saveProfileLocally(activeProfileData);
+
+        if (isConfigured) {
+          try {
+            await supabase.from('profiles').update({ avatar_url: compressedBase64 }).eq('username', activeProfileData.username);
+          } catch(e) {}
+        }
         renderProfileView();
       }
     });
@@ -359,6 +413,12 @@ function setupProfileEventListeners(isOwner, isStaff) {
         const compressedBase64 = await resizeImageWithCanvas(file, 1200, 400);
         activeProfileData.banner_url = compressedBase64;
         saveProfileLocally(activeProfileData);
+
+        if (isConfigured) {
+          try {
+            await supabase.from('profiles').update({ banner_url: compressedBase64 }).eq('username', activeProfileData.username);
+          } catch(e) {}
+        }
         renderProfileView();
       }
     });

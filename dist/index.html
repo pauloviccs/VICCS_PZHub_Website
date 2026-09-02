@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
 
-    <script type="module" crossorigin src="/assets/index-M1WwxyiS.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BO9DqRqN.css">
+    <script type="module" crossorigin src="/assets/index-CowPPNru.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-sFzsxuj3.css">
   </head>
 
   <body>
@@ -41,7 +41,7 @@
       </nav>
 
       <div class="site-header-actions">
-        <span id="cloud-status-badge" class="tarkov-tag badge-emerald">PZHUB CLOUD ATIVO</span>
+        <span id="cloud-status-badge" class="tarkov-tag badge-emerald" style="cursor: pointer;" title="Clique para configurar o Supabase">🟢 SUPABASE CONECTADO</span>
 
         <button id="nav-auth-btn" class="tarkov-btn btn-amber" style="padding: 6px 14px;">
           ENTRAR / CADASTRO
@@ -112,7 +112,7 @@
       </div>
 
       <div style="margin-bottom: 16px; font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);">
-        <span id="workshop-total-count">CARREGANDO...</span>
+        <span id="workshop-total-count">CARREGANDO MODPACKS...</span>
       </div>
 
       <!-- Feed Grid -->
@@ -135,24 +135,24 @@
       <div class="dashboard-stats-grid">
         <div class="profile-stat-box">
           <span class="stat-label">MODPACKS ATIVOS</span>
-          <span class="stat-value text-amber">128</span>
+          <span class="stat-value text-amber">0</span>
         </div>
         <div class="profile-stat-box">
           <span class="stat-label">MODS CATALOGADOS</span>
-          <span class="stat-value text-cyan">1.450+</span>
+          <span class="stat-value text-cyan">0 mods</span>
         </div>
         <div class="profile-stat-box">
           <span class="stat-label">DOWNLOADS TOTAIS</span>
-          <span class="stat-value text-emerald">48.290</span>
+          <span class="stat-value text-emerald">0</span>
         </div>
         <div class="profile-stat-box">
           <span class="stat-label">AVALIAÇÕES & LIKES</span>
-          <span class="stat-value text-red">❤️ 12.840</span>
+          <span class="stat-value text-red">❤️ 0</span>
         </div>
       </div>
 
       <div class="admin-table-wrapper" style="margin-top: 24px;">
-        <h3 style="color: #fff; font-size: 14px; margin-bottom: 14px; letter-spacing: 1px;">TODOS OS MODPACKS CADASTRADOS PELA COMUNIDADE</h3>
+        <h3 style="color: #fff; font-size: 13px; margin: 16px 16px 10px; letter-spacing: 1px;">TODOS OS MODPACKS CADASTRADOS PELA COMUNIDADE</h3>
         <table class="tarkov-table">
           <thead>
             <tr>
@@ -167,36 +167,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><strong>VICCS TACTICAL OPERATIONS PACK</strong></td>
-              <td><a href="#profile/operador_alpha" style="color: var(--accent-amber);">@Capitão Miller</a></td>
-              <td><span class="tarkov-tag badge-amber">B42.0+</span></td>
-              <td>Militar</td>
-              <td>3 mods</td>
-              <td>1.420</td>
-              <td>❤️ 388</td>
-              <td><a href="#workshop" class="tarkov-btn-mini">VER CATÁLOGO</a></td>
-            </tr>
-            <tr>
-              <td><strong>VANILLA+ QUALITY OF LIFE</strong></td>
-              <td><a href="#profile/survivor_alliance" style="color: var(--accent-amber);">@Survivor Alliance</a></td>
-              <td><span class="tarkov-tag badge-amber">B42.0+</span></td>
-              <td>Hardcore</td>
-              <td>2 mods</td>
-              <td>890</td>
-              <td>❤️ 245</td>
-              <td><a href="#workshop" class="tarkov-btn-mini">VER CATÁLOGO</a></td>
-            </tr>
-            <tr>
-              <td><strong>OVERHAUL APOCALIPSE TOTAL</strong></td>
-              <td><a href="#profile/knox_outpost" style="color: var(--accent-amber);">@Knox Outpost</a></td>
-              <td><span class="tarkov-tag badge-amber">B42.0+</span></td>
-              <td>Roleplay</td>
-              <td>2 mods</td>
-              <td>2.105</td>
-              <td>❤️ 512</td>
-              <td><a href="#workshop" class="tarkov-btn-mini">VER CATÁLOGO</a></td>
-            </tr>
+            <!-- Renderizado dinamicamente -->
           </tbody>
         </table>
       </div>
@@ -222,7 +193,7 @@
 
       <!-- Meus Modpacks Publicados -->
       <div style="margin-bottom: 30px;">
-        <h3 style="color: #fff; font-size: 14px; margin-bottom: 12px; letter-spacing: 1px;">MEUS PACOTES PUBLICADOS</h3>
+        <h3 style="color: #fff; font-size: 13px; margin-bottom: 12px; letter-spacing: 1px;">MEUS PACOTES PUBLICADOS</h3>
         <div id="creator-my-uploads-container">
           <!-- Renderizado dinamicamente pelo modpackBuilder.js -->
         </div>
@@ -231,7 +202,7 @@
       <!-- Formulário do Construtor -->
       <div class="builder-card" id="builder-form-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--panel-border); padding-bottom: 12px;">
-          <h3 id="builder-form-title" style="color: var(--accent-amber); font-size: 14px; letter-spacing: 1px; text-transform: uppercase;">CONSTRUTOR DE NOVO MODPACK</h3>
+          <h3 id="builder-form-title" style="color: var(--accent-amber); font-size: 13px; letter-spacing: 1px; text-transform: uppercase;">CONSTRUTOR DE NOVO MODPACK</h3>
           <button id="btn-cancel-edit" class="tarkov-btn" style="display: none; padding: 4px 10px; font-size: 10px;">CANCELAR EDIÇÃO</button>
         </div>
 
@@ -301,7 +272,7 @@
 
           <div class="builder-actions-row">
             <button type="button" id="btn-builder-save-local" class="tarkov-btn">COPIAR JSON</button>
-            <button type="button" id="btn-builder-publish" class="tarkov-btn btn-amber" style="padding: 12px 24px;">🚀 SALVAR E PUBLICAR MODPACK</button>
+            <button type="button" id="btn-builder-publish" class="tarkov-btn btn-amber" style="padding: 10px 22px;">🚀 SALVAR E PUBLICAR MODPACK</button>
           </div>
         </form>
       </div>
@@ -339,7 +310,7 @@
           <button class="md-tab-btn active" data-tab="tab-ws-overview">📋 VISÃO GERAL</button>
           <button class="md-tab-btn" data-tab="tab-ws-changelogs">🔄 CHANGELOGS</button>
           <button class="md-tab-btn" data-tab="tab-ws-comments">💬 COMENTÁRIOS</button>
-          <button class="md-tab-btn" data-tab="tab-ws-credits">👥 CRÉDITOS</button>
+          <button class="md-tab-btn" data-tab="tab-ws-credits">👥 CRÉDITOS & REPORT</button>
         </div>
 
         <div id="md-modal-tab-content" class="md-modal-body">
@@ -358,7 +329,7 @@
           <button id="auth-modal-close" class="modal-close-icon">✕</button>
         </div>
 
-        <form id="auth-form" style="display: flex; flex-direction: column; gap: 14px;">
+        <form id="auth-form" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
           <div class="form-group" id="auth-username-group" style="display: none;">
             <label class="form-label">Nome de Operador (Username)</label>
             <input type="text" id="auth-username" class="tarkov-input" placeholder="Ex: Rick_Grimes" />
@@ -380,9 +351,46 @@
             ENTRAR NO PZHUB
           </button>
 
-          <button type="button" id="btn-toggle-auth-mode" class="tarkov-btn-subtle" style="background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer;">
+          <button type="button" id="btn-toggle-auth-mode" class="tarkov-btn-subtle" style="background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; text-align: center;">
             Não tem conta? Cadastre-se como Criador
           </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL: CONFIGURAÇÃO DE NUVEM (SUPABASE)                                -->
+    <!-- ===================================================================== -->
+    <div id="cloud-settings-modal" class="tarkov-modal-backdrop">
+      <div class="tarkov-modal-card">
+        <div class="modal-header">
+          <h3 class="modal-title">⚙️ CONFIGURAÇÃO DE NUVEM // SUPABASE</h3>
+          <button id="cloud-modal-close" class="modal-close-icon">✕</button>
+        </div>
+
+        <form id="cloud-config-form" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+          <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+            Conecte sua instância oficial do Supabase para persistir modpacks, comentários e perfis na nuvem em tempo real.
+          </p>
+
+          <div class="form-group">
+            <label class="form-label">SUPABASE URL (Project URL)</label>
+            <input type="url" id="cfg-supabase-url" class="tarkov-input" placeholder="https://xyzcompany.supabase.co" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">SUPABASE ANON PUBLIC KEY</label>
+            <input type="text" id="cfg-supabase-key" class="tarkov-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI..." required />
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 6px;">
+            <button type="submit" class="tarkov-btn btn-amber" style="flex: 1; justify-content: center;">
+              💾 SALVAR E CONECTAR
+            </button>
+            <button type="button" id="btn-reset-cloud-cfg" class="tarkov-btn" style="color: var(--accent-red); border-color: rgba(214,48,49,0.3);">
+              RESTAURAR DEMO
+            </button>
+          </div>
         </form>
       </div>
     </div>
