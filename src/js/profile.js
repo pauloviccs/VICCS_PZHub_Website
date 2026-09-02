@@ -1,6 +1,7 @@
 /**
  * PZHub - Social Profile Module (X / Steam Showcase Style)
- * Gerenciamento de perfil, avatar/banner com Enquadramento Tático, Compressor WebP e Mural de Recados.
+ * Gerenciamento de perfil, avatar/banner com Enquadramento Tático, Compressor WebP,
+ * Painel Completo de Customização Tática (Modal) e Mural de Recados.
  */
 
 import { supabase, isConfigured } from './supabaseClient.js';
@@ -11,6 +12,19 @@ let activeProfileData = null;
 let currentTargetUsername = null;
 let profileScrapsList = [];
 let lastScrapPostTime = 0;
+let modalSelectedBadges = [];
+
+const AVAILABLE_BADGES = [
+  'SOBREVIVENTE B42',
+  'LÍDER DE ESQUADRÃO',
+  'MÉDICO DE COMBATE',
+  'MECÂNICO TÁTICO',
+  'ATIRADOR DE ELITE',
+  'CONSTRUTOR DE BASE',
+  'COZINHEIRO VETERANO',
+  'EXPLORADOR DE LV',
+  'VETERANO DO APOCALIPSE'
+];
 
 export async function loadUserProfileView(targetUsername) {
   const container = document.getElementById('view-profile');
@@ -162,16 +176,16 @@ export function renderProfileView() {
           <p class="profile-bio-text">${activeProfileData.bio || 'Sobrevivente operando no território de Knox County.'}</p>
 
           <div class="profile-badges-row">
-            ${(activeProfileData.badges || ['SOBREVIVENTE B42']).map(b => `<span class="tarkov-badge-steam">${b}</span>`).join('')}
+            ${(activeProfileData.badges && activeProfileData.badges.length > 0 ? activeProfileData.badges : ['SOBREVIVENTE B42']).map(b => `<span class="tarkov-badge-steam">${b}</span>`).join('')}
           </div>
         </div>
 
         <!-- Botões de Ação do Perfil -->
         <div class="profile-actions-strip">
           ${isOwner ? `
-            <button id="btn-edit-bio-prompt" class="tarkov-btn btn-amber">
-              <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-              <span>EDITAR BIO</span>
+            <button id="btn-open-profile-edit" class="tarkov-btn btn-amber">
+              <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+              <span>EDITAR PERFIL</span>
             </button>
           ` : `
             <button id="btn-toggle-follow" class="tarkov-btn btn-emerald">
@@ -258,17 +272,21 @@ export function renderProfileView() {
 
                 <!-- Reações estilo Discord com pílulas táteis -->
                 <div class="scrap-reactions-bar">
-                  <button class="reaction-pill btn-reaction" data-scrap-id="${scrap.id}" data-reaction="thumb">
-                    <span>👍</span> <strong class="reaction-count">${reactions.thumb || 0}</strong>
+                  <button class="btn-reaction ${reactions.thumb > 0 ? 'reacted' : ''}" data-scrap-id="${scrap.id}" data-reaction="thumb" title="Positivo">
+                    <span>👍</span>
+                    <span class="reaction-count">${reactions.thumb || 0}</span>
                   </button>
-                  <button class="reaction-pill btn-reaction" data-scrap-id="${scrap.id}" data-reaction="fire">
-                    <span>🔥</span> <strong class="reaction-count">${reactions.fire || 0}</strong>
+                  <button class="btn-reaction ${reactions.fire > 0 ? 'reacted' : ''}" data-scrap-id="${scrap.id}" data-reaction="fire" title="Fogo">
+                    <span>🔥</span>
+                    <span class="reaction-count">${reactions.fire || 0}</span>
                   </button>
-                  <button class="reaction-pill btn-reaction" data-scrap-id="${scrap.id}" data-reaction="skull">
-                    <span>💀</span> <strong class="reaction-count">${reactions.skull || 0}</strong>
+                  <button class="btn-reaction ${reactions.skull > 0 ? 'reacted' : ''}" data-scrap-id="${scrap.id}" data-reaction="skull" title="Mortal">
+                    <span>💀</span>
+                    <span class="reaction-count">${reactions.skull || 0}</span>
                   </button>
-                  <button class="reaction-pill btn-reaction" data-scrap-id="${scrap.id}" data-reaction="heart">
-                    <span>❤️</span> <strong class="reaction-count">${reactions.heart || 0}</strong>
+                  <button class="btn-reaction ${reactions.heart > 0 ? 'reacted' : ''}" data-scrap-id="${scrap.id}" data-reaction="heart" title="Apoio">
+                    <span>❤️</span>
+                    <span class="reaction-count">${reactions.heart || 0}</span>
                   </button>
                 </div>
               </div>
@@ -283,21 +301,11 @@ export function renderProfileView() {
 }
 
 function setupProfileEventListeners(isOwner, isStaff) {
-  // Editar Bio
-  const editBioBtn = document.getElementById('btn-edit-bio-prompt');
-  if (editBioBtn) {
-    editBioBtn.onclick = async () => {
-      const newBio = prompt('Atualize sua biografia tática de sobrevivente:', activeProfileData.bio || '');
-      if (newBio !== null) {
-        activeProfileData.bio = newBio.trim();
-        saveProfileLocally(activeProfileData);
-        if (isConfigured) {
-          try {
-            await supabase.from('profiles').update({ bio: activeProfileData.bio }).eq('username', activeProfileData.username);
-          } catch(e) {}
-        }
-        renderProfileView();
-      }
+  // Abrir Painel Completo de Edição de Perfil
+  const openEditBtn = document.getElementById('btn-open-profile-edit');
+  if (openEditBtn) {
+    openEditBtn.onclick = () => {
+      openProfileCustomizationModal();
     };
   }
 
@@ -424,27 +432,7 @@ function setupProfileEventListeners(isOwner, isStaff) {
     avatarInput.addEventListener('change', (e) => {
       const file = e.target.files?.[0];
       if (file) {
-        openImageCropperModal(file, {
-          title: 'AJUSTE DE FOTO DE PERFIL // AVATAR',
-          aspectRatio: 1,
-          isCircle: true,
-          outputWidth: 384,
-          outputHeight: 384,
-          quality: 0.85,
-          onComplete: async (compressedBase64) => {
-            activeProfileData.avatar_url = compressedBase64;
-            saveProfileLocally(activeProfileData);
-
-            if (isConfigured) {
-              try {
-                await supabase.from('profiles').update({ avatar_url: compressedBase64 }).eq('username', activeProfileData.username);
-              } catch(e) {
-                console.warn('Erro ao salvar avatar no Supabase:', e);
-              }
-            }
-            renderProfileView();
-          }
-        });
+        triggerAvatarCropper(file);
       }
     });
   }
@@ -455,30 +443,193 @@ function setupProfileEventListeners(isOwner, isStaff) {
     bannerInput.addEventListener('change', (e) => {
       const file = e.target.files?.[0];
       if (file) {
-        openImageCropperModal(file, {
-          title: 'AJUSTE DE BANNER PANORÂMICO TÁTICO',
-          aspectRatio: 3 / 1,
-          isCircle: false,
-          outputWidth: 1200,
-          outputHeight: 400,
-          quality: 0.85,
-          onComplete: async (compressedBase64) => {
-            activeProfileData.banner_url = compressedBase64;
-            saveProfileLocally(activeProfileData);
-
-            if (isConfigured) {
-              try {
-                await supabase.from('profiles').update({ banner_url: compressedBase64 }).eq('username', activeProfileData.username);
-              } catch(e) {
-                console.warn('Erro ao salvar banner no Supabase:', e);
-              }
-            }
-            renderProfileView();
-          }
-        });
+        triggerBannerCropper(file);
       }
     });
   }
+}
+
+function triggerAvatarCropper(file) {
+  openImageCropperModal(file, {
+    title: 'AJUSTE DE FOTO DE PERFIL // AVATAR',
+    aspectRatio: 1,
+    isCircle: true,
+    outputWidth: 384,
+    outputHeight: 384,
+    quality: 0.85,
+    onComplete: async (compressedBase64) => {
+      activeProfileData.avatar_url = compressedBase64;
+      const previewEl = document.getElementById('edit-preview-avatar');
+      if (previewEl) previewEl.src = compressedBase64;
+      saveProfileLocally(activeProfileData);
+
+      if (isConfigured) {
+        try {
+          await supabase.from('profiles').update({ avatar_url: compressedBase64 }).eq('username', activeProfileData.username);
+        } catch(e) {
+          console.warn('Erro ao salvar avatar no Supabase:', e);
+        }
+      }
+      renderProfileView();
+    }
+  });
+}
+
+function triggerBannerCropper(file) {
+  openImageCropperModal(file, {
+    title: 'AJUSTE DE BANNER PANORÂMICO TÁTICO',
+    aspectRatio: 3 / 1,
+    isCircle: false,
+    outputWidth: 1200,
+    outputHeight: 400,
+    quality: 0.85,
+    onComplete: async (compressedBase64) => {
+      activeProfileData.banner_url = compressedBase64;
+      saveProfileLocally(activeProfileData);
+
+      if (isConfigured) {
+        try {
+          await supabase.from('profiles').update({ banner_url: compressedBase64 }).eq('username', activeProfileData.username);
+        } catch(e) {
+          console.warn('Erro ao salvar banner no Supabase:', e);
+        }
+      }
+      renderProfileView();
+    }
+  });
+}
+
+/**
+ * Abre o Painel Completo de Customização e Edição de Perfil
+ */
+export function openProfileCustomizationModal() {
+  const modal = document.getElementById('profile-edit-modal');
+  const closeBtn = document.getElementById('profile-edit-modal-close');
+  const cancelBtn = document.getElementById('btn-cancel-profile-edit');
+  const form = document.getElementById('profile-edit-form');
+  const displayNameInput = document.getElementById('edit-profile-display-name');
+  const usernameInput = document.getElementById('edit-profile-username');
+  const bioInput = document.getElementById('edit-profile-bio');
+  const bioCounter = document.getElementById('edit-bio-counter');
+  const previewAvatar = document.getElementById('edit-preview-avatar');
+  const badgesContainer = document.getElementById('edit-profile-badges-container');
+  const avatarUpload = document.getElementById('edit-modal-avatar-upload');
+  const bannerUpload = document.getElementById('edit-modal-banner-upload');
+  const statusMsg = document.getElementById('profile-edit-status-msg');
+
+  if (!modal || !activeProfileData) return;
+
+  // Preenchimento dos dados do perfil ativo
+  if (displayNameInput) displayNameInput.value = activeProfileData.display_name || activeProfileData.username;
+  if (usernameInput) usernameInput.value = `@${activeProfileData.username}`;
+  if (bioInput) {
+    bioInput.value = activeProfileData.bio || '';
+    if (bioCounter) bioCounter.textContent = `${bioInput.value.length} / 280`;
+
+    bioInput.oninput = () => {
+      if (bioCounter) bioCounter.textContent = `${bioInput.value.length} / 280`;
+    };
+  }
+
+  if (previewAvatar) {
+    previewAvatar.src = activeProfileData.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80';
+  }
+
+  if (statusMsg) statusMsg.textContent = '';
+
+  // Configuração das Insígnias & Patentes (Chips Selecionáveis)
+  modalSelectedBadges = Array.isArray(activeProfileData.badges) ? [...activeProfileData.badges] : ['SOBREVIVENTE B42'];
+
+  if (badgesContainer) {
+    badgesContainer.innerHTML = AVAILABLE_BADGES.map(badge => {
+      const isSelected = modalSelectedBadges.includes(badge);
+      return `
+        <div class="badge-toggle-chip ${isSelected ? 'active' : ''}" data-badge="${badge}">
+          <span>${isSelected ? '✓' : '+'}</span>
+          <span>${badge}</span>
+        </div>
+      `;
+    }).join('');
+
+    badgesContainer.querySelectorAll('.badge-toggle-chip').forEach(chip => {
+      chip.onclick = () => {
+        const badgeName = chip.dataset.badge;
+        if (modalSelectedBadges.includes(badgeName)) {
+          modalSelectedBadges = modalSelectedBadges.filter(b => b !== badgeName);
+          chip.classList.remove('active');
+          chip.querySelector('span').textContent = '+';
+        } else {
+          modalSelectedBadges.push(badgeName);
+          chip.classList.add('active');
+          chip.querySelector('span').textContent = '✓';
+        }
+      };
+    });
+  }
+
+  // Bind dos botões de troca de mídia interna do modal
+  if (avatarUpload) {
+    avatarUpload.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (file) triggerAvatarCropper(file);
+    };
+  }
+
+  if (bannerUpload) {
+    bannerUpload.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (file) triggerBannerCropper(file);
+    };
+  }
+
+  // Fechamento
+  const closeModal = () => {
+    modal.classList.remove('visible');
+  };
+
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+
+  // Submissão do Formulário
+  if (form) {
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const newDisplayName = displayNameInput?.value.trim() || activeProfileData.username;
+      const newBio = bioInput?.value.trim() || '';
+
+      if (statusMsg) statusMsg.textContent = 'Gravando alterações no Supabase...';
+
+      activeProfileData.display_name = newDisplayName;
+      activeProfileData.bio = newBio;
+      activeProfileData.badges = modalSelectedBadges.length > 0 ? modalSelectedBadges : ['SOBREVIVENTE B42'];
+      activeProfileData.updated_at = new Date().toISOString();
+
+      saveProfileLocally(activeProfileData);
+
+      if (isConfigured) {
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              display_name: activeProfileData.display_name,
+              bio: activeProfileData.bio,
+              badges: activeProfileData.badges,
+              updated_at: activeProfileData.updated_at
+            })
+            .eq('username', activeProfileData.username);
+
+          if (error) throw error;
+        } catch(err) {
+          console.warn('Erro ao atualizar perfil no Supabase:', err);
+        }
+      }
+
+      closeModal();
+      renderProfileView();
+    };
+  }
+
+  modal.classList.add('visible');
 }
 
 async function fetchProfileScraps(profileId) {

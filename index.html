@@ -265,7 +265,6 @@
               <label class="form-label" style="font-size: 10px;">Tipo de Origem do Mod *</label>
               <select id="builder-mod-type" class="tarkov-select" style="width: 100%; max-width: 380px;">
                 <option value="workshop">🌐 Steam Workshop (Oficina Oficial)</option>
-                <option value="builtin">⚡ Módulo Nativo PZHub (Radar / VICCS)</option>
                 <option value="direct_download">📦 Download Direto (.ZIP / Servidor)</option>
               </select>
             </div>
@@ -285,17 +284,7 @@
                 <input type="text" id="builder-mod-ws-id" class="tarkov-input" placeholder="Ex: 1510950729" />
               </div>
 
-              <!-- 3. Campo Específico: Módulo Nativo Preset -->
-              <div id="field-group-builtin" style="display: none; flex: 1.5; min-width: 220px;">
-                <label class="form-label" style="font-size: 10px;">Módulo Integrado *</label>
-                <select id="builder-mod-builtin-preset" class="tarkov-select" style="width: 100%;">
-                  <option value="VICCSRadarBridge">VICCS Radar Bridge (Live Radar B42 & B41)</option>
-                  <option value="CustomMilitaryGear">VICCS Custom Military Gear Pack</option>
-                  <option value="custom_builtin">Outro Módulo Nativo Customizado</option>
-                </select>
-              </div>
-
-              <!-- 4. Campo Específico: Direct Download (.ZIP) -->
+              <!-- 3. Campo Específico: Direct Download (.ZIP) -->
               <div id="field-group-direct-url" style="display: none; flex: 2; min-width: 200px;">
                 <label class="form-label" style="font-size: 10px;">URL Direta do .ZIP *</label>
                 <input type="url" id="builder-mod-direct-url" class="tarkov-input" placeholder="https://servidor.com/mods/mod.zip" />
@@ -486,6 +475,80 @@
             🚀 CONFIRMAR & APLICAR
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL: PAINEL COMPLETO DE EDIÇÃO & CUSTOMIZAÇÃO DE PERFIL            -->
+    <!-- ===================================================================== -->
+    <div id="profile-edit-modal" class="tarkov-modal-backdrop">
+      <div class="tarkov-modal-card profile-edit-modal-card">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: var(--accent-amber); font-size: 15px;">⚙️</span>
+            <h3 class="modal-title">CUSTOMIZAÇÃO DE PERFIL // REGISTRO DO OPERADOR</h3>
+          </div>
+          <button id="profile-edit-modal-close" class="modal-close-icon">✕</button>
+        </div>
+
+        <form id="profile-edit-form" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+          <!-- 1. Pré-visualização rápida de Avatar e Banner -->
+          <div class="profile-edit-media-row" style="display: flex; gap: 16px; align-items: center; background: rgba(0,0,0,0.4); padding: 12px 16px; border: 1px solid var(--panel-border); border-radius: var(--radius-sm);">
+            <div style="position: relative;">
+              <img id="edit-preview-avatar" src="" style="width: 54px; height: 54px; border-radius: 50%; border: 2px solid var(--accent-amber); object-fit: cover;" alt="Avatar" />
+              <label class="tarkov-btn-mini" style="position: absolute; bottom: -4px; right: -4px; padding: 2px 5px; font-size: 9px; cursor: pointer;" title="Alterar Foto">
+                📷
+                <input type="file" id="edit-modal-avatar-upload" accept="image/*" style="display: none;" />
+              </label>
+            </div>
+            <div style="flex: 1;">
+              <span style="font-size: 12px; color: #fff; font-weight: bold;">Foto e Banner do Sobrevivente</span>
+              <p style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">Imagens enquadradas e comprimidas automaticamente em WebP HD.</p>
+            </div>
+            <label class="tarkov-btn" style="cursor: pointer; padding: 6px 12px; font-size: 11px;">
+              <span>🖼️ EDITAR BANNER</span>
+              <input type="file" id="edit-modal-banner-upload" accept="image/*" style="display: none;" />
+            </label>
+          </div>
+
+          <!-- 2. Informações de Identidade -->
+          <div class="builder-grid-2">
+            <div class="form-group">
+              <label class="form-label">Nome de Exibição (Display Name) *</label>
+              <input type="text" id="edit-profile-display-name" class="tarkov-input" placeholder="Ex: Capitão Miller [VICCS]" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nome de Operador (Handle / Identificador)</label>
+              <input type="text" id="edit-profile-username" class="tarkov-input" disabled style="opacity: 0.6; cursor: not-allowed;" />
+            </div>
+          </div>
+
+          <!-- 3. Biografia Tática -->
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label class="form-label" style="margin-bottom: 0;">Biografia Tática do Sobrevivente</label>
+              <span id="edit-bio-counter" style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">0 / 280</span>
+            </div>
+            <textarea id="edit-profile-bio" class="tarkov-textarea" placeholder="Descreva sua lore, especialidade em combate, horas de Knox County..." rows="3" maxlength="280"></textarea>
+          </div>
+
+          <!-- 4. Insígnias & Patentes Selecionáveis (Badges) -->
+          <div class="form-group">
+            <label class="form-label">Especialidades & Insígnias de Sobrevivente</label>
+            <div class="badge-selection-chips" id="edit-profile-badges-container" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;">
+              <!-- Gerado dinamicamente com chips táteis -->
+            </div>
+          </div>
+
+          <span id="profile-edit-status-msg" style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-amber);"></span>
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--panel-border); padding-top: 14px;">
+            <button type="button" id="btn-cancel-profile-edit" class="tarkov-btn">CANCELAR</button>
+            <button type="submit" id="btn-save-profile-edit" class="tarkov-btn btn-amber" style="padding: 10px 24px;">
+              💾 SALVAR ALTERAÇÕES NO SUPABASE
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </body>

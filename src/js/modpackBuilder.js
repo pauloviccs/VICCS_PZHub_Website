@@ -1,10 +1,9 @@
 /**
  * PZHub - Creator Studio & Modpack Builder Module
  * Criação, edição, exclusão e gerenciamento de uploads do criador.
- * Suporta 100% dos tipos de mods sincronizáveis com o PZHub Desktop:
+ * Suporta os tipos de mods sincronizáveis com o PZHub Desktop:
  * 1. Steam Workshop (workshop_id)
- * 2. Módulo Nativo PZHub (builtin: VICCSRadarBridge, CustomMilitaryGear, etc)
- * 3. Download Direto (direct_download: download_url + folder_name)
+ * 2. Download Direto (direct_download: download_url + folder_name)
  */
 
 import { supabase, isConfigured } from './supabaseClient.js';
@@ -23,27 +22,11 @@ export async function initModpackBuilder() {
   const cancelEditBtn = document.getElementById('btn-cancel-edit');
   const coverFileInput = document.getElementById('input-upload-pack-cover');
   const modTypeSelect = document.getElementById('builder-mod-type');
-  const builtinPresetSelect = document.getElementById('builder-mod-builtin-preset');
 
-  // Alternância dinâmica de campos conforme o tipo de mod
+  // Alternância dinâmica de campos conforme o tipo de mod (Workshop vs Download Direto)
   if (modTypeSelect) {
     modTypeSelect.addEventListener('change', () => {
       handleModTypeChange(modTypeSelect.value);
-    });
-  }
-
-  if (builtinPresetSelect) {
-    builtinPresetSelect.addEventListener('change', () => {
-      const nameInput = document.getElementById('builder-mod-name');
-      if (nameInput) {
-        if (builtinPresetSelect.value === 'VICCSRadarBridge') {
-          nameInput.value = 'VICCS Radar Bridge (Live Radar B42 & B41)';
-        } else if (builtinPresetSelect.value === 'CustomMilitaryGear') {
-          nameInput.value = 'VICCS Custom Military Gear Pack';
-        } else {
-          nameInput.value = '';
-        }
-      }
     });
   }
 
@@ -101,23 +84,16 @@ export async function initModpackBuilder() {
 function handleModTypeChange(selectedType) {
   const nameInput = document.getElementById('builder-mod-name');
   const groupWorkshop = document.getElementById('field-group-workshop');
-  const groupBuiltin = document.getElementById('field-group-builtin');
   const groupDirectUrl = document.getElementById('field-group-direct-url');
   const groupDirectFolder = document.getElementById('field-group-direct-folder');
 
   if (groupWorkshop) groupWorkshop.style.display = selectedType === 'workshop' ? 'block' : 'none';
-  if (groupBuiltin) groupBuiltin.style.display = selectedType === 'builtin' ? 'block' : 'none';
   if (groupDirectUrl) groupDirectUrl.style.display = selectedType === 'direct_download' ? 'block' : 'none';
   if (groupDirectFolder) groupDirectFolder.style.display = selectedType === 'direct_download' ? 'block' : 'none';
 
   if (nameInput) {
     if (selectedType === 'workshop') {
       nameInput.placeholder = "Ex: Filibuster Rhymes' Used Cars! B42";
-    } else if (selectedType === 'builtin') {
-      const builtinPresetSelect = document.getElementById('builder-mod-builtin-preset');
-      nameInput.value = builtinPresetSelect?.value === 'VICCSRadarBridge'
-        ? 'VICCS Radar Bridge (Live Radar B42 & B41)'
-        : (builtinPresetSelect?.value === 'CustomMilitaryGear' ? 'VICCS Custom Military Gear Pack' : 'Módulo Nativo');
     } else if (selectedType === 'direct_download') {
       nameInput.placeholder = "Ex: Armas Especiais B42";
     }
@@ -129,7 +105,6 @@ function handleAddModComponent() {
   const nameInput = document.getElementById('builder-mod-name');
   const reqCheckbox = document.getElementById('builder-mod-required');
   const wsInput = document.getElementById('builder-mod-ws-id');
-  const builtinPresetSelect = document.getElementById('builder-mod-builtin-preset');
   const directUrlInput = document.getElementById('builder-mod-direct-url');
   const directFolderInput = document.getElementById('builder-mod-folder-name');
 
@@ -159,15 +134,6 @@ function handleAddModComponent() {
       description: `Steam Workshop [ID: ${workshop_id}]`
     };
     if (wsInput) wsInput.value = '';
-  } else if (mod_type === 'builtin') {
-    const presetId = builtinPresetSelect?.value || 'VICCSRadarBridge';
-    modObject = {
-      id: presetId,
-      name,
-      mod_type: 'builtin',
-      required,
-      description: 'Módulo Nativo Integrado do PZHub'
-    };
   } else if (mod_type === 'direct_download') {
     const download_url = directUrlInput?.value.trim();
     const folder_name = directFolderInput?.value.trim() || name.replace(/[^a-zA-Z0-9_-]/g, '');
@@ -214,9 +180,6 @@ export function renderBuilderModsList() {
     if (m.mod_type === 'workshop') {
       typeTag = `<span class="tarkov-tag badge-amber">🌐 STEAM WORKSHOP [${m.workshop_id || m.id}]</span>`;
       metaDetails = `<span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">ID: ${m.workshop_id || m.id}</span>`;
-    } else if (m.mod_type === 'builtin') {
-      typeTag = `<span class="tarkov-tag badge-cyan">⚡ MÓDULO NATIVO PZHub</span>`;
-      metaDetails = `<span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">Core: ${m.id}</span>`;
     } else {
       typeTag = `<span class="tarkov-tag badge-emerald">📦 DOWNLOAD DIRETO (.ZIP)</span>`;
       metaDetails = `<span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">Pasta: Zomboid/mods/${m.folder_name || m.id}</span>`;
