@@ -7,6 +7,7 @@ import { initWorkshop, loadWorkshopData } from './workshop.js';
 import { initModpackBuilder, renderCreatorUploadsList } from './modpackBuilder.js';
 import { loadUserProfileView } from './profile.js';
 import { initAdminDashboard } from './admin.js';
+import { initTimeline, loadTimelinePosts } from './timeline.js';
 
 class PZHubApp {
   constructor() {
@@ -17,9 +18,10 @@ class PZHubApp {
     // 1. Inicializa Autenticação e Perfil
     await initAuth();
 
-    // 2. Inicializa Módulos de Catálogo e Construtor
+    // 2. Inicializa Módulos de Catálogo, Construtor e Timeline Social
     await initWorkshop();
     await initModpackBuilder();
+    await initTimeline();
 
     // 3. Configura Roteamento SPA e Botões Globais
     this.setupRouting();
@@ -83,6 +85,12 @@ class PZHubApp {
       if (profileView) {
         profileView.classList.add('active');
         await loadUserProfileView(param);
+      }
+    } else if (viewName === 'timeline' || viewName === 'feed') {
+      const timelineView = document.getElementById('view-timeline');
+      if (timelineView) {
+        timelineView.classList.add('active');
+        await loadTimelinePosts();
       }
     } else if (viewName === 'admin') {
       const adminView = document.getElementById('view-admin');

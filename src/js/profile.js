@@ -84,6 +84,7 @@ export async function loadUserProfileView(targetUsername) {
 }
 
 export async function fetchProfileData(username) {
+  let profile = null;
   if (isConfigured) {
     try {
       const { data, error } = await supabase
@@ -93,20 +94,78 @@ export async function fetchProfileData(username) {
         .single();
 
       if (!error && data) {
-        return data;
+        profile = data;
       }
     } catch (e) {
       console.warn('Perfil não encontrado no Supabase:', e);
     }
   }
 
-  // Fallback Local se o usuário salvou
-  const saved = localStorage.getItem(`PZHUB_PROFILE_${username}`);
-  if (saved) {
-    try { return JSON.parse(saved); } catch(e) {}
+  if (!profile) {
+    // Fallback Local se o usuário salvou
+    const saved = localStorage.getItem(`PZHUB_PROFILE_${username}`);
+    if (saved) {
+      try { profile = JSON.parse(saved); } catch(e) {}
+    }
   }
 
-  return null;
+  if (profile) {
+    // Cálculo Dinâmico Unificado de Modpacks, Likes e Seguidores
+    if (isConfigured) {
+      try {
+        // 1. Modpacks do autor e likes recebidos em modpacks
+        const { data: userModpacks } = await supabase
+          .from('modpacks')
+          .select('id, likes_count')
+          .or(`author_id.eq.${profile.id},author.eq.${profile.username},author_name.eq.${profile.username}`);
+
+        let modpackLikes = 0;
+        let modsCount = 0;
+        if (userModpacks && Array.isArray(userModpacks)) {
+          modsCount = userModpacks.length;
+          modpackLikes = userModpacks.reduce((acc, curr) => acc + (curr.likes_count || 0), 0);
+        }
+
+        // 2. Posts do autor na Timeline e likes recebidos em posts
+        const { data: userPosts } = await supabase
+          .from('posts')
+          .select('id, likes_count')
+          .or(`author_id.eq.${profile.id},author_username.eq.${profile.username}`);
+
+        let postLikes = 0;
+        if (userPosts && Array.isArray(userPosts)) {
+          postLikes = userPosts.reduce((acc, curr) => acc + (curr.likes_count || 0), 0);
+        }
+
+        // 3. Seguidores
+        const { count: followersCount } = await supabase
+          .from('follows')
+          .select('*', { count: 'exact', head: true })
+          .eq('following_id', profile.id);
+
+        // 4. Seguindo
+        const { count: followingCount } = await supabase
+          .from('follows')
+          .select('*', { count: 'exact', head: true })
+          .eq('follower_id', profile.id);
+
+        profile.total_mods_count = modsCount;
+        profile.total_likes_received = modpackLikes + postLikes;
+        profile.followers_count = followersCount || 0;
+        profile.following_count = followingCount || 0;
+      } catch (err) {
+        console.warn('Erro ao agregar métricas do perfil no Supabase:', err);
+      }
+    } else {
+      // Fallback local se offline
+      const localModpacks = JSON.parse(localStorage.getItem('PZHUB_SAVED_MODPACKS') || '[]');
+      const userPacks = localModpacks.filter(p => p.author === profile.username || p.author_name === profile.username);
+      profile.total_mods_count = userPacks.length;
+      profile.total_likes_received = userPacks.reduce((acc, p) => acc + (p.likes_count || 0), 0);
+    }
+  }
+
+  return profile;
 }
 
 export function renderProfileView() {

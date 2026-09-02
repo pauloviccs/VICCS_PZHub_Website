@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
 
-    <script type="module" crossorigin src="/assets/index-Bughbex_.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-yWd0yZFv.css">
+    <script type="module" crossorigin src="/assets/index-AQbrAHWe.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DBegubf7.css">
   </head>
 
   <body>
@@ -34,6 +34,9 @@
         </button>
         <button class="site-nav-tab" data-view="studio">
           <span>03 // ESTÚDIO DO CRIADOR</span>
+        </button>
+        <button class="site-nav-tab" data-view="timeline">
+          <span>04 // RADAR SOCIAL (FEED)</span>
         </button>
         <button class="site-nav-tab" data-view="admin" id="nav-admin-tab" style="display: none; border-bottom-color: var(--accent-red); color: var(--accent-red);">
           <span>👑 // MODERAÇÃO & STAFF</span>
@@ -329,6 +332,112 @@
     <section id="view-admin" class="site-view">
       <!-- Renderizado dinamicamente pelo admin.js -->
     </section>
+
+    <!-- ===================================================================== -->
+    <!-- VIEW 6: RADAR SOCIAL & TIMELINE (X / TWITTER STYLE)                  -->
+    <!-- ===================================================================== -->
+    <section id="view-timeline" class="site-view">
+      <div class="timeline-layout-container">
+        <!-- Coluna Principal (Feed & Compositor) -->
+        <main class="timeline-main-column">
+          <!-- Feed Tabs (Para Você vs Seguindo) -->
+          <div class="timeline-feed-tabs">
+            <button id="tab-feed-discovery" class="feed-tab active">
+              <span>🌍 PARA VOCÊ (DISCOVERY)</span>
+            </button>
+            <button id="tab-feed-following" class="feed-tab">
+              <span>👥 SEGUINDO</span>
+            </button>
+          </div>
+
+          <!-- Compositor de Post Estilo X -->
+          <div class="timeline-compose-card">
+            <div class="compose-avatar-box">
+              <img id="compose-user-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80" alt="Avatar" />
+            </div>
+
+            <div class="compose-body-box">
+              <textarea 
+                id="timeline-compose-textarea" 
+                class="compose-textarea" 
+                placeholder="Transmita sua mensagem para a frequência de Knox County... (#Hashtag ou @menção)"
+                maxlength="280"
+                rows="3"
+              ></textarea>
+
+              <!-- Miniaturas de Anexos (Fotos & YouTube) -->
+              <div id="timeline-compose-previews" class="compose-previews-strip" style="display: none;"></div>
+
+              <!-- Input para Link do YouTube -->
+              <div id="timeline-youtube-input-box" class="compose-youtube-drawer" style="display: none;">
+                <input type="url" id="input-timeline-youtube-url" class="tarkov-input" placeholder="Cole o link do YouTube (ex: https://youtu.be/... ou https://youtube.com/watch?v=...)" />
+                <button type="button" id="btn-attach-youtube-confirm" class="tarkov-btn btn-amber">EMBEDDAR VÍDEO</button>
+                <button type="button" id="btn-cancel-youtube" class="tarkov-btn">CANCELAR</button>
+              </div>
+
+              <div class="compose-actions-bar">
+                <div class="compose-tools-left">
+                  <button type="button" id="btn-add-timeline-media" class="compose-tool-btn" title="Anexar Fotos (Grid até 4)">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-5-7l-3 3.72L9 13l-3 4h12l-4-5z"/></svg>
+                    <span>FOTOS</span>
+                    <input type="file" id="input-timeline-media-file" accept="image/*" style="display: none;" />
+                  </button>
+
+                  <button type="button" id="btn-add-timeline-youtube" class="compose-tool-btn" title="Embeddar Vídeo do YouTube (Autoplay no hover)">
+                    <svg viewBox="0 0 24 24"><path d="M21.58 7.19c-.23-.86-.91-1.54-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42c.86-.23 1.54-.91 1.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15V9l5.2 3-5.2 3z"/></svg>
+                    <span>VÍDEO YOUTUBE</span>
+                  </button>
+                </div>
+
+                <div class="compose-tools-right">
+                  <span id="timeline-char-counter" class="char-counter">280</span>
+                  <button type="button" id="btn-timeline-publish" class="tarkov-btn btn-amber">
+                    <span>🚀 TRANSMITIR</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feed Stream de Posts -->
+          <div id="timeline-feed-stream" class="timeline-stream-container">
+            <!-- Renderizado dinamicamente pelo timeline.js -->
+          </div>
+        </main>
+
+        <!-- Coluna Lateral Direita (Trending Topics & Sugestões) -->
+        <aside class="timeline-sidebar-column">
+          <!-- Widget: Tópicos de Knox County -->
+          <div class="tarkov-widget-card">
+            <h3 class="widget-title">🔥 TÓPICOS EM ALTA (KNOX)</h3>
+            <div id="timeline-trending-container" class="trending-list-box">
+              <!-- Renderizado dinamicamente -->
+            </div>
+          </div>
+
+          <!-- Widget: Quem Seguir -->
+          <div class="tarkov-widget-card">
+            <h3 class="widget-title">👥 OPERADORES RECOMENDADOS</h3>
+            <div id="timeline-suggestions-container" class="suggestions-list-box">
+              <!-- Renderizado dinamicamente -->
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL: LIGHTBOX DE IMAGENS EM TELA CHEIA (TIMELINE)                   -->
+    <!-- ===================================================================== -->
+    <div id="timeline-lightbox-modal" class="tarkov-modal-backdrop">
+      <div class="lightbox-modal-content">
+        <button id="lightbox-close-btn" class="lightbox-close-btn" title="Fechar (Esc)">✕</button>
+        <button id="lightbox-prev-btn" class="lightbox-nav-btn prev-btn" title="Anterior">❮</button>
+        <button id="lightbox-next-btn" class="lightbox-nav-btn next-btn" title="Próxima">❯</button>
+        <img id="lightbox-main-img" src="" alt="Visualização em alta resolução" />
+        <div id="lightbox-counter" class="lightbox-counter">1 / 1</div>
+      </div>
+    </div>
 
     <!-- ===================================================================== -->
     <!-- MODAL: DETALHES DO MODPACK (4 ABAS)                                   -->

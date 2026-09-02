@@ -164,6 +164,45 @@ ALTER TABLE public.reports ADD COLUMN IF NOT EXISTS target_title TEXT;
 ALTER TABLE public.reports ADD COLUMN IF NOT EXISTS moderator_notes TEXT;
 ALTER TABLE public.reports ADD COLUMN IF NOT EXISTS status report_status DEFAULT 'open';
 
+-- 10. TABELA: TIMELINE & RADAR SOCIAL (POSTS ESTILO X / TWITTER)
+CREATE TABLE IF NOT EXISTS public.posts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  author_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  author_name TEXT NOT NULL,
+  author_username TEXT NOT NULL,
+  author_avatar TEXT,
+  author_role user_role DEFAULT 'user',
+  content TEXT NOT NULL,
+  media_urls JSONB DEFAULT '[]'::jsonb,
+  youtube_id TEXT,
+  likes_count INTEGER DEFAULT 0,
+  reposts_count INTEGER DEFAULT 0,
+  comments_count INTEGER DEFAULT 0,
+  tags JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 11. TABELA: CURTIDAS EM POSTS DA TIMELINE
+CREATE TABLE IF NOT EXISTS public.post_likes (
+  post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  PRIMARY KEY (post_id, user_id)
+);
+
+-- 12. TABELA: COMENTÁRIOS DE POSTS DA TIMELINE
+CREATE TABLE IF NOT EXISTS public.post_comments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE,
+  author_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  author_name TEXT NOT NULL,
+  author_username TEXT NOT NULL,
+  author_avatar TEXT,
+  content TEXT NOT NULL,
+  likes_count INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- =========================================================================
 -- TRIGGER: CRIAÇÃO AUTOMÁTICA DE PERFIL NO CADASTRO (SUPABASE AUTH)
 -- =========================================================================
@@ -201,10 +240,46 @@ ALTER TABLE public.modpack_changelogs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profile_scraps ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.post_likes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.post_comments ENABLE ROW LEVEL SECURITY;
 
 -- =========================================================================
 -- POLÍTICAS RLS (DROP IF EXISTS + CREATE)
 -- =========================================================================
+
+-- Posts da Timeline
+DROP POLICY IF EXISTS "Posts são públicos" ON public.posts;
+CREATE POLICY "Posts são públicos" ON public.posts FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Usuários autenticados criam posts" ON public.posts;
+CREATE POLICY "Usuários autenticados criam posts" ON public.posts FOR INSERT WITH CHECK (auth.uid() = author_id OR auth.uid() IS NULL);
+
+DROP POLICY IF EXISTS "Autores deletam seus posts" ON public.posts;
+CREATE POLICY "Autores deletam seus posts" ON public.posts FOR DELETE USING (
+  auth.uid() = author_id OR 
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role::text IN ('admin', 'moderator'))
+);
+
+-- Likes em Posts
+DROP POLICY IF EXISTS "Post likes são públicos" ON public.post_likes;
+CREATE POLICY "Post likes são públicos" ON public.post_likes FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Usuários curtem posts" ON public.post_likes;
+CREATE POLICY "Usuários curtem posts" ON public.post_likes FOR ALL USING (auth.uid() = user_id OR auth.uid() IS NULL);
+
+-- Comentários em Posts
+DROP POLICY IF EXISTS "Comentários em posts são públicos" ON public.post_comments;
+CREATE POLICY "Comentários em posts são públicos" ON public.post_comments FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Usuários comentam em posts" ON public.post_comments;
+CREATE POLICY "Usuários comentam em posts" ON public.post_comments FOR INSERT WITH CHECK (auth.uid() = author_id OR auth.uid() IS NULL);
+
+DROP POLICY IF EXISTS "Autores deletam comentários em posts" ON public.post_comments;
+CREATE POLICY "Autores deletam comentários em posts" ON public.post_comments FOR DELETE USING (
+  auth.uid() = author_id OR 
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role::text IN ('admin', 'moderator'))
+);
 
 -- Profiles
 DROP POLICY IF EXISTS "Profiles são públicos" ON public.profiles;
