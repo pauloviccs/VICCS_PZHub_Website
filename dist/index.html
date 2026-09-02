@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
 
-    <script type="module" crossorigin src="/assets/index-CFDoCCTD.js"></script>
+    <script type="module" crossorigin src="/assets/index-uRzxWmKE.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-sFzsxuj3.css">
   </head>
 
@@ -41,14 +41,14 @@
       </nav>
 
       <div class="site-header-actions">
-        <span id="cloud-status-badge" class="tarkov-tag badge-emerald" style="cursor: pointer;" title="Clique para configurar o Supabase">🟢 SUPABASE CONECTADO</span>
+        <span id="cloud-status-badge" class="tarkov-tag badge-emerald" title="Instância Supabase Oficial Conectada">🟢 SUPABASE ONLINE</span>
 
         <button id="nav-auth-btn" class="tarkov-btn btn-amber" style="padding: 6px 14px;">
           ENTRAR / CADASTRO
         </button>
 
         <div id="nav-user-profile" style="display: none; align-items: center; gap: 10px;">
-          <a href="#profile/operador_alpha" id="nav-user-profile-link" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+          <a href="#profile" id="nav-user-profile-link" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
             <span id="nav-user-role-badge" class="tarkov-tag badge-role-creator">💎 CRIADOR</span>
             <span id="nav-username" style="font-family: var(--font-mono); font-size: 11px; color: #fff; font-weight: bold;">Operador</span>
           </a>
@@ -332,17 +332,17 @@
         <form id="auth-form" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
           <div class="form-group" id="auth-username-group" style="display: none;">
             <label class="form-label">Nome de Operador (Username)</label>
-            <input type="text" id="auth-username" class="tarkov-input" placeholder="Ex: Rick_Grimes" />
+            <input type="text" id="auth-username" class="tarkov-input" placeholder="Ex: Rick_Grimes" autocomplete="username" />
           </div>
 
           <div class="form-group">
             <label class="form-label">E-mail de Operações</label>
-            <input type="email" id="auth-email" class="tarkov-input" placeholder="operador@pzhub.com" required />
+            <input type="email" id="auth-email" class="tarkov-input" placeholder="operador@pzhub.com" autocomplete="email" required />
           </div>
 
           <div class="form-group">
             <label class="form-label">Senha de Acesso</label>
-            <input type="password" id="auth-password" class="tarkov-input" placeholder="••••••••" required />
+            <input type="password" id="auth-password" class="tarkov-input" placeholder="••••••••" autocomplete="current-password" required />
           </div>
 
           <span id="auth-status-msg" style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-amber);"></span>
@@ -354,43 +354,6 @@
           <button type="button" id="btn-toggle-auth-mode" class="tarkov-btn-subtle" style="background: none; border: none; color: var(--text-dim); font-size: 11px; cursor: pointer; text-align: center;">
             Não tem conta? Cadastre-se como Criador
           </button>
-        </form>
-      </div>
-    </div>
-
-    <!-- ===================================================================== -->
-    <!-- MODAL: CONFIGURAÇÃO DE NUVEM (SUPABASE)                                -->
-    <!-- ===================================================================== -->
-    <div id="cloud-settings-modal" class="tarkov-modal-backdrop">
-      <div class="tarkov-modal-card">
-        <div class="modal-header">
-          <h3 class="modal-title">⚙️ CONFIGURAÇÃO DE NUVEM // SUPABASE</h3>
-          <button id="cloud-modal-close" class="modal-close-icon">✕</button>
-        </div>
-
-        <form id="cloud-config-form" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
-          <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-            Conecte sua instância oficial do Supabase para persistir modpacks, comentários e perfis na nuvem em tempo real.
-          </p>
-
-          <div class="form-group">
-            <label class="form-label">SUPABASE URL (Project URL)</label>
-            <input type="url" id="cfg-supabase-url" class="tarkov-input" placeholder="https://xyzcompany.supabase.co" required />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">SUPABASE ANON PUBLIC KEY</label>
-            <input type="text" id="cfg-supabase-key" class="tarkov-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI..." required />
-          </div>
-
-          <div style="display: flex; gap: 10px; margin-top: 6px;">
-            <button type="submit" class="tarkov-btn btn-amber" style="flex: 1; justify-content: center;">
-              💾 SALVAR E CONECTAR
-            </button>
-            <button type="button" id="btn-reset-cloud-cfg" class="tarkov-btn" style="color: var(--accent-red); border-color: rgba(214,48,49,0.3);">
-              RESTAURAR DEMO
-            </button>
-          </div>
         </form>
       </div>
     </div>

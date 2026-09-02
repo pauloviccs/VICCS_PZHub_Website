@@ -1,8 +1,8 @@
 /**
- * PZHub - Authentication, Cloud Settings & User Profile Module
+ * PZHub - Authentication & User Profile Module
  */
 
-import { supabase, isConfigured, saveSupabaseCustomCredentials } from './supabaseClient.js';
+import { supabase, isConfigured } from './supabaseClient.js';
 
 let currentUser = null;
 let currentUserProfile = null;
@@ -15,8 +15,6 @@ export async function initAuth() {
   const toggleAuthModeBtn = document.getElementById('btn-toggle-auth-mode');
   const logoutBtn = document.getElementById('nav-logout-btn');
   const userProfileLink = document.getElementById('nav-user-profile-link');
-  const cloudBadge = document.getElementById('cloud-status-badge');
-  const cloudModal = document.getElementById('cloud-settings-modal');
 
   let isRegisterMode = false;
 
@@ -40,65 +38,14 @@ export async function initAuth() {
     } catch(err) {
       console.warn('Erro ao conectar Supabase Auth:', err);
     }
-  } else {
-    // Modo simulação local
-    const savedLocalUser = localStorage.getItem('PZHUB_DEMO_USER');
-    if (savedLocalUser) {
-      currentUser = JSON.parse(savedLocalUser);
-      currentUserProfile = {
-        id: currentUser.id,
-        username: currentUser.user_metadata?.username || 'operador_alpha',
-        display_name: currentUser.user_metadata?.display_name || 'Capitão Miller [VICCS]',
-        role: currentUser.user_metadata?.username === 'admin' ? 'admin' : 'creator',
-        avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80',
-        banner_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80'
-      };
-    }
   }
 
   updateAuthUI();
 
-  // Cloud Badge click -> Open Cloud Config
-  if (cloudBadge && cloudModal) {
-    cloudBadge.addEventListener('click', () => {
-      const urlInput = document.getElementById('cfg-supabase-url');
-      const keyInput = document.getElementById('cfg-supabase-key');
-      if (urlInput) urlInput.value = localStorage.getItem('PZHUB_SUPABASE_URL') || import.meta.env.VITE_SUPABASE_URL || '';
-      if (keyInput) keyInput.value = localStorage.getItem('PZHUB_SUPABASE_ANON_KEY') || import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-      cloudModal.classList.add('visible');
-    });
-
-    const closeCloudBtn = document.getElementById('cloud-modal-close');
-    if (closeCloudBtn) {
-      closeCloudBtn.onclick = () => cloudModal.classList.remove('visible');
-    }
-
-    const formCloud = document.getElementById('cloud-config-form');
-    if (formCloud) {
-      formCloud.onsubmit = (e) => {
-        e.preventDefault();
-        const u = document.getElementById('cfg-supabase-url')?.value.trim();
-        const k = document.getElementById('cfg-supabase-key')?.value.trim();
-        saveSupabaseCustomCredentials(u, k);
-      };
-    }
-
-    const resetCloudBtn = document.getElementById('btn-reset-cloud-cfg');
-    if (resetCloudBtn) {
-      resetCloudBtn.onclick = () => {
-        saveSupabaseCustomCredentials('', '');
-      };
-    }
-
-    cloudModal.onclick = (e) => {
-      if (e.target === cloudModal) cloudModal.classList.remove('visible');
-    };
-  }
-
   if (authBtn) {
     authBtn.addEventListener('click', () => {
       if (currentUser) {
-        window.location.hash = `#profile/${currentUserProfile?.username || 'operador_alpha'}`;
+        window.location.hash = `#profile/${currentUserProfile?.username || 'operador'}`;
       } else {
         if (authModal) authModal.classList.add('visible');
       }
@@ -106,9 +53,12 @@ export async function initAuth() {
   }
 
   if (userProfileLink) {
-    userProfileLink.addEventListener('click', () => {
-      if (currentUser) {
-        window.location.hash = `#profile/${currentUserProfile?.username || 'operador_alpha'}`;
+    userProfileLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (currentUser && currentUserProfile?.username) {
+        window.location.hash = `#profile/${currentUserProfile.username}`;
+      } else {
+        if (authModal) authModal.classList.add('visible');
       }
     });
   }
@@ -147,64 +97,40 @@ export async function initAuth() {
       const username = document.getElementById('auth-username')?.value.trim() || email.split('@')[0];
       const statusMsg = document.getElementById('auth-status-msg');
 
-      if (statusMsg) statusMsg.textContent = 'Processando...';
+      if (statusMsg) statusMsg.textContent = 'Autenticando no Supabase...';
 
-      if (isConfigured) {
-        try {
-          if (isRegisterMode) {
-            const { data, error } = await supabase.auth.signUp({
-              email,
-              password,
-              options: { data: { username, display_name: username } }
-            });
-            if (error) throw error;
-            currentUser = data.user;
-          } else {
-            const { data, error } = await supabase.auth.signInWithPassword({
-              email,
-              password
-            });
-            if (error) throw error;
-            currentUser = data.user;
-          }
-          currentUserProfile = await fetchOrCreateProfile(currentUser);
-          if (authModal) authModal.classList.remove('visible');
-          updateAuthUI();
-          window.location.hash = `#profile/${currentUserProfile?.username || username}`;
-        } catch (err) {
-          if (statusMsg) statusMsg.textContent = `Erro: ${err.message}`;
+      try {
+        if (isRegisterMode) {
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { username, display_name: username } }
+          });
+          if (error) throw error;
+          currentUser = data.user;
+        } else {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+          if (error) throw error;
+          currentUser = data.user;
         }
-      } else {
-        // Simulação instantânea
-        currentUser = {
-          id: `demo-${username}`,
-          email,
-          user_metadata: { username, display_name: username }
-        };
-        currentUserProfile = {
-          id: currentUser.id,
-          username,
-          display_name: username,
-          role: username === 'admin' ? 'admin' : 'creator',
-          avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80',
-          banner_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80'
-        };
-        localStorage.setItem('PZHUB_DEMO_USER', JSON.stringify(currentUser));
+        currentUserProfile = await fetchOrCreateProfile(currentUser);
         if (authModal) authModal.classList.remove('visible');
         updateAuthUI();
-        window.location.hash = `#profile/${username}`;
+        window.location.hash = `#profile/${currentUserProfile?.username || username}`;
+      } catch (err) {
+        if (statusMsg) statusMsg.textContent = `Erro: ${err.message}`;
       }
     });
   }
 
   if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
-      if (isConfigured) {
-        try { await supabase.auth.signOut(); } catch(e) {}
-      }
+      try { await supabase.auth.signOut(); } catch(e) {}
       currentUser = null;
       currentUserProfile = null;
-      localStorage.removeItem('PZHUB_DEMO_USER');
       updateAuthUI();
       window.location.hash = '#workshop';
     });
@@ -248,21 +174,6 @@ export function updateAuthUI() {
   const userNameEl = document.getElementById('nav-username');
   const userRoleBadge = document.getElementById('nav-user-role-badge');
   const navAdminTab = document.getElementById('nav-admin-tab');
-  const cloudBadge = document.getElementById('cloud-status-badge');
-
-  if (cloudBadge) {
-    if (isConfigured) {
-      cloudBadge.className = 'tarkov-tag badge-emerald';
-      cloudBadge.innerHTML = '🟢 SUPABASE CONECTADO';
-      cloudBadge.style.cursor = 'pointer';
-      cloudBadge.title = 'Clique para ver ou alterar credenciais do Supabase';
-    } else {
-      cloudBadge.className = 'tarkov-tag badge-amber';
-      cloudBadge.innerHTML = '🟡 MODO DEMO / LOCAL (CONFIGURAR)';
-      cloudBadge.style.cursor = 'pointer';
-      cloudBadge.title = 'Clique para conectar sua instância do Supabase';
-    }
-  }
 
   if (currentUser) {
     if (authBtn) authBtn.style.display = 'none';
@@ -288,7 +199,6 @@ export function updateAuthUI() {
       }
     }
 
-    // Exibe a aba de moderação se for staff
     if (navAdminTab) {
       const isStaff = currentUserProfile?.role === 'admin' || currentUserProfile?.role === 'moderator';
       navAdminTab.style.display = isStaff ? 'flex' : 'none';
