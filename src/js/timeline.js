@@ -29,6 +29,9 @@ export async function initTimeline() {
   const feedTabDiscovery = document.getElementById('tab-feed-discovery');
   const feedTabFollowing = document.getElementById('tab-feed-following');
 
+  // Atualiza foto do autor logado na caixa de composição
+  updateComposeAvatar();
+
   // 1. Contador de Caracteres (0 a 280)
   if (composeTextarea) {
     composeTextarea.addEventListener('input', () => {
@@ -135,6 +138,18 @@ export async function initTimeline() {
   await renderFollowSuggestionsSidebar();
 }
 
+export function updateComposeAvatar() {
+  const avatarEl = document.getElementById('compose-user-avatar');
+  if (!avatarEl) return;
+  const currentProfile = getCurrentUserProfile();
+  const currentUser = getCurrentUser();
+  const avatarUrl = currentProfile?.avatar_url || currentUser?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80';
+  avatarEl.src = avatarUrl;
+  avatarEl.onerror = () => {
+    avatarEl.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80';
+  };
+}
+
 export function extractYoutubeId(url) {
   if (!url) return null;
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/);
@@ -192,6 +207,8 @@ function renderComposeMediaPreviews() {
 }
 
 export async function loadTimelinePosts() {
+  updateComposeAvatar();
+
   if (isConfigured) {
     try {
       const { data, error } = await supabase
@@ -297,7 +314,10 @@ export function renderTimelineFeed() {
   const container = document.getElementById('timeline-feed-stream');
   if (!container) return;
 
+  updateComposeAvatar();
+
   const currentUser = getCurrentUser();
+  const currentProfile = getCurrentUserProfile();
 
   let filtered = [...postsList];
 
@@ -343,6 +363,11 @@ export function renderTimelineFeed() {
     // Formatação de Tempo Amigável
     const timeAgo = formatTimeAgo(new Date(post.created_at));
 
+    // Permissão de exclusão (Autor do post ou Moderador/Admin da Staff)
+    const isAuthor = currentUser && (currentUser.id === post.author_id || currentUser.user_metadata?.username === post.author_username);
+    const isStaff = currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'moderator');
+    const canDelete = isAuthor || isStaff;
+
     // Formatação de Texto com Hashtags e Menções destacadas
     const formattedContent = escapeHtml(post.content)
       .replace(/#(\w+)/g, '<span class="timeline-hashtag" data-tag="$1">#$1</span>')
@@ -371,6 +396,12 @@ export function renderTimelineFeed() {
               <span class="tweet-dot">•</span>
               <span class="tweet-time" title="${new Date(post.created_at).toLocaleString('pt-BR')}">${timeAgo}</span>
             </div>
+
+            ${canDelete ? `
+              <button class="btn-delete-post" data-post-id="${post.id}" title="Excluir Transmissão" style="background: transparent; border: none; color: var(--text-dim); cursor: pointer; padding: 4px 6px; border-radius: 4px; transition: var(--transition-fast); display: flex; align-items: center; justify-content: center;">
+                <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+              </button>
+            ` : ''}
           </div>
 
           <!-- Conteúdo do Post -->
@@ -477,7 +508,29 @@ function setupTweetCardInteractions() {
   const container = document.getElementById('timeline-feed-stream');
   if (!container) return;
 
-  // 1. Lightbox de Imagem
+  // 1. Excluir Post
+  container.querySelectorAll('.btn-delete-post').forEach(btn => {
+    btn.onclick = async (e) => {
+      e.stopPropagation();
+      const postId = btn.dataset.postId;
+      if (!confirm('Deseja realmente excluir esta transmissão da Timeline?')) return;
+
+      if (isConfigured) {
+        try {
+          await supabase.from('posts').delete().eq('id', postId);
+        } catch(err) {
+          console.warn('Erro ao deletar post do Supabase:', err);
+        }
+      }
+
+      postsList = postsList.filter(p => p.id !== postId);
+      localStorage.setItem('PZHUB_TIMELINE_POSTS', JSON.stringify(postsList));
+      renderTimelineFeed();
+      renderTrendingSidebar();
+    };
+  });
+
+  // 2. Lightbox de Imagem
   container.querySelectorAll('.photo-cell').forEach(cell => {
     cell.onclick = () => {
       const postId = cell.dataset.postId;
@@ -489,7 +542,7 @@ function setupTweetCardInteractions() {
     };
   });
 
-  // 2. YouTube Hover Autoplay sem HUD
+  // 3. YouTube Hover Autoplay sem HUD
   container.querySelectorAll('.timeline-youtube-wrapper').forEach(wrapper => {
     const iframe = wrapper.querySelector('iframe');
     const overlay = wrapper.querySelector('.youtube-tactical-overlay');
@@ -523,7 +576,7 @@ function setupTweetCardInteractions() {
     }
   });
 
-  // 3. Curtir Post (Heart)
+  // 4. Curtir Post (Heart)
   container.querySelectorAll('.btn-action-like').forEach(btn => {
     btn.onclick = async (e) => {
       e.stopPropagation();
@@ -554,7 +607,7 @@ function setupTweetCardInteractions() {
     };
   });
 
-  // 4. Comentários Expansíveis
+  // 5. Comentários Expansíveis
   container.querySelectorAll('.btn-action-reply').forEach(btn => {
     btn.onclick = async () => {
       const postId = btn.dataset.postId;
@@ -570,7 +623,7 @@ function setupTweetCardInteractions() {
     };
   });
 
-  // 5. Envio de Comentário Inline
+  // 6. Envio de Comentário Inline
   container.querySelectorAll('.btn-send-inline-comment').forEach(btn => {
     btn.onclick = async () => {
       const postId = btn.dataset.postId;
@@ -616,7 +669,7 @@ function setupTweetCardInteractions() {
     };
   });
 
-  // 6. Clique em Hashtag para Filtrar
+  // 7. Clique em Hashtag para Filtrar
   container.querySelectorAll('.timeline-hashtag').forEach(tagEl => {
     tagEl.onclick = (e) => {
       e.stopPropagation();
@@ -625,7 +678,7 @@ function setupTweetCardInteractions() {
     };
   });
 
-  // 7. Compartilhar / Copiar Link
+  // 8. Compartilhar / Copiar Link
   container.querySelectorAll('.btn-action-share').forEach(btn => {
     btn.onclick = () => {
       const postId = btn.dataset.postId;

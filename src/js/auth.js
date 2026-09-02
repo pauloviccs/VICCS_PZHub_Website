@@ -200,11 +200,15 @@ export function updateAuthUI() {
     }
 
     if (navAdminTab) {
-      const isStaff = currentUserProfile?.role === 'admin' || currentUserProfile?.role === 'moderator';
-      navAdminTab.style.display = isStaff ? 'flex' : 'none';
+      navAdminTab.style.display = (currentUserProfile?.role === 'admin' || currentUserProfile?.role === 'moderator') ? 'inline-block' : 'none';
+    }
+
+    const composeAvatar = document.getElementById('compose-user-avatar');
+    if (composeAvatar) {
+      composeAvatar.src = currentUserProfile?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80';
     }
   } else {
-    if (authBtn) authBtn.style.display = 'flex';
+    if (authBtn) authBtn.style.display = 'block';
     if (userProfileStrip) userProfileStrip.style.display = 'none';
     if (navAdminTab) navAdminTab.style.display = 'none';
   }
