@@ -255,23 +255,73 @@
 
           <!-- Seção de Adicionar Mods ao Pacote -->
           <div class="builder-mods-builder-section">
-            <h4 style="color: #fff; font-size: 12px; margin-bottom: 10px; letter-spacing: 1px;">MODS COMPONENTES DO PACOTE</h4>
-
-            <div class="add-mod-inline-row">
-              <input type="text" id="builder-mod-name" class="tarkov-input" placeholder="Nome do Mod (ex: Filibuster Rhymes Cars)" style="flex: 2;" />
-              <select id="builder-mod-type" class="tarkov-select" style="flex: 1;">
-                <option value="workshop">Steam Workshop</option>
-                <option value="builtin">Módulo Nativo PZHub</option>
-                <option value="direct_download">Download Direto (.ZIP)</option>
-              </select>
-              <input type="text" id="builder-mod-ws-id" class="tarkov-input" placeholder="Workshop ID (ex: 1510950729)" style="flex: 1;" />
-              <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer;">
-                <input type="checkbox" id="builder-mod-required" checked /> Obrigatório
-              </label>
-              <button type="button" id="btn-builder-add-mod" class="tarkov-btn btn-amber">+ ADICIONAR MOD</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+              <h4 style="color: #fff; font-size: 12px; letter-spacing: 1px;">MODS COMPONENTES DO PACOTE</h4>
+              <span style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-amber);">⚡ Sincronização Automática com PZHub Desktop</span>
             </div>
 
-            <div id="builder-mods-items-container" style="margin-top: 12px;">
+            <!-- Seletor do Tipo de Origem do Mod -->
+            <div style="margin-bottom: 12px;">
+              <label class="form-label" style="font-size: 10px;">Tipo de Origem do Mod *</label>
+              <select id="builder-mod-type" class="tarkov-select" style="width: 100%; max-width: 380px;">
+                <option value="workshop">🌐 Steam Workshop (Oficina Oficial)</option>
+                <option value="builtin">⚡ Módulo Nativo PZHub (Radar / VICCS)</option>
+                <option value="direct_download">📦 Download Direto (.ZIP / Servidor)</option>
+              </select>
+            </div>
+
+            <!-- Campos Dinâmicos por Tipo -->
+            <div id="builder-mod-fields-row" class="add-mod-inline-row" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+              
+              <!-- 1. Campo Nome do Mod -->
+              <div style="flex: 2; min-width: 180px;">
+                <label class="form-label" style="font-size: 10px;">Nome do Mod *</label>
+                <input type="text" id="builder-mod-name" class="tarkov-input" placeholder="Ex: Filibuster Rhymes Cars B42" />
+              </div>
+
+              <!-- 2. Campo Específico: Steam Workshop ID -->
+              <div id="field-group-workshop" style="flex: 1; min-width: 150px;">
+                <label class="form-label" style="font-size: 10px;">Workshop ID *</label>
+                <input type="text" id="builder-mod-ws-id" class="tarkov-input" placeholder="Ex: 1510950729" />
+              </div>
+
+              <!-- 3. Campo Específico: Módulo Nativo Preset -->
+              <div id="field-group-builtin" style="display: none; flex: 1.5; min-width: 220px;">
+                <label class="form-label" style="font-size: 10px;">Módulo Integrado *</label>
+                <select id="builder-mod-builtin-preset" class="tarkov-select" style="width: 100%;">
+                  <option value="VICCSRadarBridge">VICCS Radar Bridge (Live Radar B42 & B41)</option>
+                  <option value="CustomMilitaryGear">VICCS Custom Military Gear Pack</option>
+                  <option value="custom_builtin">Outro Módulo Nativo Customizado</option>
+                </select>
+              </div>
+
+              <!-- 4. Campo Específico: Direct Download (.ZIP) -->
+              <div id="field-group-direct-url" style="display: none; flex: 2; min-width: 200px;">
+                <label class="form-label" style="font-size: 10px;">URL Direta do .ZIP *</label>
+                <input type="url" id="builder-mod-direct-url" class="tarkov-input" placeholder="https://servidor.com/mods/mod.zip" />
+              </div>
+              <div id="field-group-direct-folder" style="display: none; flex: 1; min-width: 140px;">
+                <label class="form-label" style="font-size: 10px;">Pasta em Zomboid/mods/ *</label>
+                <input type="text" id="builder-mod-folder-name" class="tarkov-input" placeholder="Ex: MeuModFolder" />
+              </div>
+
+              <!-- Checkbox Obrigatório -->
+              <div style="display: flex; align-items: center; gap: 6px; padding-bottom: 8px;">
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: var(--text-muted);">
+                  <input type="checkbox" id="builder-mod-required" checked /> Obrigatório
+                </label>
+              </div>
+
+              <!-- Botão Adicionar -->
+              <div>
+                <button type="button" id="btn-builder-add-mod" class="tarkov-btn btn-amber" style="padding: 10px 16px; white-space: nowrap;">
+                  + ADICIONAR MOD
+                </button>
+              </div>
+            </div>
+
+            <!-- Lista de Mods Adicionados -->
+            <div id="builder-mods-items-container" style="margin-top: 14px;">
               <!-- Renderizado dinamicamente -->
             </div>
           </div>

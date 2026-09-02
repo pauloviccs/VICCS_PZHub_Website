@@ -1,6 +1,10 @@
 /**
  * PZHub - Creator Studio & Modpack Builder Module
  * Criação, edição, exclusão e gerenciamento de uploads do criador.
+ * Suporta 100% dos tipos de mods sincronizáveis com o PZHub Desktop:
+ * 1. Steam Workshop (workshop_id)
+ * 2. Módulo Nativo PZHub (builtin: VICCSRadarBridge, CustomMilitaryGear, etc)
+ * 3. Download Direto (direct_download: download_url + folder_name)
  */
 
 import { supabase, isConfigured } from './supabaseClient.js';
@@ -18,7 +22,32 @@ export async function initModpackBuilder() {
   const saveLocalBtn = document.getElementById('btn-builder-save-local');
   const cancelEditBtn = document.getElementById('btn-cancel-edit');
   const coverFileInput = document.getElementById('input-upload-pack-cover');
+  const modTypeSelect = document.getElementById('builder-mod-type');
+  const builtinPresetSelect = document.getElementById('builder-mod-builtin-preset');
 
+  // Alternância dinâmica de campos conforme o tipo de mod
+  if (modTypeSelect) {
+    modTypeSelect.addEventListener('change', () => {
+      handleModTypeChange(modTypeSelect.value);
+    });
+  }
+
+  if (builtinPresetSelect) {
+    builtinPresetSelect.addEventListener('change', () => {
+      const nameInput = document.getElementById('builder-mod-name');
+      if (nameInput) {
+        if (builtinPresetSelect.value === 'VICCSRadarBridge') {
+          nameInput.value = 'VICCS Radar Bridge (Live Radar B42 & B41)';
+        } else if (builtinPresetSelect.value === 'CustomMilitaryGear') {
+          nameInput.value = 'VICCS Custom Military Gear Pack';
+        } else {
+          nameInput.value = '';
+        }
+      }
+    });
+  }
+
+  // Upload e Ajuste Tático da Capa do Modpack
   if (coverFileInput) {
     coverFileInput.addEventListener('change', (e) => {
       const file = e.target.files?.[0];
@@ -38,34 +67,10 @@ export async function initModpackBuilder() {
     });
   }
 
+  // Botão Adicionar Mod Componente
   if (addModBtn) {
     addModBtn.addEventListener('click', () => {
-      const nameInput = document.getElementById('builder-mod-name');
-      const typeSelect = document.getElementById('builder-mod-type');
-      const wsInput = document.getElementById('builder-mod-ws-id');
-      const reqCheckbox = document.getElementById('builder-mod-required');
-
-      const name = nameInput?.value.trim();
-      const mod_type = typeSelect?.value || 'workshop';
-      const workshop_id = wsInput?.value.trim();
-      const required = reqCheckbox?.checked || false;
-
-      if (!name) {
-        alert('Informe o nome do mod componente.');
-        return;
-      }
-
-      builderModsList.push({
-        id: workshop_id || `mod-${Date.now()}`,
-        name,
-        mod_type,
-        workshop_id,
-        required
-      });
-
-      if (nameInput) nameInput.value = '';
-      if (wsInput) wsInput.value = '';
-      renderBuilderModsList();
+      handleAddModComponent();
     });
   }
 
@@ -91,6 +96,152 @@ export async function initModpackBuilder() {
   }
 
   renderCreatorUploadsList();
+}
+
+function handleModTypeChange(selectedType) {
+  const nameInput = document.getElementById('builder-mod-name');
+  const groupWorkshop = document.getElementById('field-group-workshop');
+  const groupBuiltin = document.getElementById('field-group-builtin');
+  const groupDirectUrl = document.getElementById('field-group-direct-url');
+  const groupDirectFolder = document.getElementById('field-group-direct-folder');
+
+  if (groupWorkshop) groupWorkshop.style.display = selectedType === 'workshop' ? 'block' : 'none';
+  if (groupBuiltin) groupBuiltin.style.display = selectedType === 'builtin' ? 'block' : 'none';
+  if (groupDirectUrl) groupDirectUrl.style.display = selectedType === 'direct_download' ? 'block' : 'none';
+  if (groupDirectFolder) groupDirectFolder.style.display = selectedType === 'direct_download' ? 'block' : 'none';
+
+  if (nameInput) {
+    if (selectedType === 'workshop') {
+      nameInput.placeholder = "Ex: Filibuster Rhymes' Used Cars! B42";
+    } else if (selectedType === 'builtin') {
+      const builtinPresetSelect = document.getElementById('builder-mod-builtin-preset');
+      nameInput.value = builtinPresetSelect?.value === 'VICCSRadarBridge'
+        ? 'VICCS Radar Bridge (Live Radar B42 & B41)'
+        : (builtinPresetSelect?.value === 'CustomMilitaryGear' ? 'VICCS Custom Military Gear Pack' : 'Módulo Nativo');
+    } else if (selectedType === 'direct_download') {
+      nameInput.placeholder = "Ex: Armas Especiais B42";
+    }
+  }
+}
+
+function handleAddModComponent() {
+  const typeSelect = document.getElementById('builder-mod-type');
+  const nameInput = document.getElementById('builder-mod-name');
+  const reqCheckbox = document.getElementById('builder-mod-required');
+  const wsInput = document.getElementById('builder-mod-ws-id');
+  const builtinPresetSelect = document.getElementById('builder-mod-builtin-preset');
+  const directUrlInput = document.getElementById('builder-mod-direct-url');
+  const directFolderInput = document.getElementById('builder-mod-folder-name');
+
+  const mod_type = typeSelect?.value || 'workshop';
+  const name = nameInput?.value.trim();
+  const required = reqCheckbox?.checked || false;
+
+  if (!name) {
+    alert('Informe o nome do mod componente.');
+    return;
+  }
+
+  let modObject = null;
+
+  if (mod_type === 'workshop') {
+    const workshop_id = wsInput?.value.trim();
+    if (!workshop_id) {
+      alert('Por favor, informe o Steam Workshop ID (apenas números, ex: 1510950729).');
+      return;
+    }
+    modObject = {
+      id: workshop_id,
+      name,
+      mod_type: 'workshop',
+      workshop_id: workshop_id,
+      required,
+      description: `Steam Workshop [ID: ${workshop_id}]`
+    };
+    if (wsInput) wsInput.value = '';
+  } else if (mod_type === 'builtin') {
+    const presetId = builtinPresetSelect?.value || 'VICCSRadarBridge';
+    modObject = {
+      id: presetId,
+      name,
+      mod_type: 'builtin',
+      required,
+      description: 'Módulo Nativo Integrado do PZHub'
+    };
+  } else if (mod_type === 'direct_download') {
+    const download_url = directUrlInput?.value.trim();
+    const folder_name = directFolderInput?.value.trim() || name.replace(/[^a-zA-Z0-9_-]/g, '');
+
+    if (!download_url || !download_url.startsWith('http')) {
+      alert('Por favor, informe uma URL válida (.ZIP ou .RAR) para o download direto do mod.');
+      return;
+    }
+
+    modObject = {
+      id: folder_name,
+      name,
+      mod_type: 'direct_download',
+      download_url: download_url,
+      folder_name: folder_name,
+      required,
+      description: `Download Direto (.ZIP) ➔ Zomboid/mods/${folder_name}`
+    };
+
+    if (directUrlInput) directUrlInput.value = '';
+    if (directFolderInput) directFolderInput.value = '';
+  }
+
+  if (modObject) {
+    builderModsList.push(modObject);
+    if (nameInput) nameInput.value = '';
+    renderBuilderModsList();
+  }
+}
+
+export function renderBuilderModsList() {
+  const container = document.getElementById('builder-mods-items-container');
+  if (!container) return;
+
+  if (builderModsList.length === 0) {
+    container.innerHTML = '<div style="color: var(--text-dim); font-size: 11px; padding: 12px;">Nenhum mod adicionado ainda. Adicione os componentes do seu pacote no formulário acima.</div>';
+    return;
+  }
+
+  container.innerHTML = builderModsList.map((m, idx) => {
+    let typeTag = '';
+    let metaDetails = '';
+
+    if (m.mod_type === 'workshop') {
+      typeTag = `<span class="tarkov-tag badge-amber">🌐 STEAM WORKSHOP [${m.workshop_id || m.id}]</span>`;
+      metaDetails = `<span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">ID: ${m.workshop_id || m.id}</span>`;
+    } else if (m.mod_type === 'builtin') {
+      typeTag = `<span class="tarkov-tag badge-cyan">⚡ MÓDULO NATIVO PZHub</span>`;
+      metaDetails = `<span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">Core: ${m.id}</span>`;
+    } else {
+      typeTag = `<span class="tarkov-tag badge-emerald">📦 DOWNLOAD DIRETO (.ZIP)</span>`;
+      metaDetails = `<span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">Pasta: Zomboid/mods/${m.folder_name || m.id}</span>`;
+    }
+
+    return `
+      <div class="builder-mod-row" style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 10px 14px; border: 1px solid var(--panel-border); border-radius: 4px; margin-bottom: 6px; gap: 10px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <strong style="color: #fff; font-size: 12px;">${m.name}</strong>
+          ${typeTag}
+          ${metaDetails}
+          ${m.required ? '<span class="tarkov-tag" style="font-size: 9px; padding: 1px 4px; color: var(--accent-amber); border-color: rgba(229,142,38,0.3);">OBRIGATÓRIO</span>' : '<span class="tarkov-tag" style="font-size: 9px; padding: 1px 4px; color: var(--text-dim);">OPCIONAL</span>'}
+        </div>
+        <button type="button" class="tarkov-btn-mini btn-remove-mod-item" data-index="${idx}" style="color: var(--accent-red); border-color: rgba(214,48,49,0.3);">✕ REMOVER</button>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.btn-remove-mod-item').forEach(btn => {
+    btn.onclick = () => {
+      const idx = parseInt(btn.dataset.index, 10);
+      builderModsList.splice(idx, 1);
+      renderBuilderModsList();
+    };
+  });
 }
 
 function extractBuilderFormData() {
@@ -145,6 +296,12 @@ async function handlePublishModpack() {
     return;
   }
 
+  if (builderModsList.length === 0) {
+    if (!confirm('Este modpack não possui nenhum mod componente adicionado. Deseja publicar mesmo assim?')) {
+      return;
+    }
+  }
+
   if (isConfigured) {
     try {
       const { data, error } = await supabase
@@ -175,34 +332,6 @@ async function handlePublishModpack() {
   await loadWorkshopData();
   renderCreatorUploadsList();
   window.location.hash = '#workshop';
-}
-
-export function renderBuilderModsList() {
-  const container = document.getElementById('builder-mods-items-container');
-  if (!container) return;
-
-  if (builderModsList.length === 0) {
-    container.innerHTML = '<div style="color: var(--text-dim); font-size: 11px; padding: 12px;">Nenhum mod adicionado ainda. Adicione os componentes do seu pacote no formulário acima.</div>';
-    return;
-  }
-
-  container.innerHTML = builderModsList.map((m, idx) => `
-    <div class="builder-mod-row" style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 8px 12px; border: 1px solid rgba(255,255,255,0.06); border-radius: 4px; margin-bottom: 6px;">
-      <div>
-        <strong style="color: var(--text-main); font-size: 12px;">${m.name}</strong>
-        <span style="font-size: 10px; color: var(--text-dim); margin-left: 8px;">(${m.mod_type})</span>
-      </div>
-      <button class="tarkov-btn-mini btn-remove-mod-item" data-index="${idx}" style="color: var(--accent-red); border-color: rgba(214,48,49,0.3);">REMOVER</button>
-    </div>
-  `).join('');
-
-  container.querySelectorAll('.btn-remove-mod-item').forEach(btn => {
-    btn.onclick = () => {
-      const idx = parseInt(btn.dataset.index, 10);
-      builderModsList.splice(idx, 1);
-      renderBuilderModsList();
-    };
-  });
 }
 
 export function renderCreatorUploadsList() {
