@@ -224,28 +224,33 @@ function extractBuilderFormData() {
   const currentProfile = getCurrentUserProfile();
 
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(currentUser?.id || '');
 
-  return {
+  const packData = {
     id: editingPackId || slug,
     slug: slug,
-    name,
+    name: name,
     title: name,
-    version,
-    category,
+    version: version,
+    category: category,
     zomboid_version: zomboidVer,
     description: desc,
     banner_url: image || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
     image: image || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
-    author_id: currentUser?.id || null,
-    author: currentProfile?.username || currentUser?.user_metadata?.username || 'operador',
-    author_name: currentProfile?.display_name || currentProfile?.username || currentUser?.user_metadata?.username || 'Operador Comunitário',
+    author_id: isUUID ? currentUser.id : null,
+    author_name: currentProfile?.display_name || currentProfile?.username || currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.username || 'Operador Comunitário',
     downloads_count: 0,
     likes_count: 0,
     mods: builderModsList,
     is_public: true,
-    created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
+
+  if (!editingPackId) {
+    packData.created_at = new Date().toISOString();
+  }
+
+  return packData;
 }
 
 async function handlePublishModpack() {
@@ -253,6 +258,7 @@ async function handlePublishModpack() {
   if (!pack) return;
 
   const currentUser = getCurrentUser();
+  const currentProfile = getCurrentUserProfile();
   if (!currentUser) {
     alert('Você precisa estar autenticado no Supabase para publicar modpacks no banco de dados.');
     document.getElementById('auth-modal')?.classList.add('visible');
@@ -267,15 +273,35 @@ async function handlePublishModpack() {
 
   if (isConfigured) {
     try {
+      // 1. Garante que o profile do usuário exista no Supabase para não falhar a FK author_id
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(currentUser.id || '');
+      if (isUUID) {
+        try {
+          await supabase.from('profiles').upsert([{
+            id: currentUser.id,
+            username: currentProfile?.username || currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'operador',
+            display_name: currentProfile?.display_name || currentUser.user_metadata?.display_name || currentProfile?.username || 'Operador',
+            updated_at: new Date().toISOString()
+          }], { onConflict: 'id' });
+        } catch (profileErr) {
+          console.warn('Aviso ao sincronizar perfil do autor:', profileErr);
+        }
+      }
+
+      // 2. Salva o modpack
       const { data, error } = await supabase
         .from('modpacks')
-        .upsert([pack]);
+        .upsert([pack], { onConflict: 'id' });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro detalhado Supabase:', error);
+        throw error;
+      }
+
       alert(editingPackId ? `Modpack "${pack.name}" atualizado no Supabase com sucesso!` : `Modpack "${pack.name}" publicado com sucesso no banco de dados Supabase!`);
     } catch (err) {
       console.error('Erro ao salvar no Supabase:', err);
-      alert(`Falha ao gravar no Supabase: ${err.message}`);
+      alert(`Falha ao gravar no Supabase: ${err.message || JSON.stringify(err)}`);
       return;
     }
   } else {

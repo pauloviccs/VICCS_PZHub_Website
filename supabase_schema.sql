@@ -84,6 +84,7 @@ END $$;
 ALTER TABLE public.modpacks ADD COLUMN IF NOT EXISTS slug TEXT;
 ALTER TABLE public.modpacks ADD COLUMN IF NOT EXISTS title TEXT;
 ALTER TABLE public.modpacks ADD COLUMN IF NOT EXISTS version TEXT DEFAULT '1.0.0';
+ALTER TABLE public.modpacks ADD COLUMN IF NOT EXISTS author TEXT;
 ALTER TABLE public.modpacks ADD COLUMN IF NOT EXISTS author_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL;
 ALTER TABLE public.modpacks ADD COLUMN IF NOT EXISTS author_name TEXT DEFAULT 'Operador Comunitário';
 ALTER TABLE public.modpacks ADD COLUMN IF NOT EXISTS description TEXT;
