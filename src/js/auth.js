@@ -145,25 +145,50 @@ export function openAuthModal(registerMode = false) {
 }
 
 async function fetchOrCreateProfile(user) {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+  const uname = user.user_metadata?.username || user.email?.split('@')[0] || 'operador';
+  const dname = user.user_metadata?.display_name || uname;
 
-    if (!error && data) return data;
-  } catch (e) {
-    console.warn('Erro ao consultar profile:', e);
+  if (isConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!error && data) return data;
+
+      // Cria a linha na tabela public.profiles se ainda não existir
+      const defaultProfile = {
+        id: user.id,
+        username: uname,
+        display_name: dname,
+        role: uname.toLowerCase() === 'admin' ? 'admin' : 'user',
+        avatar_url: user.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80',
+        banner_url: user.user_metadata?.banner_url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
+        bio: 'Sobrevivente tático de Knox County.'
+      };
+
+      const { data: inserted, error: insErr } = await supabase
+        .from('profiles')
+        .upsert([defaultProfile])
+        .select()
+        .maybeSingle();
+
+      if (!insErr && inserted) return inserted;
+    } catch (e) {
+      console.warn('Erro ao consultar/criar profile:', e);
+    }
   }
 
   return {
     id: user.id,
-    username: user.user_metadata?.username || user.email?.split('@')[0] || 'operador',
-    display_name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'Operador',
-    role: user.user_metadata?.username === 'admin' ? 'admin' : 'user',
+    username: uname,
+    display_name: dname,
+    role: uname.toLowerCase() === 'admin' ? 'admin' : 'user',
     avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80',
-    banner_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80'
+    banner_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
+    bio: 'Sobrevivente tático de Knox County.'
   };
 }
 

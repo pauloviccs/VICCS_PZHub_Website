@@ -33,7 +33,13 @@ export async function loadUserProfileView(targetUsername) {
   const currentUser = getCurrentUser();
   const currentProfile = getCurrentUserProfile();
 
-  currentTargetUsername = targetUsername || currentProfile?.username || currentUser?.user_metadata?.username;
+  // Se o target for vazio ou 'operador' mas temos usuário autenticado com outro username, usa o correto
+  let resolvedUsername = targetUsername;
+  if ((!resolvedUsername || resolvedUsername === 'operador') && currentUser) {
+    resolvedUsername = currentProfile?.username || currentUser?.user_metadata?.username || currentUser?.email?.split('@')[0];
+  }
+
+  currentTargetUsername = resolvedUsername || currentProfile?.username || currentUser?.user_metadata?.username;
 
   if (!currentTargetUsername) {
     // Usuário não autenticado tentando abrir rota genérica de perfil
@@ -85,19 +91,56 @@ export async function loadUserProfileView(targetUsername) {
 
 export async function fetchProfileData(username) {
   let profile = null;
+  const currentUser = getCurrentUser();
+  const currentProfile = getCurrentUserProfile();
+
   if (isConfigured) {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('username', username)
-        .single();
+      // 1. Busca por username (case-insensitive) ou por ID se for UUID
+      let query = supabase.from('profiles').select('*');
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(username)) {
+        query = query.or(`id.eq.${username},username.ilike.${username}`);
+      } else {
+        query = query.ilike('username', username);
+      }
+
+      const { data, error } = await query.maybeSingle();
 
       if (!error && data) {
         profile = data;
       }
     } catch (e) {
       console.warn('Perfil não encontrado no Supabase:', e);
+    }
+  }
+
+  // 2. Se não encontrou no banco mas é o usuário que está autenticado, sincroniza e cria o registro automaticamente
+  if (!profile && currentUser) {
+    const myUsername = currentProfile?.username || currentUser.user_metadata?.username || currentUser.email?.split('@')[0];
+    if (myUsername && (myUsername.toLowerCase() === username.toLowerCase() || currentUser.id === username || username === 'operador')) {
+      profile = {
+        id: currentUser.id,
+        username: myUsername,
+        display_name: currentProfile?.display_name || currentUser.user_metadata?.display_name || myUsername,
+        role: myUsername.toLowerCase() === 'admin' ? 'admin' : (currentProfile?.role || 'user'),
+        avatar_url: currentProfile?.avatar_url || currentUser.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80',
+        banner_url: currentProfile?.banner_url || currentUser.user_metadata?.banner_url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
+        bio: 'Sobrevivente tático de Knox County.',
+        badges: ['SOBREVIVENTE B42']
+      };
+
+      if (isConfigured) {
+        try {
+          const { data: upserted } = await supabase
+            .from('profiles')
+            .upsert([profile])
+            .select()
+            .maybeSingle();
+          if (upserted) profile = upserted;
+        } catch(err) {
+          console.warn('Erro ao salvar perfil logado no Supabase:', err);
+        }
+      }
     }
   }
 

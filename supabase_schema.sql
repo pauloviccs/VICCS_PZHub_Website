@@ -285,6 +285,9 @@ CREATE POLICY "Autores deletam comentários em posts" ON public.post_comments FO
 DROP POLICY IF EXISTS "Profiles são públicos" ON public.profiles;
 CREATE POLICY "Profiles são públicos" ON public.profiles FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Usuários inserem próprio perfil" ON public.profiles;
+CREATE POLICY "Usuários inserem próprio perfil" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id OR auth.uid() IS NULL);
+
 DROP POLICY IF EXISTS "Usuário pode atualizar próprio perfil" ON public.profiles;
 CREATE POLICY "Usuário pode atualizar próprio perfil" ON public.profiles FOR UPDATE USING (
   auth.uid() = id OR 
