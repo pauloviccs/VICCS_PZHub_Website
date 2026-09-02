@@ -3,11 +3,12 @@
  */
 
 import { initAuth, getCurrentUser, getCurrentUserProfile } from './auth.js';
-import { initWorkshop, loadWorkshopData } from './workshop.js';
+import { initWorkshop, loadWorkshopData, populateWebsiteCategoriesSelect } from './workshop.js';
 import { initModpackBuilder, renderCreatorUploadsList } from './modpackBuilder.js';
 import { loadUserProfileView } from './profile.js';
 import { initAdminDashboard } from './admin.js';
 import { initTimeline, loadTimelinePosts } from './timeline.js';
+import { i18n } from './i18n.js';
 
 class PZHubApp {
   constructor() {
@@ -15,6 +16,9 @@ class PZHubApp {
   }
 
   async init() {
+    // 0. Inicializa o Sistema de Internacionalização (i18n)
+    this.setupLanguageSelector();
+
     // 1. Inicializa Autenticação e Perfil
     await initAuth();
 
@@ -29,6 +33,20 @@ class PZHubApp {
 
     // 4. Trata a rota inicial
     this.handleRoute();
+  }
+
+  setupLanguageSelector() {
+    const langBtns = document.querySelectorAll('.web-lang-btn');
+    langBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lang = btn.dataset.lang;
+        if (lang) {
+          i18n.setLanguage(lang);
+          populateWebsiteCategoriesSelect();
+        }
+      });
+    });
+    i18n.updateDom();
   }
 
   setupRouting() {

@@ -5,6 +5,7 @@
 import { supabase, isConfigured } from './supabaseClient.js';
 import { getCurrentUser } from './auth.js';
 import { fetchModpackChangelogs } from './changelogs.js';
+import { i18n, PZ_CATEGORIES } from './i18n.js';
 
 let modpacksList = [];
 let activeCategory = 'all';
@@ -18,11 +19,15 @@ export async function initWorkshop() {
   const searchInput = document.getElementById('ws-search-input');
   const sortSelect = document.getElementById('ws-sort-select');
 
+  populateWebsiteCategoriesSelect();
+
   categoryBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       categoryBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       activeCategory = btn.dataset.category || 'all';
+      const selectMore = document.getElementById('ws-more-categories-select');
+      if (selectMore) selectMore.value = '';
       renderWorkshop();
     });
   });
@@ -42,6 +47,47 @@ export async function initWorkshop() {
   }
 
   await loadWorkshopData();
+}
+
+export function populateWebsiteCategoriesSelect() {
+  const select = document.getElementById('ws-more-categories-select');
+  if (!select) return;
+
+  select.innerHTML = `<option value="">+ ${i18n.t('ws_category_all', 'MAIS CATEGORIAS')}...</option>`;
+
+  const groups = {
+    elements: i18n.currentLang === 'pt' ? 'Mecânicas & Itens' : (i18n.currentLang === 'es' ? 'Mecánicas e Ítems' : 'Mechanics & Items'),
+    gameplay: i18n.currentLang === 'pt' ? 'Estilo & Gameplay' : (i18n.currentLang === 'es' ? 'Estilo y Gameplay' : 'Style & Gameplay'),
+    technical: i18n.currentLang === 'pt' ? 'Técnica & Estrutura' : (i18n.currentLang === 'es' ? 'Técnica y Estructura' : 'Technical & Overhaul'),
+    versions: i18n.currentLang === 'pt' ? 'Versões Zomboid' : (i18n.currentLang === 'es' ? 'Versiones Zomboid' : 'Game Versions')
+  };
+
+  const groupedMap = {};
+  PZ_CATEGORIES.forEach(cat => {
+    if (!groupedMap[cat.group]) groupedMap[cat.group] = [];
+    groupedMap[cat.group].push(cat);
+  });
+
+  Object.keys(groupedMap).forEach(grpKey => {
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = groups[grpKey] || grpKey;
+    groupedMap[grpKey].forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat.id;
+      opt.textContent = cat.label[i18n.currentLang] || cat.label.pt || cat.id;
+      optgroup.appendChild(opt);
+    });
+    select.appendChild(optgroup);
+  });
+
+  select.onchange = (e) => {
+    const val = e.target.value;
+    if (val) {
+      document.querySelectorAll('.ws-category-btn').forEach(b => b.classList.remove('active'));
+      activeCategory = val;
+      renderWorkshop();
+    }
+  };
 }
 
 export async function loadWorkshopData() {

@@ -10,8 +10,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
 
-    <script type="module" crossorigin src="/assets/index-BVaP2szd.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DBegubf7.css">
+    <script type="module" crossorigin src="/assets/index-CsxlO-Nr.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-COk4p3Ox.css">
   </head>
 
   <body>
@@ -44,9 +44,16 @@
       </nav>
 
       <div class="site-header-actions">
+        <!-- Language Selector -->
+        <div class="lang-selector-group">
+          <button class="web-lang-btn active" data-lang="pt" title="Português (Brasil)">🇧🇷 PT</button>
+          <button class="web-lang-btn" data-lang="en" title="English (US)">🇺🇸 EN</button>
+          <button class="web-lang-btn" data-lang="es" title="Español (ES)">🇪🇸 ES</button>
+        </div>
+
         <span id="cloud-status-badge" class="tarkov-tag badge-emerald" title="Instância Supabase Oficial Conectada">🟢 SUPABASE ONLINE</span>
 
-        <button id="nav-auth-btn" class="tarkov-btn btn-amber" style="padding: 6px 14px;">
+        <button id="nav-auth-btn" class="tarkov-btn btn-amber" style="padding: 6px 14px;" data-i18n="nav_login">
           ENTRAR / CADASTRO
         </button>
 
@@ -55,7 +62,7 @@
             <span id="nav-user-role-badge" class="tarkov-tag badge-role-creator">💎 CRIADOR</span>
             <span id="nav-username" style="font-family: var(--font-mono); font-size: 11px; color: #fff; font-weight: bold;">Operador</span>
           </a>
-          <button id="nav-logout-btn" class="tarkov-btn" style="padding: 4px 8px; font-size: 10px;">SAIR</button>
+          <button id="nav-logout-btn" class="tarkov-btn" style="padding: 4px 8px; font-size: 10px;" data-i18n="nav_logout">SAIR</button>
         </div>
       </div>
     </header>
@@ -76,13 +83,13 @@
 
         <div class="hero-cta-group">
           <a href="#studio" class="tarkov-btn btn-amber">
-            <span>+ CRIAR NOVO MODPACK</span>
+            <span data-i18n="nav_builder">+ CRIAR NOVO MODPACK</span>
           </a>
           <a href="#workshop" class="tarkov-btn">
-            <span>EXPLORAR CATÁLOGO</span>
+            <span data-i18n="nav_workshop">EXPLORAR CATÁLOGO</span>
           </a>
           <button id="hero-btn-my-profile" class="tarkov-btn btn-cyan">
-            <span>👤 MEU PERFIL SOCIAL</span>
+            <span data-i18n="nav_profile">👤 MEU PERFIL SOCIAL</span>
           </button>
         </div>
       </div>
@@ -94,12 +101,18 @@
     <section id="view-workshop" class="site-view active">
       <div class="workshop-controls-bar">
         <!-- Category Filters -->
-        <div class="category-tabs-group">
-          <button class="ws-category-btn active" data-category="all">TODOS OS MODPACKS</button>
-          <button class="ws-category-btn" data-category="Militar">MILITAR & ARMAS</button>
-          <button class="ws-category-btn" data-category="Hardcore">SOBREVIVÊNCIA HARDCORE</button>
-          <button class="ws-category-btn" data-category="Veículos">VEÍCULOS</button>
-          <button class="ws-category-btn" data-category="Roleplay">FACÇÕES & ROLEPLAY</button>
+        <div class="category-tabs-group" style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+          <button class="ws-category-btn active" data-category="all" data-i18n="ws_category_all">TODOS OS MODPACKS</button>
+          <button class="ws-category-btn" data-category="Military">MILITAR</button>
+          <button class="ws-category-btn" data-category="Weapons">ARMAS</button>
+          <button class="ws-category-btn" data-category="Vehicles">VEÍCULOS</button>
+          <button class="ws-category-btn" data-category="Hardmode">HARDCORE</button>
+          <button class="ws-category-btn" data-category="Building">CONSTRUÇÃO</button>
+          <button class="ws-category-btn" data-category="QoL">QOL</button>
+          <button class="ws-category-btn" data-category="Multiplayer">MULTIPLAYER</button>
+          <select id="ws-more-categories-select" class="tarkov-select" style="padding: 4px 8px; font-size: 11px; width: 150px; height: 28px;">
+            <option value="">+ MAIS CATEGORIAS...</option>
+          </select>
         </div>
 
         <!-- Search & Popularity Sort -->
@@ -223,12 +236,42 @@
 
           <div class="builder-grid-2">
             <div class="form-group">
-              <label class="form-label">Categoria Principal</label>
+              <label class="form-label" data-i18n="builder_cat_label">Categoria Principal</label>
               <select id="builder-pack-category" class="tarkov-select">
-                <option value="Militar">Militar & Armas</option>
-                <option value="Hardcore">Sobrevivência Hardcore</option>
-                <option value="Veículos">Veículos & Transporte</option>
-                <option value="Roleplay">Facções & Roleplay</option>
+                <optgroup label="Elementos & Mecânicas">
+                  <option value="Military">Military (Militar & Tático)</option>
+                  <option value="Weapons">Weapons (Armas de Fogo e Brancas)</option>
+                  <option value="Vehicles">Vehicles (Veículos & Transporte)</option>
+                  <option value="Building">Building (Construção & Estruturas)</option>
+                  <option value="Clothing/Armor">Clothing/Armor (Roupas & Armaduras)</option>
+                  <option value="Food">Food (Comidas & Culinária)</option>
+                  <option value="Farming">Farming (Agricultura & Plantação)</option>
+                  <option value="Animals">Animals (Animais & Criação)</option>
+                  <option value="Items">Items (Itens & Equipamentos)</option>
+                  <option value="Literature">Literature (Literatura & Livros)</option>
+                  <option value="Map">Map (Mapas & Cidades Adicionais)</option>
+                  <option value="Audio">Audio (Áudio & Efeitos Sonoros)</option>
+                </optgroup>
+                <optgroup label="Estilo & Gameplay">
+                  <option value="Hardmode">Hardmode (Sobrevivência Hardcore)</option>
+                  <option value="QoL">QoL (Quality of Life / Qualidade de Vida)</option>
+                  <option value="Multiplayer">Multiplayer (Compatível/Focado em Servidores)</option>
+                  <option value="Realistic">Realistic (Realismo & Imersão)</option>
+                  <option value="Balance">Balance (Ajustes de Balanceamento)</option>
+                  <option value="Silly/Fun">Silly/Fun (Mods Cômicos / Diversão)</option>
+                </optgroup>
+                <optgroup label="Técnica & Estrutura">
+                  <option value="Framework">Framework (Bibliotecas & Bases)</option>
+                  <option value="Interface">Interface (UI / Menus / HUD)</option>
+                  <option value="Language/Translation">Language/Translation (Traduções)</option>
+                  <option value="Models">Models (Modelos 3D Customizados)</option>
+                  <option value="Textures">Textures (Texturas Visuais)</option>
+                  <option value="Skills">Skills (Habilidades & Níveis)</option>
+                  <option value="Traits">Traits (Traços de Personagem)</option>
+                  <option value="Pop Culture">Pop Culture (Filmes & Séries)</option>
+                  <option value="WIP">WIP (Work in Progress / Em Desenvolvimento)</option>
+                  <option value="Misc">Misc (Miscelânea / Outros)</option>
+                </optgroup>
               </select>
             </div>
             <div class="form-group">
