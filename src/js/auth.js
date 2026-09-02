@@ -6,6 +6,7 @@ import { supabase, isConfigured } from './supabaseClient.js';
 
 let currentUser = null;
 let currentUserProfile = null;
+let isRegisterMode = false;
 
 export async function initAuth() {
   const authBtn = document.getElementById('nav-auth-btn');
@@ -15,8 +16,6 @@ export async function initAuth() {
   const toggleAuthModeBtn = document.getElementById('btn-toggle-auth-mode');
   const logoutBtn = document.getElementById('nav-logout-btn');
   const userProfileLink = document.getElementById('nav-user-profile-link');
-
-  let isRegisterMode = false;
 
   if (isConfigured) {
     try {
@@ -47,7 +46,7 @@ export async function initAuth() {
       if (currentUser) {
         window.location.hash = `#profile/${currentUserProfile?.username || 'operador'}`;
       } else {
-        if (authModal) authModal.classList.add('visible');
+        openAuthModal(false);
       }
     });
   }
@@ -58,7 +57,7 @@ export async function initAuth() {
       if (currentUser && currentUserProfile?.username) {
         window.location.hash = `#profile/${currentUserProfile.username}`;
       } else {
-        if (authModal) authModal.classList.add('visible');
+        openAuthModal(false);
       }
     });
   }
@@ -77,15 +76,7 @@ export async function initAuth() {
 
   if (toggleAuthModeBtn) {
     toggleAuthModeBtn.addEventListener('click', () => {
-      isRegisterMode = !isRegisterMode;
-      const titleEl = document.getElementById('auth-modal-title');
-      const submitBtn = document.getElementById('auth-submit-btn');
-      const usernameGroup = document.getElementById('auth-username-group');
-
-      if (titleEl) titleEl.textContent = isRegisterMode ? 'CADASTRO DE CRIADOR' : 'AUTENTICAÇÃO TÁTICA';
-      if (submitBtn) submitBtn.textContent = isRegisterMode ? 'CRIAR CONTA DE CRIADOR' : 'ENTRAR NO PZHUB';
-      if (usernameGroup) usernameGroup.style.display = isRegisterMode ? 'block' : 'none';
-      toggleAuthModeBtn.textContent = isRegisterMode ? 'Já possui conta? Faça Login' : 'Não tem conta? Cadastre-se como Criador';
+      openAuthModal(!isRegisterMode);
     });
   }
 
@@ -135,6 +126,22 @@ export async function initAuth() {
       window.location.hash = '#workshop';
     });
   }
+}
+
+export function openAuthModal(registerMode = false) {
+  const authModal = document.getElementById('auth-modal');
+  const titleEl = document.getElementById('auth-modal-title');
+  const submitBtn = document.getElementById('auth-submit-btn');
+  const usernameGroup = document.getElementById('auth-username-group');
+  const toggleAuthModeBtn = document.getElementById('btn-toggle-auth-mode');
+
+  isRegisterMode = registerMode;
+  if (titleEl) titleEl.textContent = isRegisterMode ? 'CADASTRO DE OPERADOR' : 'AUTENTICAÇÃO TÁTICA';
+  if (submitBtn) submitBtn.textContent = isRegisterMode ? 'CRIAR CONTA DE OPERADOR' : 'ENTRAR NO PZHUB';
+  if (usernameGroup) usernameGroup.style.display = isRegisterMode ? 'block' : 'none';
+  if (toggleAuthModeBtn) toggleAuthModeBtn.textContent = isRegisterMode ? 'Já possui conta? Faça Login' : 'Não tem conta? Cadastre-se como Criador';
+
+  if (authModal) authModal.classList.add('visible');
 }
 
 async function fetchOrCreateProfile(user) {

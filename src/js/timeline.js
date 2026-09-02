@@ -4,7 +4,7 @@
  */
 
 import { supabase, isConfigured } from './supabaseClient.js';
-import { getCurrentUser, getCurrentUserProfile } from './auth.js';
+import { getCurrentUser, getCurrentUserProfile, openAuthModal } from './auth.js';
 import { openImageCropperModal } from './imageCropper.js';
 
 let postsList = [];
@@ -28,6 +28,10 @@ export async function initTimeline() {
   const cancelYoutubeBtn = document.getElementById('btn-cancel-youtube');
   const feedTabDiscovery = document.getElementById('tab-feed-discovery');
   const feedTabFollowing = document.getElementById('tab-feed-following');
+
+  // Configura modais de autenticação e lightbox
+  setupAuthLockModal();
+  setupLightboxModal();
 
   // Atualiza foto do autor logado na caixa de composição
   updateComposeAvatar();
@@ -130,12 +134,47 @@ export async function initTimeline() {
     });
   }
 
-  // 6. Configurar Lightbox Modal de Imagem em Tela Cheia
-  setupLightboxModal();
-
   // Carrega dados 100% reais do Supabase
   await loadTimelinePosts();
   await renderFollowSuggestionsSidebar();
+}
+
+function setupAuthLockModal() {
+  const modal = document.getElementById('timeline-auth-lock-modal');
+  const closeBtn = document.getElementById('timeline-auth-lock-close');
+  const loginBtn = document.getElementById('modal-btn-feed-login');
+  const registerBtn = document.getElementById('modal-btn-feed-register');
+
+  if (closeBtn && modal) {
+    closeBtn.onclick = () => modal.classList.remove('visible');
+  }
+
+  if (modal) {
+    modal.onclick = (e) => {
+      if (e.target === modal) modal.classList.remove('visible');
+    };
+  }
+
+  if (loginBtn) {
+    loginBtn.onclick = () => {
+      modal?.classList.remove('visible');
+      openAuthModal(false);
+    };
+  }
+
+  if (registerBtn) {
+    registerBtn.onclick = () => {
+      modal?.classList.remove('visible');
+      openAuthModal(true);
+    };
+  }
+}
+
+export function showAuthLockModal() {
+  const modal = document.getElementById('timeline-auth-lock-modal');
+  if (modal) {
+    modal.classList.add('visible');
+  }
 }
 
 export function updateComposeAvatar() {
@@ -248,8 +287,7 @@ async function handlePublishTimelinePost() {
   const currentProfile = getCurrentUserProfile();
 
   if (!currentUser) {
-    alert('Você precisa estar autenticado para publicar no Radar Social.');
-    document.getElementById('auth-modal')?.classList.add('visible');
+    showAuthLockModal();
     return;
   }
 
@@ -318,29 +356,55 @@ export function renderTimelineFeed() {
 
   const currentUser = getCurrentUser();
   const currentProfile = getCurrentUserProfile();
+  const composeCard = document.querySelector('.timeline-compose-card');
+
+  // Se o usuário NÃO está logado: bloqueia leitura e exibe aviso tático de autenticação obrigatória
+  if (!currentUser) {
+    if (composeCard) {
+      composeCard.style.opacity = '0.4';
+      composeCard.style.pointerEvents = 'none';
+    }
+
+    container.innerHTML = `
+      <div class="timeline-lock-gate-card" style="padding: 48px 24px; background: rgba(14, 17, 23, 0.95); border: 1px solid rgba(229, 142, 38, 0.4); border-radius: 6px; text-align: center; box-shadow: 0 4px 30px rgba(0,0,0,0.8); margin-bottom: 24px;">
+        <div style="font-size: 48px; margin-bottom: 12px;">🔒</div>
+        <span class="tarkov-tag badge-amber" style="margin-bottom: 12px; font-size: 11px;">CANAL MILITAR CRIPTOGRAFADO // FREQ. 92.4 MHz</span>
+        <h2 style="font-size: 20px; font-weight: 800; color: #fff; letter-spacing: 1px; margin: 10px 0 14px 0;">AUTENTICAÇÃO NECESSÁRIA PARA LER TRANSMISSÕES</h2>
+        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6; max-width: 580px; margin: 0 auto 24px auto; background: rgba(0,0,0,0.4); padding: 16px; border: 1px solid var(--panel-border); border-radius: 4px; text-align: left;">
+          As transmissões de rádio e mensagens da comunidade de Knox County contêm relatórios de bases, coordenadas de esquadrões e discussões táticas da comunidade Project Zomboid.
+          <br><br>
+          Para evitar transmissões fantasmas e proteger a segurança dos operadores, <strong>é obrigatório estar conectado com seu perfil</strong> para visualizar as postagens e interagir no feed.
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <button id="btn-gate-login" class="tarkov-btn btn-amber" style="padding: 12px 24px; font-size: 13px;">
+            <span>⚡ ENTRAR NA FREQUÊNCIA (LOGIN)</span>
+          </button>
+          <button id="btn-gate-register" class="tarkov-btn btn-cyan" style="padding: 12px 24px; font-size: 13px;">
+            <span>🎖️ ALISTAR-SE (CRIAR CONTA)</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('btn-gate-login')?.addEventListener('click', () => openAuthModal(false));
+    document.getElementById('btn-gate-register')?.addEventListener('click', () => openAuthModal(true));
+    
+    // Abre o modal de bloqueio automaticamente
+    showAuthLockModal();
+    return;
+  }
+
+  // Usuário autenticado: libera o compositor
+  if (composeCard) {
+    composeCard.style.opacity = '1';
+    composeCard.style.pointerEvents = 'auto';
+  }
 
   let filtered = [...postsList];
 
   // Filtro por Tag Ativa se o usuário clicou num Trending Topic
   if (activeSearchTag) {
     filtered = filtered.filter(p => (p.tags || []).some(t => t.toLowerCase() === activeSearchTag.toLowerCase()) || p.content.toLowerCase().includes(`#${activeSearchTag.toLowerCase()}`));
-  }
-
-  // Filtro da Aba "Seguindo"
-  if (activeFeedTab === 'following') {
-    if (!currentUser) {
-      container.innerHTML = `
-        <div class="tarkov-empty-state" style="padding: 40px; background: rgba(0,0,0,0.4); border: 1px solid var(--panel-border); border-radius: 4px;">
-          <div class="tarkov-empty-title" style="color: var(--accent-amber);">CONEXÃO NECESSÁRIA</div>
-          <div class="tarkov-empty-desc">Faça login para visualizar apenas as transmissões dos sobreviventes que você segue.</div>
-          <button id="btn-login-following-feed" class="tarkov-btn btn-amber" style="margin-top: 12px;">ENTRAR NA FREQUÊNCIA</button>
-        </div>
-      `;
-      document.getElementById('btn-login-following-feed')?.addEventListener('click', () => {
-        document.getElementById('auth-modal')?.classList.add('visible');
-      });
-      return;
-    }
   }
 
   if (filtered.length === 0) {
@@ -585,8 +649,7 @@ function setupTweetCardInteractions() {
       const currentUser = getCurrentUser();
 
       if (!currentUser) {
-        alert('Faça login para curtir posts da Timeline.');
-        document.getElementById('auth-modal')?.classList.add('visible');
+        showAuthLockModal();
         return;
       }
 
@@ -637,8 +700,7 @@ function setupTweetCardInteractions() {
       const currentProfile = getCurrentUserProfile();
 
       if (!currentUser) {
-        alert('Faça login para comentar nesta transmissão.');
-        document.getElementById('auth-modal')?.classList.add('visible');
+        showAuthLockModal();
         return;
       }
 
@@ -849,8 +911,12 @@ export async function renderFollowSuggestionsSidebar() {
 
   container.querySelectorAll('.btn-follow-suggestion').forEach(btn => {
     btn.onclick = async () => {
+      if (!currentUser) {
+        showAuthLockModal();
+        return;
+      }
       const profileId = btn.dataset.profileId;
-      if (currentUser && isConfigured) {
+      if (isConfigured) {
         try {
           await supabase.from('follows').insert([{ follower_id: currentUser.id, following_id: profileId }]);
         } catch(e) {}

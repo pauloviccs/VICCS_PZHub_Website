@@ -440,6 +440,31 @@
     </div>
 
     <!-- ===================================================================== -->
+    <!-- MODAL: BLOQUEIO DE ACESSO AO FEED SOCIAL (AUTH REQUIRED)              -->
+    <!-- ===================================================================== -->
+    <div id="timeline-auth-lock-modal" class="tarkov-modal-backdrop">
+      <div class="tarkov-modal-card" style="max-width: 520px; text-align: center; border-color: rgba(229, 142, 38, 0.4); box-shadow: 0 0 40px rgba(0,0,0,0.9), 0 0 20px rgba(229, 142, 38, 0.2); position: relative;">
+        <button id="timeline-auth-lock-close" class="modal-close-icon" style="position: absolute; top: 12px; right: 12px;">✕</button>
+        <div style="font-size: 38px; margin-bottom: 8px;">🔒</div>
+        <span class="tarkov-tag badge-amber" style="margin-bottom: 8px;">TRANSMISSÃO CRIPTOGRAFADA // KNOX CO.</span>
+        <h2 style="font-size: 17px; font-weight: 800; color: #fff; letter-spacing: 1px; margin: 8px 0 12px 0;">ACESSO RESTRITO AO RADAR SOCIAL</h2>
+        <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; text-align: left; background: rgba(0,0,0,0.35); padding: 14px; border: 1px solid var(--panel-border); border-radius: 4px;">
+          As transmissões desta frequência de rádio contêm fotos de bases, discussões táticas e coordenadas estratégicas da comunidade Project Zomboid.
+          <br><br>
+          Para evitar transmissões fantasmas e garantir a segurança das facções, <strong>é obrigatório estar conectado com seu perfil de Operador</strong> para visualizar as postagens e publicar no feed.
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+          <button id="modal-btn-feed-login" class="tarkov-btn btn-amber" style="flex: 1; min-width: 160px; padding: 10px 16px;">
+            <span>ENTRAR NA FREQUÊNCIA</span>
+          </button>
+          <button id="modal-btn-feed-register" class="tarkov-btn btn-cyan" style="flex: 1; min-width: 160px; padding: 10px 16px;">
+            <span>CRIAR CONTA GRÁTIS</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
     <!-- MODAL: DETALHES DO MODPACK (4 ABAS)                                   -->
     <!-- ===================================================================== -->
     <div id="modpack-details-modal" class="tarkov-modal-backdrop">
