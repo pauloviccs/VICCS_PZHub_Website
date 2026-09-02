@@ -45,6 +45,40 @@ class PZHubApp {
     this.handleRoute();
   }
 
+  initTheme() {
+    const savedTheme = localStorage.getItem('pzhub_web_theme') || 'dark';
+    const isLight = savedTheme === 'light';
+    document.body.classList.toggle('theme-light', isLight);
+    const themeIcon = document.getElementById('theme-toggle-icon');
+    if (themeIcon) themeIcon.textContent = isLight ? '🌙' : '☀️';
+
+    const toggleBtn = document.getElementById('btn-theme-toggle');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        const currentlyLight = document.body.classList.contains('theme-light');
+        const nextLight = !currentlyLight;
+        document.body.classList.toggle('theme-light', nextLight);
+        localStorage.setItem('pzhub_web_theme', nextLight ? 'light' : 'dark');
+        if (themeIcon) themeIcon.textContent = nextLight ? '🌙' : '☀️';
+        showTacticalToast(nextLight ? 'Modo Claro Ativado' : 'Modo Escuro Ativado', 'info', 2000);
+      });
+    }
+  }
+
+  setupLanguageSelector() {
+    const langBtns = document.querySelectorAll('.web-lang-btn');
+    langBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lang = btn.dataset.lang;
+        if (lang) {
+          i18n.setLanguage(lang);
+          populateWebsiteCategoriesSelect();
+        }
+      });
+    });
+    i18n.updateDom();
+  }
+
   setupMobileNavigation() {
     const hamburgerBtn = document.getElementById('btn-mobile-nav-toggle');
     const closeBtn = document.getElementById('btn-mobile-nav-close');
@@ -115,82 +149,6 @@ class PZHubApp {
 
     // Atualiza abas do topo desktop e gaveta mobile
     document.querySelectorAll('.site-nav-tab, .mobile-nav-tab').forEach(tab => {
-      tab.classList.toggle('active', tab.dataset.view === viewName);
-    });
-    const savedTheme = localStorage.getItem('pzhub_web_theme') || 'dark';
-    const isLight = savedTheme === 'light';
-    document.body.classList.toggle('theme-light', isLight);
-    const themeIcon = document.getElementById('theme-toggle-icon');
-    if (themeIcon) themeIcon.textContent = isLight ? '🌙' : '☀️';
-
-    const toggleBtn = document.getElementById('btn-theme-toggle');
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', () => {
-        const currentlyLight = document.body.classList.contains('theme-light');
-        const nextLight = !currentlyLight;
-        document.body.classList.toggle('theme-light', nextLight);
-        localStorage.setItem('pzhub_web_theme', nextLight ? 'light' : 'dark');
-        if (themeIcon) themeIcon.textContent = nextLight ? '🌙' : '☀️';
-        showTacticalToast(nextLight ? 'Modo Claro Ativado' : 'Modo Escuro Ativado', 'info', 2000);
-      });
-    }
-  }
-
-  setupLanguageSelector() {
-    const langBtns = document.querySelectorAll('.web-lang-btn');
-    langBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const lang = btn.dataset.lang;
-        if (lang) {
-          i18n.setLanguage(lang);
-          populateWebsiteCategoriesSelect();
-        }
-      });
-    });
-    i18n.updateDom();
-  }
-
-  setupRouting() {
-    window.addEventListener('hashchange', () => this.handleRoute());
-
-    // Abas do topo
-    document.querySelectorAll('.site-nav-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        const view = tab.dataset.view;
-        if (view) window.location.hash = `#${view}`;
-      });
-    });
-  }
-
-  setupGlobalButtons() {
-    const heroProfileBtn = document.getElementById('hero-btn-my-profile');
-    if (heroProfileBtn) {
-      heroProfileBtn.addEventListener('click', () => {
-        const currentUser = getCurrentUser();
-        const profile = getCurrentUserProfile();
-        if (currentUser && profile?.username) {
-          window.location.hash = `#profile/${profile.username}`;
-        } else {
-          document.getElementById('auth-modal')?.classList.add('visible');
-        }
-      });
-    }
-  }
-
-  handleRoute() {
-    const rawHash = window.location.hash.slice(1) || 'workshop';
-    const parts = rawHash.split('/');
-    const view = parts[0];
-    const param = parts[1];
-
-    this.switchView(view, param);
-  }
-
-  async switchView(viewName, param) {
-    this.currentView = viewName;
-
-    // Atualiza abas do topo
-    document.querySelectorAll('.site-nav-tab').forEach(tab => {
       tab.classList.toggle('active', tab.dataset.view === viewName);
     });
 
