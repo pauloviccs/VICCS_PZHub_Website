@@ -7,10 +7,13 @@
 import { supabase, isConfigured } from './supabaseClient.js';
 import { getCurrentUser, getCurrentUserProfile } from './auth.js';
 import { openImageCropperModal } from './imageCropper.js';
+import { showTacticalAlert, showTacticalConfirm, showTacticalToast } from './tacticalModal.js';
 
 let activeProfileData = null;
 let currentTargetUsername = null;
 let profileScrapsList = [];
+let profileUserModpacksList = [];
+let isFollowingOperator = false;
 let lastScrapPostTime = 0;
 let modalSelectedBadges = [];
 
@@ -85,8 +88,48 @@ export async function loadUserProfileView(targetUsername) {
     return;
   }
 
+  // Verifica persistência de Follow real no Supabase
+  if (currentUser && currentUser.id !== activeProfileData.id && isConfigured) {
+    try {
+      const { data: followRel } = await supabase
+        .from('follows')
+        .select('id')
+        .eq('follower_id', currentUser.id)
+        .eq('following_id', activeProfileData.id)
+        .maybeSingle();
+      isFollowingOperator = !!followRel;
+    } catch(e) {
+      console.warn('Erro ao checar status de follow:', e);
+      isFollowingOperator = false;
+    }
+  } else {
+    isFollowingOperator = false;
+  }
+
   profileScrapsList = await fetchProfileScraps(activeProfileData.id || currentTargetUsername);
+  profileUserModpacksList = await fetchUserModpacks(activeProfileData.id, activeProfileData.username);
   renderProfileView();
+}
+
+export async function fetchUserModpacks(userId, username) {
+  if (isConfigured) {
+    try {
+      let query = supabase.from('modpacks').select('*');
+      if (userId) {
+        query = query.or(`author_id.eq.${userId},author.ilike.${username},author_name.ilike.${username}`);
+      } else {
+        query = query.or(`author.ilike.${username},author_name.ilike.${username}`);
+      }
+      const { data, error } = await query.order('created_at', { ascending: false });
+      if (!error && data) return data;
+    } catch(e) {
+      console.warn('Erro ao buscar modpacks do autor:', e);
+    }
+  }
+
+  // Fallback local
+  const localModpacks = JSON.parse(localStorage.getItem('PZHUB_SAVED_MODPACKS') || '[]');
+  return localModpacks.filter(p => p.author === username || p.author_name === username);
 }
 
 export async function fetchProfileData(username) {
@@ -310,7 +353,7 @@ export function renderProfileView() {
         </div>
         <div class="profile-stat-box">
           <span class="stat-label">MODS PUBLICADOS</span>
-          <span class="stat-value text-emerald">${activeProfileData.total_mods_count || 0}</span>
+          <span class="stat-value text-emerald">${profileUserModpacksList.length || activeProfileData.total_mods_count || 0}</span>
         </div>
         <div class="profile-stat-box">
           <span class="stat-label">LIKES RECEBIDOS</span>
@@ -318,8 +361,48 @@ export function renderProfileView() {
         </div>
       </div>
 
+      <!-- 3.5. COLEÇÕES & MODPACKS PUBLICADOS PELO OPERADOR -->
+      <div class="profile-published-modpacks-section" style="margin-top: 24px;">
+        <div class="scraps-header-strip">
+          <div class="scraps-title-group">
+            <span class="view-sub">PRODUÇÃO TÁTICA</span>
+            <h2 class="section-title">MODPACKS PUBLICADOS (${profileUserModpacksList.length})</h2>
+          </div>
+          <span class="scrap-notice-tag">📦 Coleções disponíveis no Catálogo</span>
+        </div>
+
+        ${profileUserModpacksList.length === 0 ? `
+          <div class="tarkov-empty-state" style="padding: 24px; background: rgba(0, 0, 0, 0.2); border: 1px dashed var(--panel-border); border-radius: var(--radius-sm); margin-top: 12px;">
+            <div class="tarkov-empty-title" style="font-size: 13px;">NENHUM MODPACK PUBLICADO</div>
+            <div class="tarkov-empty-desc" style="font-size: 12px;">Este operador ainda não publicou coleções de mods no catálogo comunitário.</div>
+          </div>
+        ` : `
+          <div class="workshop-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 14px;">
+            ${profileUserModpacksList.map(pack => `
+              <div class="ws-card">
+                <div class="ws-card-banner" style="background-image: url('${pack.banner_url || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80'}'); height: 110px; background-size: cover; background-position: center; position: relative;">
+                  <div class="ws-card-tags" style="position: absolute; top: 8px; left: 8px; display: flex; gap: 4px;">
+                    <span class="tarkov-tag badge-amber">${pack.zomboid_version || '42.0+'}</span>
+                    <span class="tarkov-tag badge-cyan">${pack.category || 'Militar'}</span>
+                  </div>
+                </div>
+                <div class="ws-card-body" style="padding: 12px 14px;">
+                  <h3 class="ws-card-title" style="font-size: 13.5px; margin: 0 0 6px 0; color: #fff;">${pack.name}</h3>
+                  <p class="ws-card-desc" style="font-size: 11.5px; color: var(--text-dim); line-height: 1.4; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${pack.description || 'Coleção tática de mods.'}</p>
+                  
+                  <div class="ws-card-meta" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 8px; font-size: 11px; font-family: var(--font-mono);">
+                    <span style="color: var(--accent-emerald);">📦 ${(pack.mods || []).length} Mods</span>
+                    <span style="color: var(--accent-amber);">❤️ ${pack.likes_count || 0} Likes</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `}
+      </div>
+
       <!-- 4. MURAL DE RECADOS DO PERFIL (SCRAPS / DISCORD STYLE) -->
-      <div class="profile-scraps-section">
+      <div class="profile-scraps-section" style="margin-top: 24px;">
         <div class="scraps-header-strip">
           <div class="scraps-title-group">
             <span class="view-sub">MURAL DE COMUNICAÇÃO</span>
@@ -411,22 +494,57 @@ function setupProfileEventListeners(isOwner, isStaff) {
     };
   }
 
-  // Follow button
+  // Follow button com persistência real no Supabase
   const followBtn = document.getElementById('btn-toggle-follow');
   const followText = document.getElementById('follow-btn-text');
   const followersCountEl = document.getElementById('profile-followers-count');
 
   if (followBtn) {
-    let following = false;
-    followBtn.addEventListener('click', () => {
-      following = !following;
-      followBtn.classList.toggle('btn-amber', following);
-      followBtn.classList.toggle('btn-emerald', !following);
-      if (followText) followText.textContent = following ? '✓ SEGUINDO' : 'SEGUIR OPERADOR';
+    followBtn.classList.toggle('btn-amber', isFollowingOperator);
+    followBtn.classList.toggle('btn-emerald', !isFollowingOperator);
+    if (followText) followText.textContent = isFollowingOperator ? '✓ SEGUINDO' : 'SEGUIR OPERADOR';
+
+    followBtn.addEventListener('click', async () => {
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        document.getElementById('auth-modal')?.classList.add('visible');
+        return;
+      }
+
+      if (currentUser.id === activeProfileData.id) {
+        showTacticalToast('Você não pode seguir a si mesmo.', 'warning');
+        return;
+      }
+
+      const nextFollowState = !isFollowingOperator;
+      isFollowingOperator = nextFollowState;
+      followBtn.classList.toggle('btn-amber', isFollowingOperator);
+      followBtn.classList.toggle('btn-emerald', !isFollowingOperator);
+      if (followText) followText.textContent = isFollowingOperator ? '✓ SEGUINDO' : 'SEGUIR OPERADOR';
 
       const currentCount = parseInt(followersCountEl?.textContent || '0', 10);
       if (followersCountEl) {
-        followersCountEl.textContent = following ? currentCount + 1 : Math.max(0, currentCount - 1);
+        followersCountEl.textContent = isFollowingOperator ? currentCount + 1 : Math.max(0, currentCount - 1);
+      }
+
+      if (isConfigured) {
+        try {
+          if (nextFollowState) {
+            await supabase.from('follows').insert([{
+              follower_id: currentUser.id,
+              following_id: activeProfileData.id
+            }]);
+            showTacticalToast(`Agora você está seguindo @${activeProfileData.username}!`, 'success');
+          } else {
+            await supabase.from('follows').delete()
+              .eq('follower_id', currentUser.id)
+              .eq('following_id', activeProfileData.id);
+            showTacticalToast(`Deixou de seguir @${activeProfileData.username}.`, 'info');
+          }
+        } catch (err) {
+          console.error('Erro ao persistir follow no Supabase:', err);
+          showTacticalToast('Erro ao sincronizar com o banco.', 'error');
+        }
       }
     });
   }

@@ -49,15 +49,21 @@ export const translations = {
     // Top Nav
     "nav_brand": "PZHUB",
     "nav_brand_sub": "COMUNIDADE PROJECT ZOMBOID B42",
-    "nav_workshop": "CATÁLOGO WORKSHOP",
-    "nav_builder": "+ CRIAR MODPACK",
-    "nav_timeline": "HISTÓRICO & LOGS",
-    "nav_profile": "MEU PERFIL",
-    "nav_admin": "PAINEL ADMIN",
-    "nav_login": "ENTRAR",
+    "nav_workshop": "01 // CATÁLOGO",
+    "nav_dashboard": "02 // DASHBOARD GERAL",
+    "nav_builder": "03 // ESTÚDIO DO CRIADOR",
+    "nav_feed": "04 // RADAR SOCIAL (FEED)",
+    "nav_admin": "👑 // MODERAÇÃO & STAFF",
+    "nav_login": "ENTRAR / CADASTRO",
     "nav_signup": "CADASTRAR",
     "nav_logout": "SAIR",
+    "nav_profile": "👤 MEU PERFIL SOCIAL",
     "nav_download_app": "BAIXAR SOFTWARE DESKTOP",
+    "btn_download_software": "⬇️ BAIXAR PZHUB DESKTOP (.EXE)",
+
+    // Hero
+    "hero_title": "ECOSSISTEMA SOCIAL & TÁCTICO DE MODPACKS",
+    "hero_desc": "Publique suas coleções de mods com 1 clique, siga seus criadores favoritos, interaja no mural de recados e sincronize instantaneamente com o aplicativo desktop PZHub.",
 
     // Workshop View
     "ws_category_all": "TODOS OS MODPACKS",
@@ -95,23 +101,29 @@ export const translations = {
     // Top Nav
     "nav_brand": "PZHUB",
     "nav_brand_sub": "PROJECT ZOMBOID B42 COMMUNITY",
-    "nav_workshop": "WORKSHOP CATALOG",
-    "nav_builder": "+ CREATE MODPACK",
-    "nav_timeline": "LOGS & TIMELINE",
-    "nav_profile": "MY PROFILE",
-    "nav_admin": "ADMIN PANEL",
-    "nav_login": "SIGN IN",
+    "nav_workshop": "01 // WORKSHOP",
+    "nav_dashboard": "02 // DASHBOARD",
+    "nav_builder": "03 // CREATOR STUDIO",
+    "nav_feed": "04 // SOCIAL RADAR",
+    "nav_admin": "👑 // MODERATION & STAFF",
+    "nav_login": "LOGIN / SIGNUP",
     "nav_signup": "REGISTER",
-    "nav_logout": "SIGN OUT",
+    "nav_logout": "LOGOUT",
+    "nav_profile": "👤 MY SOCIAL PROFILE",
     "nav_download_app": "DOWNLOAD DESKTOP APP",
+    "btn_download_software": "⬇️ DOWNLOAD PZHUB DESKTOP (.EXE)",
+
+    // Hero
+    "hero_title": "SOCIAL & TACTICAL MODPACK ECOSYSTEM",
+    "hero_desc": "Publish your mod collections with 1 click, follow your favorite creators, post on bulletin boards and sync instantly with PZHub desktop app.",
 
     // Workshop View
     "ws_category_all": "ALL MODPACKS",
-    "ws_search_placeholder": "Search modpacks...",
+    "ws_search_placeholder": "Search modpack...",
     "ws_sort_popular": "🔥 Most Popular (Relevance)",
-    "ws_sort_likes": "⭐ Most Voted (Likes)",
-    "ws_sort_recent": "⚡ Recent (Newest)",
-    "btn_copy_manifest": "COPY LINK FOR PZHub",
+    "ws_sort_likes": "⭐ Top Rated (Likes)",
+    "ws_sort_recent": "⚡ New Releases",
+    "btn_copy_manifest": "COPY LINK TO PZHub",
     "btn_view_details": "INSPECT DETAILS",
     "btn_download_zip": "DIRECT DOWNLOAD (.ZIP)",
 
@@ -122,18 +134,18 @@ export const translations = {
     "builder_version_label": "Initial Version *",
     "builder_cat_label": "Primary Category",
     "builder_compat_label": "Zomboid Compatibility",
-    "builder_desc_label": "Full Description / Manifesto *",
+    "builder_desc_label": "Full Description / Lore *",
     "builder_image_label": "Cover Image (HD Banner)",
     "builder_crop_btn": "📷 CROP & UPLOAD",
     "builder_mods_title": "MODPACK COMPONENTS",
-    "btn_add_mod": "+ ADD MOD / ITEM",
+    "btn_add_mod": "+ ADD MOD / COMPONENT",
     "btn_save_publish": "🚀 SAVE & PUBLISH TO WORKSHOP",
 
     // Modals
     "auth_modal_title": "PZHUB NETWORK ACCESS",
-    "auth_email": "Survivor E-mail",
-    "auth_pass": "Access Key (Password)",
-    "auth_btn_login": "SIGN IN",
+    "auth_email": "Survivor Email",
+    "auth_pass": "Access Password",
+    "auth_btn_login": "LOGIN TO NETWORK",
     "auth_btn_signup": "CREATE NEW ACCOUNT"
   },
 
@@ -141,28 +153,34 @@ export const translations = {
     // Top Nav
     "nav_brand": "PZHUB",
     "nav_brand_sub": "COMUNIDAD PROJECT ZOMBOID B42",
-    "nav_workshop": "CATÁLOGO WORKSHOP",
-    "nav_builder": "+ CREAR MODPACK",
-    "nav_timeline": "REGISTRO Y TIMELINE",
-    "nav_profile": "MI PERFIL",
-    "nav_admin": "PANEL ADMIN",
-    "nav_login": "INICIAR SESIÓN",
+    "nav_workshop": "01 // CATÁLOGO",
+    "nav_dashboard": "02 // PANEL GENERAL",
+    "nav_builder": "03 // ESTUDIO CREADOR",
+    "nav_feed": "04 // RADAR SOCIAL",
+    "nav_admin": "👑 // MODERACIÓN Y STAFF",
+    "nav_login": "INICIAR SESIÓN / REGISTRO",
     "nav_signup": "REGISTRARSE",
-    "nav_logout": "CERRAR SESIÓN",
-    "nav_download_app": "DESCARGAR APP DESKTOP",
+    "nav_logout": "SALIR",
+    "nav_profile": "👤 MI PERFIL SOCIAL",
+    "nav_download_app": "DESCARGAR APP ESCRITORIO",
+    "btn_download_software": "⬇️ DESCARGAR PZHUB DESKTOP (.EXE)",
+
+    // Hero
+    "hero_title": "ECOSISTEMA SOCIAL Y TÁCTICO DE MODPACKS",
+    "hero_desc": "Publica tus colecciones de mods con 1 clic, sigue a tus creadores favoritos, interactúa en el muro de mensajes y sincroniza al instante con la app de escritorio PZHub.",
 
     // Workshop View
     "ws_category_all": "TODOS LOS MODPACKS",
-    "ws_search_placeholder": "Buscar modpacks...",
+    "ws_search_placeholder": "Buscar modpack...",
     "ws_sort_popular": "🔥 Más Populares (Relevancia)",
     "ws_sort_likes": "⭐ Más Votados (Likes)",
     "ws_sort_recent": "⚡ Recientes (Novedades)",
-    "btn_copy_manifest": "COPIAR ENLACE P/ PZHub",
+    "btn_copy_manifest": "COPIAR LINK P/ PZHub",
     "btn_view_details": "INSPECCIONAR DETALLES",
     "btn_download_zip": "DESCARGA DIRECTA (.ZIP)",
 
     // Builder View
-    "builder_title": "CREADOR DE MODPACKS // NUBE",
+    "builder_title": "CONSTRUCTOR DE MODPACKS // NUBE",
     "builder_subtitle": "Crea colecciones oficiales o personalizadas para que la comunidad las importe en PZHub.",
     "builder_name_label": "Nombre Oficial del Modpack *",
     "builder_version_label": "Versión Inicial *",
@@ -172,14 +190,14 @@ export const translations = {
     "builder_image_label": "Imagen de Portada (Banner HD)",
     "builder_crop_btn": "📷 AJUSTAR Y SUBIR",
     "builder_mods_title": "COMPONENTES DEL MODPACK",
-    "btn_add_mod": "+ AÑADIR MOD / ITEM",
+    "btn_add_mod": "+ AÑADIR MOD / ÍTEM",
     "btn_save_publish": "🚀 GUARDAR Y PUBLICAR EN WORKSHOP",
 
     // Modals
-    "auth_modal_title": "ACCESO A RED PZHUB",
+    "auth_modal_title": "ACCESO A LA RED PZHUB",
     "auth_email": "Correo del Superviviente",
-    "auth_pass": "Clave de Acceso (Contraseña)",
-    "auth_btn_login": "INGRESAR AL SISTEMA",
+    "auth_pass": "Contraseña de Acceso",
+    "auth_btn_login": "ENTRAR AL SISTEMA",
     "auth_btn_signup": "CREAR CUENTA NUEVA"
   }
 };

@@ -214,6 +214,11 @@ export function updateAuthUI() {
       userNameEl.textContent = currentUserProfile?.display_name || currentUserProfile?.username || 'Operador';
     }
 
+    const navAvatar = document.getElementById('nav-user-avatar');
+    if (navAvatar) {
+      navAvatar.src = currentUserProfile?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=64&q=80';
+    }
+
     if (userRoleBadge && currentUserProfile) {
       const role = currentUserProfile.role || 'user';
       if (role === 'admin') {

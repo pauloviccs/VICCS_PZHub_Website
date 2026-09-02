@@ -5,20 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PZHub Community Workshop - Modpack Creator & Social Platform</title>
 
+    <!-- Official Favicons & App Icons -->
+    <link rel="icon" type="image/svg+xml" href="/assets/PZHub_LogoIcon-CDJcGwfb.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32-DZPUOhAv.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16-BBq8xOQu.png" />
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon-BEHiZNjl.png" />
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
 
-    <script type="module" crossorigin src="/assets/index-CsxlO-Nr.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-COk4p3Ox.css">
+    <script type="module" crossorigin src="/assets/index-jdMgH-DU.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B9D6txcn.css">
   </head>
 
   <body>
     <!-- 1. TOP HEADER NAVBAR -->
     <header class="site-header">
       <a href="#workshop" class="site-brand">
-        <div class="brand-icon-box">PZ</div>
+        <img src="/assets/PZHub_LogoIcon-CDJcGwfb.svg" class="brand-logo-img" alt="PZHub Logo" style="width: 30px; height: 30px; object-fit: contain;" />
         <div class="brand-title">
           <span class="brand-title-main">PZHUB WORKSHOP</span>
           <span class="brand-title-sub">COMMUNITY CREATOR & SOCIAL PLATFORM</span>
@@ -27,19 +33,19 @@
 
       <nav class="site-nav-menu">
         <button class="site-nav-tab active" data-view="workshop">
-          <span>01 // CATÁLOGO</span>
+          <span data-i18n="nav_workshop">01 // CATÁLOGO</span>
         </button>
         <button class="site-nav-tab" data-view="dashboard">
-          <span>02 // DASHBOARD GERAL</span>
+          <span data-i18n="nav_dashboard">02 // DASHBOARD GERAL</span>
         </button>
         <button class="site-nav-tab" data-view="studio">
-          <span>03 // ESTÚDIO DO CRIADOR</span>
+          <span data-i18n="nav_builder">03 // ESTÚDIO DO CRIADOR</span>
         </button>
         <button class="site-nav-tab" data-view="timeline">
-          <span>04 // RADAR SOCIAL (FEED)</span>
+          <span data-i18n="nav_feed">04 // RADAR SOCIAL (FEED)</span>
         </button>
         <button class="site-nav-tab" data-view="admin" id="nav-admin-tab" style="display: none; border-bottom-color: var(--accent-red); color: var(--accent-red);">
-          <span>👑 // MODERAÇÃO & STAFF</span>
+          <span data-i18n="nav_admin">👑 // MODERAÇÃO & STAFF</span>
         </button>
       </nav>
 
@@ -51,6 +57,11 @@
           <button class="web-lang-btn" data-lang="es" title="Español (ES)">🇪🇸 ES</button>
         </div>
 
+        <!-- White/Dark Mode Toggle -->
+        <button id="btn-theme-toggle" class="tarkov-btn" style="padding: 5px 9px; font-size: 11px;" title="Alternar Modo Claro / Escuro">
+          <span id="theme-toggle-icon">☀️</span>
+        </button>
+
         <span id="cloud-status-badge" class="tarkov-tag badge-emerald" title="Instância Supabase Oficial Conectada">🟢 SUPABASE ONLINE</span>
 
         <button id="nav-auth-btn" class="tarkov-btn btn-amber" style="padding: 6px 14px;" data-i18n="nav_login">
@@ -59,6 +70,7 @@
 
         <div id="nav-user-profile" style="display: none; align-items: center; gap: 10px;">
           <a href="#profile" id="nav-user-profile-link" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+            <img id="nav-user-avatar" class="nav-avatar-img" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=64&q=80" alt="Avatar" />
             <span id="nav-user-role-badge" class="tarkov-tag badge-role-creator">💎 CRIADOR</span>
             <span id="nav-username" style="font-family: var(--font-mono); font-size: 11px; color: #fff; font-weight: bold;">Operador</span>
           </a>
@@ -76,12 +88,18 @@
         <div class="hero-corner corner-br"></div>
 
         <div class="hero-tag">PROJECT ZOMBOID // BUILD 42 & 41 ECOSYSTEM</div>
-        <h1 class="hero-title">ECOSSISTEMA SOCIAL & TÁTICO DE MODPACKS</h1>
-        <p class="hero-desc">
+        <h1 class="hero-title" data-i18n="hero_title">ECOSSISTEMA SOCIAL & TÁTICO DE MODPACKS</h1>
+        <p class="hero-desc" data-i18n="hero_desc">
           Publique suas coleções de mods com 1 clique, siga seus criadores favoritos, interaja no mural de recados e sincronize instantaneamente com o aplicativo desktop <strong>PZHub</strong>.
         </p>
 
         <div class="hero-cta-group">
+          <!-- Download Software CTA -->
+          <a href="https://github.com/viccs/pzhub/releases/latest/download/PZHub_2.0.0_x64-setup.exe" id="hero-btn-download-app" class="tarkov-btn btn-download-glow" target="_blank">
+            <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: currentColor;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+            <span data-i18n="btn_download_software">⬇️ BAIXAR PZHUB DESKTOP (.EXE)</span>
+          </a>
+
           <a href="#studio" class="tarkov-btn btn-amber">
             <span data-i18n="nav_builder">+ CRIAR NOVO MODPACK</span>
           </a>

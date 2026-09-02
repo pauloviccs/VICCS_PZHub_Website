@@ -9,6 +9,12 @@ import { loadUserProfileView } from './profile.js';
 import { initAdminDashboard } from './admin.js';
 import { initTimeline, loadTimelinePosts } from './timeline.js';
 import { i18n } from './i18n.js';
+import { showTacticalAlert, showTacticalConfirm, showTacticalToast } from './tacticalModal.js';
+
+// Expõe globalmente para que qualquer script possa usar diálogos elegantes
+window.showTacticalAlert = showTacticalAlert;
+window.showTacticalConfirm = showTacticalConfirm;
+window.showTacticalToast = showTacticalToast;
 
 class PZHubApp {
   constructor() {
@@ -16,7 +22,10 @@ class PZHubApp {
   }
 
   async init() {
-    // 0. Inicializa o Sistema de Internacionalização (i18n)
+    // 0. Inicializa o Tema (Dark / Light White Mode)
+    this.initTheme();
+
+    // 0.1 Inicializa o Sistema de Internacionalização (i18n)
     this.setupLanguageSelector();
 
     // 1. Inicializa Autenticação e Perfil
@@ -33,6 +42,26 @@ class PZHubApp {
 
     // 4. Trata a rota inicial
     this.handleRoute();
+  }
+
+  initTheme() {
+    const savedTheme = localStorage.getItem('pzhub_web_theme') || 'dark';
+    const isLight = savedTheme === 'light';
+    document.body.classList.toggle('theme-light', isLight);
+    const themeIcon = document.getElementById('theme-toggle-icon');
+    if (themeIcon) themeIcon.textContent = isLight ? '🌙' : '☀️';
+
+    const toggleBtn = document.getElementById('btn-theme-toggle');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        const currentlyLight = document.body.classList.contains('theme-light');
+        const nextLight = !currentlyLight;
+        document.body.classList.toggle('theme-light', nextLight);
+        localStorage.setItem('pzhub_web_theme', nextLight ? 'light' : 'dark');
+        if (themeIcon) themeIcon.textContent = nextLight ? '🌙' : '☀️';
+        showTacticalToast(nextLight ? 'Modo Claro Ativado' : 'Modo Escuro Ativado', 'info', 2000);
+      });
+    }
   }
 
   setupLanguageSelector() {
