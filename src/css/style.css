@@ -818,3 +818,694 @@ body {
   font-size: 11px;
   max-width: 400px;
 }
+
+/* ==========================================================================
+   STEAM SHOWCASE & X (TWITTER) SOCIAL PROFILE STYLES
+   ========================================================================== */
+.steam-profile-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile-banner-wrapper {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  background: #000;
+}
+
+.profile-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.65) saturate(1.1);
+}
+
+.profile-banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, rgba(7, 10, 13, 0.95) 10%, transparent 70%);
+}
+
+.btn-edit-banner {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.btn-edit-banner:hover {
+  border-color: var(--accent-amber);
+  color: var(--accent-amber);
+}
+.btn-edit-banner svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.profile-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  background: var(--bg-surface-card);
+  border: 1px solid var(--panel-border);
+  padding: 24px;
+  border-radius: var(--radius-md);
+  margin-top: -60px;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  flex-wrap: wrap;
+}
+
+.profile-avatar-block {
+  position: relative;
+}
+
+.avatar-frame {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 3px solid var(--accent-amber);
+  box-shadow: 0 0 20px var(--accent-amber-glow);
+  overflow: hidden;
+  background: #000;
+  position: relative;
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-status-dot {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-emerald);
+  border: 2px solid #000;
+  box-shadow: 0 0 8px var(--accent-emerald-glow);
+}
+
+.btn-edit-avatar {
+  position: absolute;
+  bottom: 0;
+  right: -4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--panel-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  transition: var(--transition-fast);
+}
+.btn-edit-avatar:hover {
+  border-color: var(--accent-amber);
+  color: var(--accent-amber);
+}
+.btn-edit-avatar svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
+
+.profile-identity-strip {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 260px;
+}
+
+.profile-display-name {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.profile-handle {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent-amber);
+}
+
+.profile-bio-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  max-width: 700px;
+}
+
+.profile-badges-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.tarkov-badge-steam {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-main);
+  padding: 3px 10px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border-radius: 2px;
+}
+
+/* Patentes Semânticas */
+.badge-role-admin {
+  background: rgba(241, 196, 15, 0.18) !important;
+  border-color: #f1c40f !important;
+  color: #f1c40f !important;
+  font-weight: 800;
+  box-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
+}
+
+.badge-role-mod {
+  background: rgba(0, 206, 201, 0.18) !important;
+  border-color: var(--accent-cyan) !important;
+  color: var(--accent-cyan) !important;
+  font-weight: 800;
+}
+
+.badge-role-creator {
+  background: rgba(46, 204, 113, 0.18) !important;
+  border-color: var(--accent-emerald) !important;
+  color: var(--accent-emerald) !important;
+  font-weight: 800;
+}
+
+.badge-role-user {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: var(--text-muted) !important;
+}
+
+/* Grade de Estatísticas */
+.profile-stats-grid, .dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.profile-stat-box {
+  background: var(--bg-surface-card);
+  border: 1px solid var(--panel-border);
+  padding: 16px 20px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-stat-box .stat-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+}
+
+.profile-stat-box .stat-value {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+/* ==========================================================================
+   MURAL DE RECADOS DO PERFIL (SCRAPS / DISCORD REACTION PILLS)
+   ========================================================================== */
+.profile-scraps-section {
+  background: var(--bg-surface-card);
+  border: 1px solid var(--panel-border);
+  padding: 24px;
+  border-radius: var(--radius-md);
+}
+
+.scraps-header-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.scrap-notice-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.scrap-compose-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+}
+
+.scrap-compose-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.scrap-cooldown-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-amber);
+}
+
+.scraps-feed-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.scrap-card {
+  background: rgba(11, 16, 22, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color var(--transition-fast);
+}
+
+.scrap-card:hover {
+  border-color: rgba(229, 142, 38, 0.3);
+}
+
+.scrap-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.scrap-author-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.scrap-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--panel-border);
+}
+
+.scrap-author-name {
+  font-weight: 700;
+  color: #fff;
+  font-size: 12px;
+}
+
+.scrap-date {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  display: block;
+}
+
+.btn-delete-scrap {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px;
+  transition: var(--transition-fast);
+}
+.btn-delete-scrap:hover {
+  color: var(--accent-red);
+}
+.btn-delete-scrap svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.scrap-message-text {
+  font-size: 13px;
+  color: var(--text-main);
+  line-height: 1.5;
+}
+
+/* Discord Style Reaction Pills */
+.scrap-reactions-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.reaction-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.reaction-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.reaction-pill.reacted {
+  background: rgba(229, 142, 38, 0.2);
+  border-color: var(--accent-amber);
+  color: var(--accent-amber);
+}
+
+/* ==========================================================================
+   PAINEL ADMINISTRATIVO & TABELAS DE MODERAÇÃO
+   ========================================================================== */
+.admin-dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-header-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.admin-quick-stats {
+  display: flex;
+  gap: 10px;
+}
+
+.stat-pill {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--panel-border);
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.pill-dot.red { background: var(--accent-red); box-shadow: 0 0 6px var(--accent-red-glow); }
+.pill-dot.cyan { background: var(--accent-cyan); box-shadow: 0 0 6px var(--accent-cyan-glow); }
+
+.admin-tabs-bar {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 8px;
+}
+
+.admin-tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  padding: 8px 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.admin-tab-btn.active {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--panel-border);
+  color: #fff;
+}
+
+.admin-tab-pane {
+  display: none;
+}
+.admin-tab-pane.active {
+  display: block;
+}
+
+.admin-table-wrapper {
+  background: var(--bg-surface-card);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+}
+
+.tarkov-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+
+.tarkov-table th {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.tarkov-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--text-main);
+}
+
+.tarkov-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ==========================================================================
+   MODAL DE DETALHES DE MODPACK (4 ABAS & CHANGELOGS)
+   ========================================================================== */
+.md-large-modal {
+  max-width: 800px !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.md-modal-hero {
+  position: relative;
+  height: 180px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  padding: 20px 24px;
+}
+
+.md-modal-hero-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.4) saturate(1.2);
+}
+
+.md-modal-hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, rgba(11, 16, 22, 0.98) 15%, transparent 80%);
+}
+
+.md-modal-hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.md-modal-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.md-modal-meta-strip {
+  display: flex;
+  gap: 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.md-modal-tabs-strip {
+  display: flex;
+  background: rgba(0, 0, 0, 0.5);
+  border-bottom: 1px solid var(--panel-border);
+  padding: 0 16px;
+}
+
+.md-tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  padding: 12px 18px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.md-tab-btn.active {
+  color: #fff;
+  border-bottom-color: var(--accent-amber);
+}
+
+.md-modal-body {
+  padding: 24px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.md-desc-long {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.md-mods-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.md-mod-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
+
+.mod-status-dot {
+  color: var(--accent-emerald);
+  font-weight: bold;
+}
+
+/* Timeline de Changelogs */
+.changelogs-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.changelog-entry {
+  background: rgba(0, 0, 0, 0.4);
+  border-left: 3px solid var(--accent-amber);
+  padding: 14px 18px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.ch-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ch-title {
+  color: #fff;
+  font-size: 13px;
+}
+
+.ch-date {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.ws-stat-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.ws-stat-btn:hover {
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+.ws-stat-btn.liked {
+  background: rgba(214, 48, 49, 0.2);
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}

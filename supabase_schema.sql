@@ -1,141 +1,183 @@
--- ==============================================================================
--- PZHub Community Workshop & Creator Platform - Supabase PostgreSQL Schema
--- Execute este script no SQL Editor do seu projeto Supabase (100% Gratuito)
--- ==============================================================================
+﻿-- =========================================================================
+-- PZHub Ecosystem - Database Schema (PostgreSQL + Supabase)
+-- =========================================================================
 
--- 1. Criação da Tabela de Perfis de Usuários/Criadores
-create table if not exists public.profiles (
-  id uuid references auth.users on delete cascade primary key,
-  username text unique not null,
-  avatar_url text,
-  discord_tag text,
-  bio text,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+-- 1. EXTENSÕES & ENUMS
+CREATE TYPE user_role AS ENUM ('user', 'creator', 'moderator', 'admin');
+CREATE TYPE report_status AS ENUM ('open', 'investigating', 'resolved', 'dismissed');
+
+-- 2. TABELA: PERFIS DE USUÁRIO (PROFILES)
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  display_name TEXT,
+  avatar_url TEXT DEFAULT 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80',
+  banner_url TEXT DEFAULT 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
+  bio TEXT DEFAULT 'Sobrevivente tático em Knox County.',
+  role user_role DEFAULT 'user',
+  badges JSONB DEFAULT '[]'::jsonb,
+  total_likes_received INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 2. Criação da Tabela Principal de Modpacks
-create table if not exists public.modpacks (
-  id uuid default gen_random_uuid() primary key,
-  slug text unique not null,
-  name text not null,
-  description text not null,
-  banner_url text default 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
-  author_id uuid references public.profiles(id) on delete set null,
-  author_name text not null default 'Operador PZHub',
-  version text not null default '1.0.0',
-  zomboid_version text not null default '42.0+',
-  category text not null default 'Militar',
-  is_public boolean not null default true,
-  downloads_count integer not null default 0,
-  likes_count integer not null default 0,
-  mods jsonb not null default '[]'::jsonb,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+-- 3. TABELA: SEGUIDORES (FOLLOWS)
+CREATE TABLE IF NOT EXISTS public.follows (
+  follower_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  following_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  PRIMARY KEY (follower_id, following_id)
 );
 
--- 3. Habilitar Segurança por Linha (Row Level Security - RLS)
-alter table public.profiles enable row level security;
-alter table public.modpacks enable row level security;
+-- 4. TABELA: MODPACKS & MODS PUBLICADOS
+CREATE TABLE IF NOT EXISTS public.modpacks (
+  id TEXT PRIMARY KEY,
+  slug TEXT UNIQUE,
+  name TEXT NOT NULL,
+  title TEXT,
+  version TEXT DEFAULT '1.0.0',
+  author_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  author_name TEXT DEFAULT 'Operador Comunitário',
+  description TEXT,
+  category TEXT DEFAULT 'Militar',
+  image TEXT,
+  banner_url TEXT,
+  downloads_count INTEGER DEFAULT 0,
+  likes_count INTEGER DEFAULT 0,
+  mods JSONB DEFAULT '[]'::jsonb,
+  zomboid_version TEXT DEFAULT '42.0+',
+  is_public BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
--- Políticas de Acesso para Perfis
-create policy "Perfis são visíveis publicamente"
-  on public.profiles for select
-  using (true);
+-- 5. TABELA: LIKES EM MODPACKS
+CREATE TABLE IF NOT EXISTS public.modpack_likes (
+  modpack_id TEXT REFERENCES public.modpacks(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  PRIMARY KEY (modpack_id, user_id)
+);
 
-create policy "Usuários podem criar seu próprio perfil"
-  on public.profiles for insert
-  with check (auth.uid() = id);
+-- 6. TABELA: CHANGELOGS DE MODPACK (HISTÓRICO DE VERSÕES)
+CREATE TABLE IF NOT EXISTS public.modpack_changelogs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  modpack_id TEXT REFERENCES public.modpacks(id) ON DELETE CASCADE,
+  version TEXT NOT NULL,
+  title TEXT NOT NULL,
+  notes TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
-create policy "Usuários podem atualizar seu próprio perfil"
-  on public.profiles for update
-  using (auth.uid() = id);
+-- 7. TABELA: COMENTÁRIOS DE MODPACKS / MODS
+CREATE TABLE IF NOT EXISTS public.comments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  target_id TEXT NOT NULL, -- ID do modpack
+  author_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  author_name TEXT NOT NULL,
+  author_avatar TEXT,
+  content TEXT NOT NULL,
+  likes_count INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
--- Políticas de Acesso para Modpacks
-create policy "Modpacks públicos são visíveis para qualquer pessoa"
-  on public.modpacks for select
-  using (is_public = true);
+-- 8. TABELA: MURAL DE RECADOS DO PERFIL (SCRAPS / WALL)
+CREATE TABLE IF NOT EXISTS public.profile_scraps (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  profile_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL, -- Dono do mural
+  sender_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,  -- Quem escreveu
+  sender_name TEXT NOT NULL,
+  sender_avatar TEXT,
+  message TEXT NOT NULL,
+  likes_count INTEGER DEFAULT 0,
+  reactions JSONB DEFAULT '{"thumb":0, "fire":0, "skull":0, "heart":0}'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
-create policy "Usuários autenticados podem criar modpacks"
-  on public.modpacks for insert
-  with check (auth.uid() = author_id);
+-- 9. TABELA: DENÚNCIAS & REPORTS (MODERAÇÃO)
+CREATE TABLE IF NOT EXISTS public.reports (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  target_type TEXT NOT NULL, -- 'modpack', 'comment', 'profile'
+  target_id TEXT NOT NULL,
+  target_title TEXT,
+  reporter_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+  reporter_name TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  status report_status DEFAULT 'open',
+  moderator_notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
-create policy "Criadores podem atualizar seus próprios modpacks"
-  on public.modpacks for update
-  using (auth.uid() = author_id);
-
-create policy "Criadores podem excluir seus próprios modpacks"
-  on public.modpacks for delete
-  using (auth.uid() = author_id);
-
--- 4. Função e Trigger para Auto-criar Perfil após Cadastro no Auth
-create or replace function public.handle_new_user()
-returns trigger as $$
-begin
-  insert into public.profiles (id, username, avatar_url)
-  values (
-    new.id,
-    coalesce(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
-    coalesce(new.raw_user_meta_data->>'avatar_url', 'https://api.dicebear.com/7.x/bottts/svg?seed=' || new.id)
+-- =========================================================================
+-- TRIGGER: CRIAÇÃO AUTOMÁTICA DE PERFIL NO CADASTRO (SUPABASE AUTH)
+-- =========================================================================
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, username, display_name, avatar_url, role)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
+    COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1)),
+    COALESCE(NEW.raw_user_meta_data->>'avatar_url', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=256&q=80'),
+    'user'
   );
-  return new;
-end;
-$$ language plpgsql security definer;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- 5. Inserção de Modpacks Oficiais de Demonstração
-insert into public.modpacks (slug, name, description, banner_url, author_name, version, zomboid_version, category, downloads_count, likes_count, mods)
-values
-(
-  'viccs-tactical-b42',
-  'VICCS TACTICAL OPERATIONS PACK (B42)',
-  'Modpack oficial militar e balanceado para Project Zomboid Build 42. Contém radar de esquadrão com telemetria ao vivo, veículos militares blindados autênticos dos anos 90, uniformes camuflados e armas balísticas.',
-  'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
-  'VICCS Tactical Command',
-  '1.4.0',
-  '42.0+',
-  'Militar',
-  1420,
-  388,
-  '[
-    {"id": "VICCSRadarBridge", "name": "VICCS Radar Bridge (B42 Native)", "mod_type": "builtin", "required": true, "description": "Módulo Lua transmissor de telemetria para o Radar Tático"},
-    {"id": "1510950729", "name": "Filibuster Rhymes'' Used Cars! B42", "mod_type": "workshop", "workshop_id": "1510950729", "required": true, "description": "Veículos militares e civis realistas"},
-    {"id": "CustomMilitaryGear", "name": "VICCS Custom Military Gear Pack", "mod_type": "builtin", "required": false, "description": "Uniformes, mochilas e coletes balísticos"}
-  ]'::jsonb
-),
-(
-  'vanilla-plus-qol-b42',
-  'VANILLA+ QUALITY OF LIFE & EXPANSION',
-  'Coleção essencial para quem quer a experiência original do Zomboid B42 aprimorada. Inclui leitura de mapa avançada, indicadores de status imersivos e sons de passos táticos.',
-  'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80',
-  'Survivor Alliance',
-  '2.1.0',
-  '42.0+',
-  'Hardcore',
-  890,
-  245,
-  '[
-    {"id": "VICCSRadarBridge", "name": "VICCS Radar Bridge", "mod_type": "builtin", "required": true, "description": "Radar integrado"},
-    {"id": "2392709985", "name": "Minimal Display Bars", "mod_type": "workshop", "workshop_id": "2392709985", "required": true, "description": "Barras sutis de status do personagem"}
-  ]'::jsonb
-),
-(
-  'apocalypse-roleplay-heavy',
-  'OVERHAUL APOCALIPSE TOTAL (B41 & B42)',
-  'Experiência brutal de sobrevivência para servidores de facção. Hordas inteligentes, escassez severa de loot e clima radioativo com tempestades ácidas.',
-  'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1200&q=80',
-  'Knox County Outpost',
-  '1.0.5',
-  '42.0+',
-  'Roleplay',
-  2105,
-  512,
-  '[
-    {"id": "VICCSRadarBridge", "name": "VICCS Radar Bridge", "mod_type": "builtin", "required": true, "description": "Transmissor do Radar PZHub"},
-    {"id": "2703664356", "name": "True Actions (Dancing & Sitting)", "mod_type": "workshop", "workshop_id": "2703664356", "required": false, "description": "Animações e interações sociais imersivas"}
-  ]'::jsonb
-)
-on conflict (slug) do nothing;
+-- =========================================================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- =========================================================================
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.follows ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.modpacks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.modpack_likes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.modpack_changelogs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profile_scraps ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
+
+-- Profiles: Leitura pública, update apenas pelo próprio usuário ou admin
+CREATE POLICY "Profiles são públicos" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Usuário pode atualizar próprio perfil" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+
+-- Follows: Qualquer um pode ver seguidores; autenticados podem seguir/desseguir
+CREATE POLICY "Follows são públicos" ON public.follows FOR SELECT USING (true);
+CREATE POLICY "Usuário pode seguir/desseguir" ON public.follows FOR ALL USING (auth.uid() = follower_id);
+
+-- Modpacks: Leitura pública, inserção/update pelo autor ou admin
+CREATE POLICY "Modpacks públicos visíveis" ON public.modpacks FOR SELECT USING (is_public = true OR auth.uid() = author_id);
+CREATE POLICY "Criadores publicam modpacks" ON public.modpacks FOR INSERT WITH CHECK (auth.uid() = author_id);
+CREATE POLICY "Criadores atualizam seus modpacks" ON public.modpacks FOR UPDATE USING (auth.uid() = author_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'moderator')));
+CREATE POLICY "Criadores deletam seus modpacks" ON public.modpacks FOR DELETE USING (auth.uid() = author_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'moderator')));
+
+-- Profile Scraps (REGRA DE OURO):
+-- Leitura pública, escrita autenticada, DELETE PERMITIDO APENAS PELO DONO DO MURAL OU ADMIN/MOD
+CREATE POLICY "Recados são públicos" ON public.profile_scraps FOR SELECT USING (true);
+CREATE POLICY "Usuários autenticados podem postar recados" ON public.profile_scraps FOR INSERT WITH CHECK (auth.uid() = sender_id);
+CREATE POLICY "Apenas dono do perfil ou staff pode deletar recados" ON public.profile_scraps FOR DELETE USING (
+  auth.uid() = profile_id OR 
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'moderator'))
+);
+
+-- Changelogs: Leitura pública, inserção/update pelo criador do modpack ou staff
+CREATE POLICY "Changelogs são públicos" ON public.modpack_changelogs FOR SELECT USING (true);
+CREATE POLICY "Criador ou staff gerenciam changelogs" ON public.modpack_changelogs FOR ALL USING (
+  auth.uid() IS NOT NULL
+);
+
+-- Comments:
+CREATE POLICY "Comentários são públicos" ON public.comments FOR SELECT USING (true);
+CREATE POLICY "Usuários postam comentários" ON public.comments FOR INSERT WITH CHECK (auth.uid() = author_id);
+
+-- Reports: Autenticado cria report; Staff visualiza e resolve
+CREATE POLICY "Usuários podem reportar" ON public.reports FOR INSERT WITH CHECK (auth.uid() = reporter_id);
+CREATE POLICY "Apenas staff visualiza e gerencia denúncias" ON public.reports FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('admin', 'moderator'))
+);
