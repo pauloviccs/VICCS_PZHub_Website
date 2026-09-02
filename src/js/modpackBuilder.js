@@ -1,10 +1,10 @@
-﻿/**
+/**
  * PZHub - Creator Studio & Modpack Builder Module
  * Criação, edição, exclusão e gerenciamento de uploads do criador.
  */
 
 import { supabase, isConfigured } from './supabaseClient.js';
-import { getCurrentUser } from './auth.js';
+import { getCurrentUser, getCurrentUserProfile } from './auth.js';
 import { getAllModpacks, loadWorkshopData } from './workshop.js';
 import { createChangelog } from './changelogs.js';
 
@@ -30,7 +30,7 @@ export async function initModpackBuilder() {
       const required = reqCheckbox?.checked || false;
 
       if (!name) {
-        alert('Informe o nome do mod.');
+        alert('Informe o nome do mod componente.');
         return;
       }
 
@@ -59,7 +59,7 @@ export async function initModpackBuilder() {
       const pack = extractBuilderFormData();
       if (!pack) return;
       navigator.clipboard.writeText(JSON.stringify(pack, null, 2));
-      alert('Manifesto JSON copiado para a área de transferência!');
+      alert('Manifesto JSON do modpack copiado para a área de transferência!');
     });
   }
 
@@ -86,21 +86,29 @@ function extractBuilderFormData() {
   }
 
   const currentUser = getCurrentUser();
+  const currentProfile = getCurrentUserProfile();
+
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
   return {
-    id: editingPackId || `pack-${Date.now()}`,
-    slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+    id: editingPackId || slug,
+    slug: slug,
     name,
+    title: name,
     version,
     category,
     zomboid_version: zomboidVer,
     description: desc,
+    banner_url: image || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
     image: image || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
-    author: currentUser?.user_metadata?.username || 'operador_alpha',
-    author_name: currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.username || 'Capitão Miller [VICCS]',
+    author_id: currentUser?.id || null,
+    author: currentProfile?.username || currentUser?.user_metadata?.username || 'operador',
+    author_name: currentProfile?.display_name || currentProfile?.username || currentUser?.user_metadata?.username || 'Operador Comunitário',
     downloads_count: 0,
     likes_count: 0,
     mods: builderModsList,
+    is_public: true,
+    created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
 }
@@ -111,7 +119,8 @@ async function handlePublishModpack() {
 
   const currentUser = getCurrentUser();
   if (!currentUser) {
-    alert('Você precisa estar autenticado para publicar modpacks.');
+    alert('Você precisa estar autenticado no Supabase para publicar modpacks no banco de dados.');
+    document.getElementById('auth-modal')?.classList.add('visible');
     return;
   }
 
@@ -122,22 +131,25 @@ async function handlePublishModpack() {
         .upsert([pack]);
 
       if (error) throw error;
+      alert(editingPackId ? `Modpack "${pack.name}" atualizado no Supabase com sucesso!` : `Modpack "${pack.name}" publicado com sucesso no banco de dados Supabase!`);
     } catch (err) {
-      console.warn('Erro ao salvar no Supabase:', err);
+      console.error('Erro ao salvar no Supabase:', err);
+      alert(`Falha ao gravar no Supabase: ${err.message}`);
+      return;
     }
-  }
-
-  // Local fallback save
-  const all = getAllModpacks();
-  let updated;
-  if (editingPackId) {
-    updated = all.map(p => p.id === editingPackId ? pack : p);
   } else {
-    updated = [pack, ...all];
+    // Gravação local se Supabase estiver em modo demo
+    const all = getAllModpacks();
+    let updated;
+    if (editingPackId) {
+      updated = all.map(p => p.id === editingPackId ? pack : p);
+    } else {
+      updated = [pack, ...all];
+    }
+    localStorage.setItem('PZHUB_COMMUNITY_MODPACKS', JSON.stringify(updated));
+    alert(`Modpack "${pack.name}" gravado localmente.`);
   }
-  localStorage.setItem('PZHUB_COMMUNITY_MODPACKS', JSON.stringify(updated));
 
-  alert(editingPackId ? `Modpack "${pack.name}" atualizado com sucesso!` : `Modpack "${pack.name}" publicado com sucesso no catálogo!`);
   resetBuilderForm();
   await loadWorkshopData();
   renderCreatorUploadsList();
@@ -149,7 +161,7 @@ export function renderBuilderModsList() {
   if (!container) return;
 
   if (builderModsList.length === 0) {
-    container.innerHTML = '<div style="color: var(--text-dim); font-size: 11px; padding: 12px;">Nenhum mod adicionado ainda. Adicione os mods acima.</div>';
+    container.innerHTML = '<div style="color: var(--text-dim); font-size: 11px; padding: 12px;">Nenhum mod adicionado ainda. Adicione os componentes do seu pacote no formulário acima.</div>';
     return;
   }
 
@@ -177,18 +189,37 @@ export function renderCreatorUploadsList() {
   if (!container) return;
 
   const currentUser = getCurrentUser();
+  const currentProfile = getCurrentUserProfile();
+
+  if (!currentUser) {
+    container.innerHTML = `
+      <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--panel-border); padding: 18px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; flex-wrap: gap: 12px;">
+        <div style="font-size: 12px; color: var(--text-muted);">
+          Você não está autenticado. Faça login para gerenciar e publicar seus modpacks no banco de dados.
+        </div>
+        <button id="btn-login-from-studio" class="tarkov-btn btn-amber">ENTRAR / CADASTRAR</button>
+      </div>
+    `;
+
+    document.getElementById('btn-login-from-studio')?.addEventListener('click', () => {
+      document.getElementById('auth-modal')?.classList.add('visible');
+    });
+    return;
+  }
+
   const all = getAllModpacks();
-  const myPacks = all.filter(p => !currentUser || p.author === currentUser.user_metadata?.username || p.author === 'operador_alpha');
+  const currentUsername = currentProfile?.username || currentUser.user_metadata?.username;
+  const myPacks = all.filter(p => p.author_id === currentUser.id || (currentUsername && (p.author === currentUsername || p.author_name === currentUsername)));
 
   if (myPacks.length === 0) {
-    container.innerHTML = '<div style="color: var(--text-dim); font-size: 11px; padding: 14px;">Você ainda não possui modpacks publicados. Use o formulário abaixo para criar seu primeiro pacote.</div>';
+    container.innerHTML = '<div style="color: var(--text-dim); font-size: 11px; padding: 14px; background: rgba(0,0,0,0.3); border: 1px dashed var(--panel-border); border-radius: 4px;">Você ainda não possui modpacks publicados no banco de dados. Use o construtor abaixo para criar seu primeiro pacote.</div>';
     return;
   }
 
   container.innerHTML = myPacks.map(pack => `
     <div class="my-upload-card" style="display: flex; justify-content: space-between; align-items: center; background: rgba(14,20,28,0.9); border: 1px solid var(--panel-border); padding: 14px 18px; border-radius: 4px; margin-bottom: 10px; gap: 14px; flex-wrap: wrap;">
       <div style="display: flex; align-items: center; gap: 14px;">
-        <img src="${pack.image || pack.banner_url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=120&q=80'}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" alt="${pack.name}" />
+        <img src="${pack.image || pack.banner_url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=120&q=80'}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" alt="${pack.name}" onerror="this.src='https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=120&q=80'" />
         <div>
           <h4 style="color: #fff; font-size: 14px; text-transform: uppercase;">${pack.name}</h4>
           <span style="font-size: 11px; color: var(--text-dim); font-family: var(--font-mono);">v${pack.version} • ${pack.mods?.length || 0} mods • ❤️ ${pack.likes_count || 0} likes • 🚀 ${pack.downloads_count || 0} downloads</span>
@@ -215,6 +246,13 @@ export function renderCreatorUploadsList() {
     btn.onclick = async () => {
       const packId = btn.dataset.packId;
       if (confirm('Tem certeza que deseja excluir permanentemente este modpack do catálogo?')) {
+        if (isConfigured) {
+          try {
+            await supabase.from('modpacks').delete().eq('id', packId);
+          } catch(e) {
+            console.warn('Erro ao deletar do Supabase:', e);
+          }
+        }
         const remaining = all.filter(p => p.id !== packId);
         localStorage.setItem('PZHUB_COMMUNITY_MODPACKS', JSON.stringify(remaining));
         await loadWorkshopData();
@@ -238,6 +276,11 @@ export function renderCreatorUploadsList() {
 
       await createChangelog(pack.slug || pack.id, newVer, title, notes);
       pack.version = newVer;
+      if (isConfigured) {
+        try {
+          await supabase.from('modpacks').update({ version: newVer }).eq('id', packId);
+        } catch(e) {}
+      }
       localStorage.setItem('PZHUB_COMMUNITY_MODPACKS', JSON.stringify(all));
       alert(`Changelog v${newVer} publicado com sucesso para "${pack.name}"!`);
       renderCreatorUploadsList();

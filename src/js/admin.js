@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PZHub - Admin & Moderation Dashboard Module
  */
 
@@ -39,7 +39,7 @@ async function loadAdminReports() {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data) {
+      if (!error && Array.isArray(data)) {
         reportsList = data;
         return;
       }
@@ -53,42 +53,31 @@ async function loadAdminReports() {
     try { reportsList = JSON.parse(saved); return; } catch(e) {}
   }
 
-  reportsList = [
-    {
-      id: "rep-101",
-      target_type: "modpack",
-      target_id: "apocalypse-roleplay-heavy",
-      target_title: "Overhaul Apocalipse Total",
-      reporter_name: "Survivor99",
-      reason: "Link do modpack contém arquivo quebrado na Build 42 sem aviso prévio.",
-      status: "open",
-      created_at: new Date(Date.now() - 3600000 * 2).toISOString()
-    },
-    {
-      id: "rep-102",
-      target_type: "comment",
-      target_id: "c-44",
-      target_title: "Comentário Ofensivo",
-      reporter_name: "Rick_Grimes",
-      reason: "Spam repetitivo e conduta anti-jogo no mural público.",
-      status: "open",
-      created_at: new Date(Date.now() - 3600000 * 8).toISOString()
-    }
-  ];
+  reportsList = [];
 }
 
 async function loadUsersList() {
+  if (isConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, display_name, role');
+
+      if (!error && Array.isArray(data)) {
+        usersManagementList = data.map(u => ({ ...u, total_uploads: 0 }));
+        return;
+      }
+    } catch (e) {
+      console.warn('Erro ao ler profiles do Supabase:', e);
+    }
+  }
+
   const saved = localStorage.getItem('PZHUB_USER_ROLES');
   if (saved) {
     try { usersManagementList = JSON.parse(saved); return; } catch(e) {}
   }
 
-  usersManagementList = [
-    { username: 'admin', display_name: 'Comandante Supremo', role: 'admin', total_uploads: 6 },
-    { username: 'operador_alpha', display_name: 'Capitão Miller [VICCS]', role: 'creator', total_uploads: 4 },
-    { username: 'mod_tatico', display_name: 'Sargento Harper', role: 'moderator', total_uploads: 1 },
-    { username: 'rick_grimes', display_name: 'Rick Grimes', role: 'user', total_uploads: 0 }
-  ];
+  usersManagementList = [];
 }
 
 export function renderAdminDashboard() {
@@ -174,18 +163,20 @@ export function renderAdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              ${usersManagementList.map(user => `
+              ${usersManagementList.length === 0 ? `
+                <tr><td colspan="5" style="text-align: center; color: var(--text-dim); padding: 30px;">Nenhum operador registrado no Supabase ainda.</td></tr>
+              ` : usersManagementList.map(user => `
                 <tr>
                   <td><strong>@${user.username}</strong></td>
-                  <td>${user.display_name}</td>
-                  <td><span class="tarkov-tag badge-emerald">${user.total_uploads} MODS</span></td>
+                  <td>${user.display_name || user.username}</td>
+                  <td><span class="tarkov-tag badge-emerald">${user.total_uploads || 0} MODS</span></td>
                   <td>
                     <span class="tarkov-tag ${
                       user.role === 'admin' ? 'badge-role-admin' :
                       user.role === 'moderator' ? 'badge-role-mod' :
                       user.role === 'creator' ? 'badge-role-creator' : 'badge-role-user'
                     }">
-                      ${user.role.toUpperCase()}
+                      ${(user.role || 'user').toUpperCase()}
                     </span>
                   </td>
                   <td>

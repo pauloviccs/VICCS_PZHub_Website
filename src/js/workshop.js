@@ -2,8 +2,8 @@
  * PZHub - Community Workshop Module (Popularity, Details, Comments, Changelogs)
  */
 
-import { supabase, isConfigured, DEFAULT_COMMUNITY_MODPACKS } from './supabaseClient.js';
-import { getCurrentUser, getCurrentUserProfile } from './auth.js';
+import { supabase, isConfigured } from './supabaseClient.js';
+import { getCurrentUser } from './auth.js';
 import { fetchModpackChangelogs } from './changelogs.js';
 
 let modpacksList = [];
@@ -53,26 +53,27 @@ export async function loadWorkshopData() {
         .eq('is_public', true)
         .order('downloads_count', { ascending: false });
 
-      if (!error && data && data.length > 0) {
+      if (!error && Array.isArray(data)) {
         modpacksList = data;
         renderWorkshop();
         updateDashboardView();
         return;
       }
     } catch (err) {
-      console.warn('Carregando catálogo padrão de fallback:', err);
+      console.warn('Erro ao carregar catálogo do Supabase:', err);
     }
   }
 
+  // Fallback Local
   const saved = localStorage.getItem('PZHUB_COMMUNITY_MODPACKS');
   if (saved) {
     try { 
       modpacksList = JSON.parse(saved); 
     } catch(e) { 
-      modpacksList = DEFAULT_COMMUNITY_MODPACKS; 
+      modpacksList = []; 
     }
   } else {
-    modpacksList = DEFAULT_COMMUNITY_MODPACKS;
+    modpacksList = [];
   }
 
   renderWorkshop();
@@ -117,13 +118,14 @@ export function renderWorkshop() {
     return 0;
   });
 
-  if (totalCountEl) totalCountEl.textContent = `${filtered.length} MODPACKS OFICIAIS ENCONTRADOS`;
+  if (totalCountEl) totalCountEl.textContent = `${filtered.length} MODPACKS ENCONTRADOS`;
 
   if (filtered.length === 0) {
     container.innerHTML = `
-      <div class="tarkov-empty-state" style="grid-column: 1 / -1;">
-        <div class="tarkov-empty-title">NENHUM MODPACK ENCONTRADO</div>
-        <div class="tarkov-empty-desc">Tente alterar os termos de busca ou selecione outra categoria militar.</div>
+      <div class="tarkov-empty-state" style="grid-column: 1 / -1; padding: 48px 20px; background: var(--bg-surface-card); border: 1px dashed var(--panel-border); border-radius: var(--radius-md);">
+        <div class="tarkov-empty-title" style="color: var(--accent-amber); font-size: 14px;">NENHUM MODPACK REGISTRADO NO BANCO DE DADOS</div>
+        <div class="tarkov-empty-desc" style="margin: 10px 0 18px;">${isConfigured ? 'A tabela de modpacks do seu Supabase está vazia no momento. Publique seu primeiro modpack no Estúdio do Criador ou execute o script de Seed.' : 'O sistema não encontrou modpacks cadastrados. Conecte sua instância Supabase ou crie um modpack no Estúdio.'}</div>
+        <a href="#studio" class="tarkov-btn btn-amber">+ CRIAR PRIMEIRO MODPACK</a>
       </div>
     `;
     return;
@@ -148,7 +150,7 @@ export function renderWorkshop() {
 
         <div class="ws-card-body">
           <div class="ws-meta-row">
-            <span>OPERADOR: <a href="#profile/${pack.author || 'operador_alpha'}" class="author-link">@${pack.author_name || pack.author || 'PZHub'}</a></span>
+            <span>OPERADOR: <a href="#profile/${pack.author || 'operador'}" class="author-link">@${pack.author_name || pack.author || 'PZHub'}</a></span>
             <span><strong>${totalMods}</strong> MODS INCLUSOS</span>
           </div>
 
@@ -242,7 +244,7 @@ export async function openModpackDetailsModal(pack) {
 
   if (titleEl) titleEl.textContent = pack.name;
   if (authorEl) {
-    authorEl.innerHTML = `Criado por <a href="#profile/${pack.author || 'operador_alpha'}" style="color: var(--accent-amber); font-weight: bold; text-decoration: none;">@${pack.author_name || pack.author || 'PZHub'}</a>`;
+    authorEl.innerHTML = `Criado por <a href="#profile/${pack.author || 'operador'}" style="color: var(--accent-amber); font-weight: bold; text-decoration: none;">@${pack.author_name || pack.author || 'PZHub'}</a>`;
   }
   if (downloadsEl) downloadsEl.textContent = `🚀 ${pack.downloads_count || 0} Downloads`;
   if (likesEl) likesEl.textContent = `❤️ ${pack.likes_count || 0} Likes`;
@@ -444,10 +446,15 @@ function updateDashboardView() {
 
   const tbody = container.querySelector('.tarkov-table tbody');
   if (tbody) {
+    if (modpacksList.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-dim); padding: 30px;">Nenhum modpack registrado no banco de dados.</td></tr>';
+      return;
+    }
+
     tbody.innerHTML = modpacksList.map(pack => `
       <tr>
         <td><strong>${pack.name}</strong></td>
-        <td><a href="#profile/${pack.author || 'operador_alpha'}" style="color: var(--accent-amber); text-decoration: none; font-weight: bold;">@${pack.author_name || pack.author || 'PZHub'}</a></td>
+        <td><a href="#profile/${pack.author || 'operador'}" style="color: var(--accent-amber); text-decoration: none; font-weight: bold;">@${pack.author_name || pack.author || 'PZHub'}</a></td>
         <td><span class="tarkov-tag badge-amber">B${pack.zomboid_version || '42.0+'}</span></td>
         <td>${pack.category || 'Militar'}</td>
         <td>${pack.mods?.length || 0} mods</td>
