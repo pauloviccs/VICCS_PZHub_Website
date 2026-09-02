@@ -879,6 +879,7 @@ export async function renderFollowSuggestionsSidebar() {
   if (!container) return;
 
   let profiles = [];
+  let followingIds = new Set();
   const currentUser = getCurrentUser();
 
   if (isConfigured) {
@@ -889,7 +890,20 @@ export async function renderFollowSuggestionsSidebar() {
       }
       const { data } = await query;
       if (data && Array.isArray(data)) profiles = data;
-    } catch(e) {}
+
+      // Buscar relações de follow reais do usuário logado
+      if (currentUser?.id) {
+        const { data: followRows } = await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', currentUser.id);
+        if (followRows && Array.isArray(followRows)) {
+          followingIds = new Set(followRows.map(r => r.following_id));
+        }
+      }
+    } catch(e) {
+      console.warn('Erro ao obter sugestões de operadores:', e);
+    }
   }
 
   if (profiles.length === 0) {
@@ -897,7 +911,15 @@ export async function renderFollowSuggestionsSidebar() {
     return;
   }
 
-  container.innerHTML = profiles.map(p => `
+  container.innerHTML = profiles.map(p => {
+    const isFollowing = followingIds.has(p.id);
+    const followingClass = isFollowing ? ' following' : '';
+    const btnText = isFollowing ? '✓ SEGUINDO' : '+ SEGUIR';
+    const inlineStyle = isFollowing 
+      ? 'border-color: var(--accent-amber); color: var(--accent-amber); background: rgba(229, 142, 38, 0.12);' 
+      : '';
+
+    return `
     <div class="suggestion-operator-card">
       <div style="display: flex; gap: 10px; align-items: center;">
         <img src="${p.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80'}" class="suggestion-avatar" alt="${p.username}" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80'" />
@@ -906,9 +928,12 @@ export async function renderFollowSuggestionsSidebar() {
           <span class="suggestion-handle">@${p.username}</span>
         </div>
       </div>
-      <button class="tarkov-btn-mini btn-follow-suggestion" data-profile-id="${p.id}">+ SEGUIR</button>
+      <button class="tarkov-btn-mini btn-follow-suggestion${followingClass}" data-profile-id="${p.id}" style="${inlineStyle}">
+        ${btnText}
+      </button>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   container.querySelectorAll('.btn-follow-suggestion').forEach(btn => {
     btn.onclick = async () => {
@@ -917,14 +942,40 @@ export async function renderFollowSuggestionsSidebar() {
         return;
       }
       const profileId = btn.dataset.profileId;
+      const isCurrentlyFollowing = btn.classList.contains('following');
+      const nextState = !isCurrentlyFollowing;
+
+      // Atualização Otimista imediata na interface
+      if (nextState) {
+        btn.classList.add('following');
+        btn.textContent = '✓ SEGUINDO';
+        btn.style.borderColor = 'var(--accent-amber)';
+        btn.style.color = 'var(--accent-amber)';
+        btn.style.background = 'rgba(229, 142, 38, 0.12)';
+      } else {
+        btn.classList.remove('following');
+        btn.textContent = '+ SEGUIR';
+        btn.style.borderColor = '';
+        btn.style.color = '';
+        btn.style.background = '';
+      }
+
       if (isConfigured) {
         try {
-          await supabase.from('follows').insert([{ follower_id: currentUser.id, following_id: profileId }]);
-        } catch(e) {}
+          if (nextState) {
+            await supabase.from('follows').upsert([{ 
+              follower_id: currentUser.id, 
+              following_id: profileId 
+            }], { onConflict: 'follower_id,following_id' });
+          } else {
+            await supabase.from('follows').delete()
+              .eq('follower_id', currentUser.id)
+              .eq('following_id', profileId);
+          }
+        } catch(e) {
+          console.error('Erro ao persistir alternância de follow no Supabase:', e);
+        }
       }
-      btn.textContent = '✓ SEGUINDO';
-      btn.style.borderColor = 'var(--accent-emerald)';
-      btn.style.color = 'var(--accent-emerald)';
     };
   });
 }

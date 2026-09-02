@@ -51,9 +51,27 @@ export async function initAuth() {
     });
   }
 
-  if (userProfileLink) {
-    userProfileLink.addEventListener('click', (e) => {
+  const cardTrigger = document.getElementById('nav-user-card-trigger');
+  const userContextMenu = document.getElementById('user-context-menu');
+  const menuOptProfile = document.getElementById('menu-opt-profile');
+
+  if (cardTrigger && userContextMenu) {
+    cardTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      userContextMenu.classList.toggle('open');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#nav-user-profile')) {
+        userContextMenu.classList.remove('open');
+      }
+    });
+  }
+
+  if (menuOptProfile) {
+    menuOptProfile.addEventListener('click', (e) => {
       e.preventDefault();
+      if (userContextMenu) userContextMenu.classList.remove('open');
       if (currentUser && currentUserProfile?.username) {
         window.location.hash = `#profile/${currentUserProfile.username}`;
       } else {

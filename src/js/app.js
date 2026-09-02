@@ -39,12 +39,84 @@ class PZHubApp {
     // 3. Configura Roteamento SPA e Botões Globais
     this.setupRouting();
     this.setupGlobalButtons();
+    this.setupMobileNavigation();
 
     // 4. Trata a rota inicial
     this.handleRoute();
   }
 
-  initTheme() {
+  setupMobileNavigation() {
+    const hamburgerBtn = document.getElementById('btn-mobile-nav-toggle');
+    const closeBtn = document.getElementById('btn-mobile-nav-close');
+    const drawer = document.getElementById('mobile-nav-drawer');
+    const backdrop = document.getElementById('mobile-nav-backdrop');
+
+    const openDrawer = () => {
+      if (drawer) drawer.classList.add('open');
+      if (backdrop) backdrop.classList.add('visible');
+    };
+
+    const closeDrawer = () => {
+      if (drawer) drawer.classList.remove('open');
+      if (backdrop) backdrop.classList.remove('visible');
+    };
+
+    if (hamburgerBtn) hamburgerBtn.addEventListener('click', openDrawer);
+    if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+    if (backdrop) backdrop.addEventListener('click', closeDrawer);
+
+    document.querySelectorAll('.mobile-nav-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const view = tab.dataset.view;
+        if (view) window.location.hash = `#${view}`;
+        closeDrawer();
+      });
+    });
+  }
+
+  setupRouting() {
+    window.addEventListener('hashchange', () => this.handleRoute());
+
+    // Abas do topo
+    document.querySelectorAll('.site-nav-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const view = tab.dataset.view;
+        if (view) window.location.hash = `#${view}`;
+      });
+    });
+  }
+
+  setupGlobalButtons() {
+    const heroProfileBtn = document.getElementById('hero-btn-my-profile');
+    if (heroProfileBtn) {
+      heroProfileBtn.addEventListener('click', () => {
+        const currentUser = getCurrentUser();
+        const profile = getCurrentUserProfile();
+        if (currentUser && profile?.username) {
+          window.location.hash = `#profile/${profile.username}`;
+        } else {
+          document.getElementById('auth-modal')?.classList.add('visible');
+        }
+      });
+    }
+  }
+
+  handleRoute() {
+    const rawHash = window.location.hash.slice(1) || 'workshop';
+    const parts = rawHash.split('/');
+    const view = parts[0];
+    const param = parts[1];
+
+    this.switchView(view, param);
+  }
+
+  async switchView(viewName, param) {
+    this.currentView = viewName;
+
+    // Atualiza abas do topo desktop e gaveta mobile
+    document.querySelectorAll('.site-nav-tab, .mobile-nav-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.view === viewName);
+    });
     const savedTheme = localStorage.getItem('pzhub_web_theme') || 'dark';
     const isLight = savedTheme === 'light';
     document.body.classList.toggle('theme-light', isLight);

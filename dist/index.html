@@ -16,68 +16,112 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
 
-    <script type="module" crossorigin src="/assets/index-CIfWGe3a.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-D53ap_ZT.css">
+    <script type="module" crossorigin src="/assets/index-DLXFKIpf.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Cxukq7OF.css">
   </head>
 
   <body>
     <!-- 1. TOP HEADER NAVBAR -->
     <header class="site-header">
       <a href="#workshop" class="site-brand">
-        <img src="/assets/PZHub_LogoIcon-CDJcGwfb.svg" class="brand-logo-img" alt="PZHub Logo" style="width: 30px; height: 30px; object-fit: contain;" />
+        <img src="/assets/PZHub_LogoIcon-CDJcGwfb.svg" class="brand-logo-img" alt="PZHub Logo" style="width: 26px; height: 26px; object-fit: contain;" />
         <div class="brand-title">
           <span class="brand-title-main">PZHUB WORKSHOP</span>
-          <span class="brand-title-sub">COMMUNITY CREATOR & SOCIAL PLATFORM</span>
+          <span class="brand-title-sub">COMMUNITY & SOCIAL</span>
         </div>
       </a>
 
+      <!-- Desktop Navigation Tabs (Clean & Professional) -->
       <nav class="site-nav-menu">
         <button class="site-nav-tab active" data-view="workshop">
-          <span data-i18n="nav_workshop">01 // CATÁLOGO</span>
+          <span data-i18n="nav_workshop">CATÁLOGO</span>
         </button>
         <button class="site-nav-tab" data-view="dashboard">
-          <span data-i18n="nav_dashboard">02 // DASHBOARD GERAL</span>
+          <span data-i18n="nav_dashboard">DASHBOARD</span>
         </button>
         <button class="site-nav-tab" data-view="studio">
-          <span data-i18n="nav_builder">03 // ESTÚDIO DO CRIADOR</span>
+          <span data-i18n="nav_builder">ESTÚDIO</span>
         </button>
         <button class="site-nav-tab" data-view="timeline">
-          <span data-i18n="nav_feed">04 // RADAR SOCIAL (FEED)</span>
+          <span data-i18n="nav_feed">RADAR SOCIAL</span>
         </button>
         <button class="site-nav-tab" data-view="admin" id="nav-admin-tab" style="display: none; border-bottom-color: var(--accent-red); color: var(--accent-red);">
-          <span data-i18n="nav_admin">👑 // MODERAÇÃO & STAFF</span>
+          <span data-i18n="nav_admin">👑 MODERAÇÃO</span>
         </button>
       </nav>
 
       <div class="site-header-actions">
-        <!-- Language Selector -->
+        <!-- Compact Language Selector -->
         <div class="lang-selector-group">
-          <button class="web-lang-btn active" data-lang="pt" title="Português (Brasil)">🇧🇷 PT</button>
-          <button class="web-lang-btn" data-lang="en" title="English (US)">🇺🇸 EN</button>
-          <button class="web-lang-btn" data-lang="es" title="Español (ES)">🇪🇸 ES</button>
+          <button class="web-lang-btn active" data-lang="pt" title="Português (Brasil)">PT</button>
+          <button class="web-lang-btn" data-lang="en" title="English (US)">EN</button>
+          <button class="web-lang-btn" data-lang="es" title="Español (ES)">ES</button>
         </div>
 
         <!-- White/Dark Mode Toggle -->
-        <button id="btn-theme-toggle" class="tarkov-btn" style="padding: 5px 9px; font-size: 11px;" title="Alternar Modo Claro / Escuro">
+        <button id="btn-theme-toggle" class="tarkov-btn-icon" title="Alternar Modo Claro / Escuro">
           <span id="theme-toggle-icon">☀️</span>
         </button>
-
-        <span id="cloud-status-badge" class="tarkov-tag badge-emerald" title="Instância Supabase Oficial Conectada">🟢 SUPABASE ONLINE</span>
 
         <button id="nav-auth-btn" class="tarkov-btn btn-amber" style="padding: 6px 14px;" data-i18n="nav_login">
           ENTRAR / CADASTRO
         </button>
 
-        <div id="nav-user-profile" style="display: none; align-items: center; gap: 10px;">
-          <a href="#profile" id="nav-user-profile-link" style="display: flex; align-items: center; gap: 8px; text-decoration: none;">
+        <!-- User Profile Card com Dropdown -->
+        <div id="nav-user-profile" class="nav-user-card" style="display: none;">
+          <div id="nav-user-card-trigger" class="user-card-trigger" title="Opções da Conta">
             <img id="nav-user-avatar" class="nav-avatar-img" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=64&q=80" alt="Avatar" />
-            <span id="nav-user-role-badge" class="tarkov-tag badge-role-creator">💎 CRIADOR</span>
-            <span id="nav-username" style="font-family: var(--font-mono); font-size: 11px; color: #fff; font-weight: bold;">Operador</span>
-          </a>
-          <button id="nav-logout-btn" class="tarkov-btn" style="padding: 4px 8px; font-size: 10px;" data-i18n="nav_logout">SAIR</button>
+            <div class="user-card-info">
+              <span id="nav-username" class="user-card-name">Operador</span>
+              <span id="nav-user-role-badge" class="tarkov-tag badge-role-creator">💎 CRIADOR</span>
+            </div>
+            <span class="user-dropdown-arrow">▾</span>
+          </div>
+
+          <!-- Dropdown Menu de Usuário -->
+          <div id="user-context-menu" class="user-dropdown-menu">
+            <a href="#profile" id="menu-opt-profile" class="dropdown-item">
+              <span>👤 Meu Perfil Social</span>
+            </a>
+            <div class="dropdown-divider"></div>
+            <button type="button" id="nav-logout-btn" class="dropdown-item text-danger">
+              <span>🚪 Sair da Conta</span>
+            </button>
+          </div>
         </div>
+
+        <!-- Mobile Hamburger Toggle -->
+        <button type="button" id="btn-mobile-nav-toggle" class="mobile-nav-hamburger" title="Abrir Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
       </div>
     </header>
+
+    <!-- Mobile Drawer Overlay & Navigation -->
+    <div id="mobile-nav-drawer" class="mobile-nav-drawer">
+      <div class="mobile-drawer-header">
+        <div class="site-brand">
+          <img src="/assets/PZHub_LogoIcon-CDJcGwfb.svg" class="brand-logo-img" alt="PZHub Logo" style="width: 22px; height: 22px;" />
+          <span class="brand-title-main" style="font-size: 13px;">PZHUB NAVEGAÇÃO</span>
+        </div>
+        <button type="button" id="btn-mobile-nav-close" class="mobile-drawer-close">✕</button>
+      </div>
+      <div class="mobile-drawer-links">
+        <button class="mobile-nav-tab active" data-view="workshop">📦 Catálogo de Modpacks</button>
+        <button class="mobile-nav-tab" data-view="dashboard">📊 Dashboard Geral</button>
+        <button class="mobile-nav-tab" data-view="studio">🛠️ Estúdio do Criador</button>
+        <button class="mobile-nav-tab" data-view="timeline">📡 Radar Social (Feed)</button>
+        <button class="mobile-nav-tab" data-view="admin" id="mobile-nav-admin-tab" style="display: none; color: var(--accent-red);">👑 Moderação & Staff</button>
+      </div>
+      <div class="mobile-drawer-footer">
+        <a href="https://github.com/viccs/pzhub/releases/latest/download/PZHub_2.0.0_x64-setup.exe" class="tarkov-btn btn-amber" style="width: 100%; justify-content: center; font-size: 11px;">
+          ⬇️ BAIXAR PZHUB DESKTOP (.EXE)
+        </a>
+      </div>
+    </div>
+    <div id="mobile-nav-backdrop" class="mobile-nav-backdrop"></div>
 
     <!-- 2. HERO OPERATIONAL BANNER -->
     <div class="site-hero-wrap">
@@ -342,10 +386,13 @@
                 <input type="text" id="builder-mod-name" class="tarkov-input" placeholder="Ex: Filibuster Rhymes Cars B42" />
               </div>
 
-              <!-- 2. Campo Específico: Steam Workshop ID -->
-              <div id="field-group-workshop" style="flex: 1; min-width: 150px;">
-                <label class="form-label" style="font-size: 10px;">Workshop ID *</label>
-                <input type="text" id="builder-mod-ws-id" class="tarkov-input" placeholder="Ex: 1510950729" />
+              <!-- 2. Campo Específico: Steam Workshop ID / Link Automático -->
+              <div id="field-group-workshop" style="flex: 2; min-width: 220px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <label class="form-label" style="font-size: 10px; margin: 0;">Link do Mod na Steam ou ID *</label>
+                  <span id="builder-mod-ws-feedback" class="steam-extraction-badge" style="display: none;"></span>
+                </div>
+                <input type="text" id="builder-mod-ws-id" class="tarkov-input" placeholder="Cole o link da Steam (https://steamcommunity.com/...) ou o ID" />
               </div>
 
               <!-- 3. Campo Específico: Direct Download (.ZIP) -->

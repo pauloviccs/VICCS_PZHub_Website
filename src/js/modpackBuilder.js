@@ -79,7 +79,67 @@ export async function initModpackBuilder() {
     });
   }
 
+  if (addModBtn) {
+    addModBtn.addEventListener('click', handleAddModComponent);
+  }
+
+  const wsInput = document.getElementById('builder-mod-ws-id');
+  const wsFeedback = document.getElementById('builder-mod-ws-feedback');
+  if (wsInput) {
+    const handleWsInput = () => {
+      const val = wsInput.value.trim();
+      if (!val) {
+        if (wsFeedback) {
+          wsFeedback.style.display = 'none';
+          wsFeedback.innerHTML = '';
+        }
+        return;
+      }
+      const extractedId = parseSteamWorkshopId(val);
+      if (extractedId) {
+        if (wsFeedback) {
+          wsFeedback.style.display = 'inline-flex';
+          wsFeedback.className = 'steam-extraction-badge valid';
+          wsFeedback.innerHTML = `✓ ID Detectado: <strong>${extractedId}</strong>`;
+        }
+      } else {
+        if (wsFeedback) {
+          wsFeedback.style.display = 'inline-flex';
+          wsFeedback.className = 'steam-extraction-badge invalid';
+          wsFeedback.innerHTML = `⚠️ Insira um link válido da Steam ou o ID numérico`;
+        }
+      }
+    };
+    wsInput.addEventListener('input', handleWsInput);
+    wsInput.addEventListener('paste', () => setTimeout(handleWsInput, 50));
+  }
+
   renderCreatorUploadsList();
+}
+
+export function parseSteamWorkshopId(rawInput) {
+  if (!rawInput) return null;
+  const trimmed = rawInput.trim();
+  // 1. Se já for estritamente numérico
+  if (/^\d+$/.test(trimmed)) {
+    return trimmed;
+  }
+  // 2. Extração via query param ?id=XXXX ou &id=XXXX
+  const queryMatch = trimmed.match(/[?&]id=(\d+)/i);
+  if (queryMatch && queryMatch[1]) {
+    return queryMatch[1];
+  }
+  // 3. Extração via path alternativo filedetails/XXXX ou sharedfiles/XXXX
+  const pathMatch = trimmed.match(/(?:filedetails|sharedfiles)[^\d]*(\d+)/i);
+  if (pathMatch && pathMatch[1]) {
+    return pathMatch[1];
+  }
+  // 4. Sequência numérica isolada (6 a 12 dígitos)
+  const broadMatch = trimmed.match(/\b(\d{6,12})\b/);
+  if (broadMatch && broadMatch[1]) {
+    return broadMatch[1];
+  }
+  return null;
 }
 
 function handleModTypeChange(selectedType) {
@@ -106,6 +166,7 @@ function handleAddModComponent() {
   const nameInput = document.getElementById('builder-mod-name');
   const reqCheckbox = document.getElementById('builder-mod-required');
   const wsInput = document.getElementById('builder-mod-ws-id');
+  const wsFeedback = document.getElementById('builder-mod-ws-feedback');
   const directUrlInput = document.getElementById('builder-mod-direct-url');
   const directFolderInput = document.getElementById('builder-mod-folder-name');
 
@@ -121,20 +182,25 @@ function handleAddModComponent() {
   let modObject = null;
 
   if (mod_type === 'workshop') {
-    const workshop_id = wsInput?.value.trim();
-    if (!workshop_id) {
-      showTacticalAlert('Por favor, informe o Steam Workshop ID (apenas números, ex: 1510950729).', 'ID INVÁLIDO', 'warning');
+    const rawVal = wsInput?.value.trim();
+    const extractedId = parseSteamWorkshopId(rawVal);
+    if (!extractedId) {
+      showTacticalAlert('Por favor, informe o link completo do mod na Steam ou o Workshop ID numérico (ex: https://steamcommunity.com/sharedfiles/filedetails/?id=1510950729 ou 1510950729).', 'LINK OU ID INVÁLIDO', 'warning');
       return;
     }
     modObject = {
-      id: workshop_id,
+      id: extractedId,
       name,
       mod_type: 'workshop',
-      workshop_id: workshop_id,
+      workshop_id: extractedId,
       required,
-      description: `Steam Workshop [ID: ${workshop_id}]`
+      description: `Steam Workshop [ID: ${extractedId}]`
     };
     if (wsInput) wsInput.value = '';
+    if (wsFeedback) {
+      wsFeedback.style.display = 'none';
+      wsFeedback.innerHTML = '';
+    }
   } else if (mod_type === 'direct_download') {
     const download_url = directUrlInput?.value.trim();
     const folder_name = directFolderInput?.value.trim() || name.replace(/[^a-zA-Z0-9_-]/g, '');
