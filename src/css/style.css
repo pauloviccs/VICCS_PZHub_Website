@@ -3715,13 +3715,58 @@ body.theme-light .btn-follow-suggestion.following {
   margin: 16px 0;
 }
 
-/* Modal de Changelog Custom */
+/* Modal de Changelog Custom & Gerenciador */
 .changelog-modal-card {
   width: 100%;
-  max-width: 680px;
+  max-width: 720px;
   background: var(--bg-surface-card);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-md);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.85);
   overflow: hidden;
 }
+
+.ch-history-item {
+  background: rgba(15, 20, 25, 0.7);
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--accent-cyan);
+  padding: 12px 14px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.ch-history-item:hover {
+  border-color: rgba(0, 206, 201, 0.5);
+  background: rgba(20, 26, 33, 0.85);
+}
+
+.ch-history-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ch-history-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.ch-history-notes-preview {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 8px 10px;
+  border-radius: 4px;
+  max-height: 90px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  white-space: pre-line;
+}
+

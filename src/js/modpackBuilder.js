@@ -9,13 +9,15 @@
 import { supabase, isConfigured } from './supabaseClient.js';
 import { getCurrentUser, getCurrentUserProfile } from './auth.js';
 import { getAllModpacks, loadWorkshopData } from './workshop.js';
-import { createChangelog } from './changelogs.js';
+import { createChangelog, updateChangelog, deleteChangelog, fetchModpackChangelogs, syncLatestModpackVersion } from './changelogs.js';
 import { openImageCropperModal } from './imageCropper.js';
 import { showTacticalAlert, showTacticalConfirm, showTacticalToast } from './tacticalModal.js';
 
 let builderModsList = [];
 let editingPackId = null;
 let currentChangelogPack = null;
+let editingChangelogId = null;
+let changelogModalMode = 'history';
 
 export async function initModpackBuilder() {
   const addModBtn = document.getElementById('btn-builder-add-mod');
@@ -444,7 +446,7 @@ export function renderCreatorUploadsList() {
 
       <div style="display: flex; gap: 8px;">
         <button class="tarkov-btn-mini btn-edit-mypack" data-pack-id="${pack.id}">✏️ EDITAR</button>
-        <button class="tarkov-btn-mini btn-changelog-mypack" data-pack-id="${pack.id}" style="border-color: var(--accent-cyan); color: var(--accent-cyan);">🔄 NOVO CHANGELOG</button>
+        <button class="tarkov-btn-mini btn-changelog-mypack" data-pack-id="${pack.id}" style="border-color: var(--accent-cyan); color: var(--accent-cyan);">🔄 CHANGELOGS</button>
         <button class="tarkov-btn-mini btn-delete-mypack" data-pack-id="${pack.id}" style="border-color: var(--accent-red); color: var(--accent-red);">🗑️ DELETAR</button>
       </div>
     </div>
@@ -674,11 +676,192 @@ export function setupMarkdownEditor() {
 }
 
 /**
+ * Alterna a visualização entre o Histórico e o Formulário de Despacho
+ */
+function switchChangelogModalMode(mode) {
+  changelogModalMode = mode;
+  const historyPane = document.getElementById('changelog-history-pane');
+  const formPane = document.getElementById('changelog-form');
+  const btnHistory = document.getElementById('btn-ch-mode-history');
+  const btnCreate = document.getElementById('btn-ch-mode-create');
+  const headerTitle = document.getElementById('changelog-modal-header-title');
+
+  if (mode === 'history') {
+    if (historyPane) historyPane.style.display = 'flex';
+    if (formPane) formPane.style.display = 'none';
+    if (btnHistory) btnHistory.classList.add('active');
+    if (btnCreate) btnCreate.classList.remove('active');
+    if (headerTitle) headerTitle.textContent = 'GERENCIADOR DE CHANGELOGS & HISTÓRICO';
+  } else {
+    if (historyPane) historyPane.style.display = 'none';
+    if (formPane) formPane.style.display = 'flex';
+    if (btnCreate) btnCreate.classList.add('active');
+    if (btnHistory) btnHistory.classList.remove('active');
+  }
+}
+
+/**
+ * Prepara o formulário para um NOVO changelog com sugestão de versão
+ */
+function prepareNewChangelogForm() {
+  editingChangelogId = null;
+  const headerTitle = document.getElementById('changelog-modal-header-title');
+  const submitBtn = document.getElementById('btn-submit-changelog-modal');
+  const verInput = document.getElementById('changelog-version-input');
+  const titleInput = document.getElementById('changelog-title-input');
+  const notesInput = document.getElementById('changelog-notes-input');
+  const editingIdInput = document.getElementById('changelog-editing-id');
+  const tabWrite = document.getElementById('btn-ch-tab-write');
+
+  if (headerTitle) headerTitle.textContent = 'DESPACHO DE ATUALIZAÇÃO // NOVO CHANGELOG';
+  if (submitBtn) submitBtn.innerHTML = '🚀 PUBLICAR CHANGELOG OFICIAL';
+  if (editingIdInput) editingIdInput.value = '';
+
+  if (currentChangelogPack) {
+    const currentVer = currentChangelogPack.version || '1.0.0';
+    const parts = currentVer.split('.').map(n => parseInt(n, 10) || 0);
+    if (parts.length >= 2) {
+      parts[1] += 1;
+      if (parts.length >= 3) parts[2] = 0;
+      if (verInput) verInput.value = parts.join('.');
+    } else {
+      if (verInput) verInput.value = '1.1.0';
+    }
+  }
+
+  if (titleInput) titleInput.value = 'Atualização de Compatibilidade Build 42';
+  if (notesInput) notesInput.value = '- Melhorias de performance e estabilidade.\n- Ajustes de compatibilidade com os mods recentes.\n- Correções de bugs relatados pela comunidade.';
+
+  if (tabWrite) tabWrite.click();
+}
+
+/**
+ * Recarrega e renderiza a lista de histórico de changelogs no modal
+ */
+async function refreshChangelogHistoryList(pack) {
+  const container = document.getElementById('ch-history-list');
+  const countEl = document.getElementById('ch-history-count');
+  const targetNameEl = document.getElementById('ch-history-target-name');
+  const currentVerEl = document.getElementById('ch-history-current-ver');
+  const formTargetName = document.getElementById('changelog-target-name');
+  const formCurrentVer = document.getElementById('changelog-current-ver');
+
+  if (targetNameEl) targetNameEl.textContent = pack.name;
+  if (currentVerEl) currentVerEl.textContent = `v${pack.version || '1.0.0'}`;
+  if (formTargetName) formTargetName.textContent = pack.name;
+  if (formCurrentVer) formCurrentVer.textContent = `v${pack.version || '1.0.0'}`;
+
+  if (!container) return;
+  container.innerHTML = '<div style="color: var(--text-dim); font-size: 11px; padding: 20px; text-align: center;">Carregando histórico na nuvem...</div>';
+
+  const changelogs = await fetchModpackChangelogs(pack.slug || pack.id);
+  if (countEl) countEl.textContent = changelogs.length;
+
+  if (changelogs.length === 0) {
+    container.innerHTML = `
+      <div style="color: var(--text-dim); font-size: 12px; padding: 24px; text-align: center; background: rgba(0,0,0,0.2); border: 1px dashed var(--panel-border); border-radius: 4px;">
+        <p style="margin-bottom: 10px;">Nenhum changelog publicado ainda para este modpack.</p>
+        <button type="button" class="tarkov-btn btn-amber btn-create-first-ch" style="font-size: 11px; padding: 6px 14px;">
+          ➕ CRIAR PRIMEIRO CHANGELOG
+        </button>
+      </div>
+    `;
+    const btnFirst = container.querySelector('.btn-create-first-ch');
+    if (btnFirst) {
+      btnFirst.onclick = () => {
+        prepareNewChangelogForm();
+        switchChangelogModalMode('create');
+      };
+    }
+    return;
+  }
+
+  container.innerHTML = changelogs.map((ch, idx) => `
+    <div class="ch-history-item" data-ch-id="${ch.id}">
+      <div class="ch-history-item-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="tarkov-tag badge-version" style="font-weight: bold;">v${ch.version}</span>
+          ${idx === 0 ? '<span class="tarkov-tag" style="background: rgba(0, 206, 201, 0.15); color: var(--accent-cyan); border-color: rgba(0, 206, 201, 0.4); font-size: 9px;">VERSÃO ATIVA</span>' : ''}
+          <strong style="color: #fff; font-size: 12px;">${ch.title}</strong>
+        </div>
+        <div class="ch-history-actions">
+          <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); margin-right: 6px;">
+            ${new Date(ch.created_at).toLocaleDateString('pt-BR')}
+          </span>
+          <button type="button" class="tarkov-btn-mini btn-edit-ch" data-ch-id="${ch.id}" title="Editar notas e título desta versão">
+            ✏️ EDITAR
+          </button>
+          <button type="button" class="tarkov-btn-mini btn-delete-ch" data-ch-id="${ch.id}" style="border-color: var(--accent-red); color: var(--accent-red);" title="Excluir changelog permanentemente">
+            🗑️ EXCLUIR
+          </button>
+        </div>
+      </div>
+      <div class="ch-history-notes-preview">${ch.notes || 'Sem notas registradas.'}</div>
+    </div>
+  `).join('');
+
+  // Ações nos itens da lista
+  container.querySelectorAll('.btn-edit-ch').forEach(btn => {
+    btn.onclick = () => {
+      const chId = btn.dataset.chId;
+      const targetCh = changelogs.find(c => c.id === chId);
+      if (!targetCh) return;
+
+      editingChangelogId = targetCh.id;
+      const headerTitle = document.getElementById('changelog-modal-header-title');
+      const submitBtn = document.getElementById('btn-submit-changelog-modal');
+      const verInput = document.getElementById('changelog-version-input');
+      const titleInput = document.getElementById('changelog-title-input');
+      const notesInput = document.getElementById('changelog-notes-input');
+      const editingIdInput = document.getElementById('changelog-editing-id');
+      const tabWrite = document.getElementById('btn-ch-tab-write');
+
+      if (headerTitle) headerTitle.textContent = `EDITANDO CHANGELOG // v${targetCh.version}`;
+      if (submitBtn) submitBtn.innerHTML = '💾 SALVAR ALTERAÇÕES';
+      if (editingIdInput) editingIdInput.value = targetCh.id;
+
+      if (verInput) verInput.value = targetCh.version;
+      if (titleInput) titleInput.value = targetCh.title;
+      if (notesInput) notesInput.value = targetCh.notes;
+
+      if (tabWrite) tabWrite.click();
+      switchChangelogModalMode('create');
+    };
+  });
+
+  container.querySelectorAll('.btn-delete-ch').forEach(btn => {
+    btn.onclick = async () => {
+      const chId = btn.dataset.chId;
+      const targetCh = changelogs.find(c => c.id === chId);
+      if (!targetCh) return;
+
+      if (confirm(`Tem certeza que deseja excluir o changelog v${targetCh.version} ("${targetCh.title}")?`)) {
+        await deleteChangelog(chId, pack.slug || pack.id);
+        const newVersion = await syncLatestModpackVersion(pack.id);
+        if (newVersion) {
+          pack.version = newVersion;
+          const allPacks = getAllModpacks();
+          const targetInAll = allPacks.find(p => p.id === pack.id);
+          if (targetInAll) targetInAll.version = newVersion;
+          localStorage.setItem('PZHUB_COMMUNITY_MODPACKS', JSON.stringify(allPacks));
+        }
+
+        showTacticalToast(`Changelog v${targetCh.version} excluído com sucesso!`, 'success');
+        await refreshChangelogHistoryList(pack);
+        renderCreatorUploadsList();
+        await loadWorkshopData();
+      }
+    };
+  });
+}
+
+/**
  * Configura o Modal Tático de Changelog e sua Estação de Redação
  */
 export function setupChangelogModal() {
   const modal = document.getElementById('changelog-modal');
   const closeBtn = document.getElementById('changelog-modal-close');
+  const historyCloseBtn = document.getElementById('btn-ch-history-close');
   const cancelBtn = document.getElementById('btn-cancel-changelog-modal');
   const form = document.getElementById('changelog-form');
   const textarea = document.getElementById('changelog-notes-input');
@@ -691,12 +874,28 @@ export function setupChangelogModal() {
   const fileInput = document.getElementById('input-upload-ch-md-file');
   const editorWrap = document.getElementById('tarkov-changelog-editor');
 
+  const btnModeHistory = document.getElementById('btn-ch-mode-history');
+  const btnModeCreate = document.getElementById('btn-ch-mode-create');
+  const btnHistoryAddNew = document.getElementById('btn-ch-history-add-new');
+
   if (!modal) return;
 
   const closeModal = () => modal.classList.remove('visible');
 
   if (closeBtn) closeBtn.onclick = closeModal;
-  if (cancelBtn) cancelBtn.onclick = closeModal;
+  if (historyCloseBtn) historyCloseBtn.onclick = closeModal;
+
+  if (cancelBtn) {
+    cancelBtn.onclick = () => {
+      if (editingChangelogId) {
+        editingChangelogId = null;
+        switchChangelogModalMode('history');
+      } else {
+        closeModal();
+      }
+    };
+  }
+
   modal.onclick = (e) => {
     if (e.target === modal) closeModal();
   };
@@ -706,6 +905,24 @@ export function setupChangelogModal() {
       closeModal();
     }
   });
+
+  if (btnModeHistory) {
+    btnModeHistory.onclick = () => switchChangelogModalMode('history');
+  }
+
+  if (btnModeCreate) {
+    btnModeCreate.onclick = () => {
+      prepareNewChangelogForm();
+      switchChangelogModalMode('create');
+    };
+  }
+
+  if (btnHistoryAddNew) {
+    btnHistoryAddNew.onclick = () => {
+      prepareNewChangelogForm();
+      switchChangelogModalMode('create');
+    };
+  }
 
   const updateChCount = () => {
     if (charCounter && textarea) charCounter.textContent = `${textarea.value.length} CARACTERES`;
@@ -808,24 +1025,34 @@ export function setupChangelogModal() {
         return;
       }
 
-      await createChangelog(currentChangelogPack.slug || currentChangelogPack.id, version, title, notes);
-      currentChangelogPack.version = version;
+      if (editingChangelogId) {
+        // Modo Edição
+        await updateChangelog(editingChangelogId, version, title, notes, currentChangelogPack.slug || currentChangelogPack.id);
+        editingChangelogId = null;
+        showTacticalAlert(`Changelog v${version} atualizado com sucesso!`, 'CHANGELOG ATUALIZADO', 'success');
+      } else {
+        // Modo Criação
+        await createChangelog(currentChangelogPack.slug || currentChangelogPack.id, version, title, notes);
+        currentChangelogPack.version = version;
 
-      if (isConfigured) {
-        try {
-          await supabase.from('modpacks').update({ version: version }).eq('id', currentChangelogPack.id);
-        } catch (err) {
-          console.warn('Erro ao sincronizar versão do modpack no Supabase:', err);
+        if (isConfigured) {
+          try {
+            await supabase.from('modpacks').update({ version: version }).eq('id', currentChangelogPack.id);
+          } catch (err) {
+            console.warn('Erro ao sincronizar versão do modpack no Supabase:', err);
+          }
         }
+
+        const allPacks = getAllModpacks();
+        const targetInAll = allPacks.find(p => p.id === currentChangelogPack.id);
+        if (targetInAll) targetInAll.version = version;
+        localStorage.setItem('PZHUB_COMMUNITY_MODPACKS', JSON.stringify(allPacks));
+
+        showTacticalAlert(`Changelog v${version} publicado com sucesso para "${currentChangelogPack.name}"!`, 'CHANGELOG PUBLICADO', 'success');
       }
 
-      const allPacks = getAllModpacks();
-      const targetInAll = allPacks.find(p => p.id === currentChangelogPack.id);
-      if (targetInAll) targetInAll.version = version;
-      localStorage.setItem('PZHUB_COMMUNITY_MODPACKS', JSON.stringify(allPacks));
-
-      showTacticalAlert(`Changelog v${version} publicado com sucesso para "${currentChangelogPack.name}"!`, 'CHANGELOG PUBLICADO', 'success');
-      closeModal();
+      await refreshChangelogHistoryList(currentChangelogPack);
+      switchChangelogModalMode('history');
       renderCreatorUploadsList();
       await loadWorkshopData();
     };
@@ -833,38 +1060,16 @@ export function setupChangelogModal() {
 }
 
 /**
- * Abre o Modal de Changelog para um modpack específico
+ * Abre o Modal de Changelog para um modpack específico no modo Histórico/Gerenciador
  */
-export function openChangelogModal(pack) {
+export async function openChangelogModal(pack) {
   currentChangelogPack = pack;
+  editingChangelogId = null;
   const modal = document.getElementById('changelog-modal');
-  const targetNameEl = document.getElementById('changelog-target-name');
-  const currentVerEl = document.getElementById('changelog-current-ver');
-  const verInput = document.getElementById('changelog-version-input');
-  const titleInput = document.getElementById('changelog-title-input');
-  const notesInput = document.getElementById('changelog-notes-input');
-  const tabWrite = document.getElementById('btn-ch-tab-write');
-
   if (!modal) return;
 
-  if (targetNameEl) targetNameEl.textContent = pack.name;
-  if (currentVerEl) currentVerEl.textContent = `v${pack.version || '1.0.0'}`;
-
-  // Sugestão de nova versão (bump minor automático)
-  const currentVer = pack.version || '1.0.0';
-  const parts = currentVer.split('.').map(n => parseInt(n, 10) || 0);
-  if (parts.length >= 2) {
-    parts[1] += 1;
-    if (parts.length >= 3) parts[2] = 0;
-    if (verInput) verInput.value = parts.join('.');
-  } else {
-    if (verInput) verInput.value = '1.1.0';
-  }
-
-  if (titleInput) titleInput.value = 'Atualização de Compatibilidade Build 42';
-  if (notesInput) notesInput.value = '- Melhorias de performance e estabilidade.\n- Ajustes de compatibilidade com os mods recentes.\n- Correções de bugs relatados pela comunidade.';
-
-  if (tabWrite) tabWrite.click();
+  await refreshChangelogHistoryList(pack);
+  switchChangelogModalMode('history');
   modal.classList.add('visible');
 }
 

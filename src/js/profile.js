@@ -591,23 +591,27 @@ function setupProfileEventListeners(isOwner, isStaff) {
         created_at: new Date().toISOString()
       };
 
-      profileScrapsList.unshift(newScrap);
-      saveScrapsLocally(activeProfileData.id || activeProfileData.username, profileScrapsList);
-
-      if (isConfigured && currentUser) {
+      if (isConfigured && currentUser && activeProfileData.id) {
         try {
-          await supabase.from('profile_scraps').insert([{
+          const { data, error } = await supabase.from('profile_scraps').insert([{
             profile_id: activeProfileData.id,
             sender_id: currentUser.id,
             sender_name: newScrap.sender_name,
             sender_avatar: newScrap.sender_avatar,
             message: text,
             reactions: newScrap.reactions
-          }]);
+          }]).select();
+
+          if (!error && data && data[0]) {
+            newScrap.id = data[0].id;
+          }
         } catch(err) {
           console.warn('Erro ao salvar recado no Supabase:', err);
         }
       }
+
+      profileScrapsList.unshift(newScrap);
+      saveScrapsLocally(activeProfileData.id || activeProfileData.username, profileScrapsList);
 
       scrapInput.value = '';
       if (cooldownHint) cooldownHint.textContent = 'Recado gravado no mural com sucesso!';

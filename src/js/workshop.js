@@ -3,13 +3,14 @@
  */
 
 import { supabase, isConfigured } from './supabaseClient.js';
-import { getCurrentUser } from './auth.js';
+import { getCurrentUser, getCurrentUserProfile } from './auth.js';
 import { fetchModpackChangelogs } from './changelogs.js';
 import { i18n, PZ_CATEGORIES } from './i18n.js';
 import { showTacticalAlert, showTacticalToast } from './tacticalModal.js';
 import { parseMarkdown } from './modpackBuilder.js';
 
 let modpacksList = [];
+let userLikedModpackIds = new Set();
 let activeCategory = 'all';
 let searchQuery = '';
 let currentSort = 'popular';
@@ -93,6 +94,23 @@ export function populateWebsiteCategoriesSelect() {
 }
 
 export async function loadWorkshopData() {
+  const currentUser = getCurrentUser();
+  if (currentUser && isConfigured) {
+    try {
+      const { data: likesData } = await supabase
+        .from('modpack_likes')
+        .select('modpack_id')
+        .eq('user_id', currentUser.id);
+      if (likesData && Array.isArray(likesData)) {
+        userLikedModpackIds = new Set(likesData.map(l => l.modpack_id));
+      }
+    } catch(e) {
+      console.warn('Erro ao carregar modpack_likes no Supabase:', e);
+    }
+  } else {
+    userLikedModpackIds.clear();
+  }
+
   if (isConfigured) {
     try {
       const { data, error } = await supabase
@@ -209,7 +227,7 @@ export function renderWorkshop() {
               <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
               <span>${pack.downloads_count || 0}</span>
             </span>
-            <button class="btn-like-modpack ws-stat-btn" data-pack-id="${pack.id}" title="Curtir modpack">
+            <button class="btn-like-modpack ws-stat-btn ${userLikedModpackIds.has(pack.id) ? 'liked' : ''}" data-pack-id="${pack.id}" title="Curtir modpack" style="${userLikedModpackIds.has(pack.id) ? 'color: var(--accent-red);' : ''}">
               ❤️ <strong class="like-count">${pack.likes_count || 0}</strong>
             </button>
           </div>
@@ -239,20 +257,51 @@ export function renderWorkshop() {
   container.querySelectorAll('.btn-like-modpack').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        showTacticalAlert('Você precisa entrar na sua conta para curtir modpacks da comunidade.', 'ACESSO RESTRITO', 'warning');
+        return;
+      }
+
       const packId = btn.dataset.packId;
       const pack = modpacksList.find(p => p.id === packId);
-      if (pack) {
-        pack.likes_count = (pack.likes_count || 0) + 1;
-        const countEl = btn.querySelector('.like-count');
+      if (!pack) return;
+
+      const countEl = btn.querySelector('.like-count');
+      const isAlreadyLiked = userLikedModpackIds.has(pack.id) || btn.classList.contains('liked');
+
+      if (isAlreadyLiked) {
+        // Toggle OFF: Descurtir
+        userLikedModpackIds.delete(pack.id);
+        pack.likes_count = Math.max(0, (pack.likes_count || 1) - 1);
+        btn.classList.remove('liked');
+        btn.style.color = '';
         if (countEl) countEl.textContent = pack.likes_count;
-        btn.classList.add('liked');
         saveModpacksLocally();
 
         if (isConfigured) {
           try {
             await supabase.from('modpacks').update({ likes_count: pack.likes_count }).eq('id', pack.id);
+            await supabase.from('modpack_likes').delete().eq('modpack_id', pack.id).eq('user_id', currentUser.id);
           } catch(err) {
-            console.warn('Erro ao atualizar curtida no Supabase:', err);
+            console.warn('Erro ao remover curtida no Supabase:', err);
+          }
+        }
+      } else {
+        // Toggle ON: Curtir
+        userLikedModpackIds.add(pack.id);
+        pack.likes_count = (pack.likes_count || 0) + 1;
+        btn.classList.add('liked');
+        btn.style.color = 'var(--accent-red)';
+        if (countEl) countEl.textContent = pack.likes_count;
+        saveModpacksLocally();
+
+        if (isConfigured) {
+          try {
+            await supabase.from('modpacks').update({ likes_count: pack.likes_count }).eq('id', pack.id);
+            await supabase.from('modpack_likes').upsert([{ modpack_id: pack.id, user_id: currentUser.id }], { onConflict: 'modpack_id,user_id' });
+          } catch(err) {
+            console.warn('Erro ao gravar curtida no Supabase:', err);
           }
         }
       }
@@ -283,6 +332,22 @@ export async function openModpackDetailsModal(pack) {
   if (!modal) return;
 
   const changelogs = await fetchModpackChangelogs(pack.slug || pack.id);
+
+  // Carregar comentários reais da nuvem Supabase
+  if (isConfigured) {
+    try {
+      const { data: dbComments, error: comErr } = await supabase
+        .from('comments')
+        .select('*')
+        .eq('target_id', pack.id)
+        .order('created_at', { ascending: false });
+      if (!comErr && Array.isArray(dbComments)) {
+        pack.comments = dbComments;
+      }
+    } catch(e) {
+      console.warn('Erro ao carregar comentários do modpack no Supabase:', e);
+    }
+  }
 
   const titleEl = document.getElementById('md-modal-title');
   const authorEl = document.getElementById('md-modal-author');
@@ -322,41 +387,29 @@ export async function openModpackDetailsModal(pack) {
     btn.onclick = () => {
       document.querySelectorAll('.md-tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      activeModalTab = btn.dataset.tab;
+      activeModalTab = btn.id;
       renderModalTabContent(pack, changelogs);
     };
   });
 }
 
 function renderModalTabContent(pack, changelogs) {
-  const bodyEl = document.getElementById('md-modal-tab-content');
+  const bodyEl = document.getElementById('md-modal-body-content');
   if (!bodyEl) return;
 
   if (activeModalTab === 'tab-ws-overview') {
+    const rawDesc = pack.detailed_description || pack.description || 'Nenhuma descrição estendida informada pelo autor.';
     bodyEl.innerHTML = `
-      <div class="md-overview-pane">
-        <div class="md-desc-long">${parseMarkdown(pack.description || 'Sem descrição cadastrada.')}</div>
-        <h4 style="color: #fff; margin: 20px 0 10px 0; font-size: 13px; letter-spacing: 1px;">COMPONENTES & MODS INCLUSOS (${pack.mods?.length || 0}):</h4>
-        <div class="md-mods-list">
-          ${(pack.mods || []).map(m => `
-            <div class="md-mod-item">
-              <span class="mod-status-dot">✓</span>
-              <div style="display: flex; flex-direction: column;">
-                <strong style="color: var(--text-main); font-size: 12px;">${m.name}</strong>
-                <span style="font-size: 10px; color: var(--text-dim); font-family: var(--font-mono);">${m.mod_type === 'workshop' ? `Steam Workshop ID: ${m.workshop_id || m.id}` : 'Módulo Nativo PZHub'}</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
+      <div class="md-rendered-content" style="font-size: 13px; color: var(--text-main); line-height: 1.7;">
+        ${parseMarkdown(rawDesc)}
       </div>
     `;
-  } else if (activeModalTab === 'tab-ws-changelogs') {
+  } else if (activeModalTab === 'tab-ws-changelog') {
     bodyEl.innerHTML = `
       <div class="md-changelogs-pane">
-        <h4 style="color: var(--accent-amber); margin-bottom: 16px; font-size: 13px; letter-spacing: 1px;">HISTÓRICO OFICIAL DE VERSÕES</h4>
-        <div class="changelogs-timeline">
+        <div class="changelog-timeline-stream" style="display: flex; flex-direction: column; gap: 16px;">
           ${changelogs.length === 0 ? `
-            <div style="color: var(--text-dim); font-size: 11px;">Nenhum changelog registrado para este modpack.</div>
+            <div style="color: var(--text-dim); font-size: 11px; padding: 20px; text-align: center;">Nenhum registro de atualização para este modpack.</div>
           ` : changelogs.map(ch => `
             <div class="changelog-entry">
               <div class="ch-header">
@@ -402,31 +455,49 @@ function renderModalTabContent(pack, changelogs) {
         const text = commentInput.value.trim();
         if (!text) return;
         const currentUser = getCurrentUser();
-        const newC = {
-          id: `c-${Date.now()}`,
+        const currentProfile = getCurrentUserProfile();
+
+        if (!currentUser) {
+          showTacticalAlert('Você precisa entrar na sua conta para comentar neste modpack.', 'ACESSO RESTRITO', 'warning');
+          return;
+        }
+
+        const authorName = currentProfile?.display_name || currentProfile?.username || currentUser?.user_metadata?.username || 'Sobrevivente';
+        const authorAvatar = currentProfile?.avatar_url || currentUser?.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80';
+
+        const commentPayload = {
           target_id: pack.id,
-          author_name: currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.username || 'Sobrevivente',
-          content: text,
-          likes_count: 0,
-          created_at: new Date().toISOString()
+          author_id: currentUser.id,
+          author_name: authorName,
+          author_avatar: authorAvatar,
+          content: text
         };
-        pack.comments = pack.comments || [];
-        pack.comments.unshift(newC);
-        saveModpacksLocally();
 
         if (isConfigured) {
           try {
-            await supabase.from('comments').insert([{
-              target_id: pack.id,
-              author_id: currentUser?.id,
-              author_name: newC.author_name,
-              content: text
-            }]);
+            const { data, error } = await supabase.from('comments').insert([commentPayload]).select();
+            if (error) throw error;
+            if (data && data[0]) {
+              pack.comments = pack.comments || [];
+              pack.comments.unshift(data[0]);
+            }
+            showTacticalToast('Comentário registrado com sucesso!', 'success');
           } catch(err) {
             console.warn('Erro ao salvar comentário no Supabase:', err);
+            showTacticalToast('Erro ao gravar comentário na rede.', 'error');
           }
+        } else {
+          pack.comments = pack.comments || [];
+          pack.comments.unshift({
+            ...commentPayload,
+            id: `c-${Date.now()}`,
+            created_at: new Date().toISOString()
+          });
+          showTacticalToast('Comentário salvo localmente!', 'success');
         }
 
+        saveModpacksLocally();
+        commentInput.value = '';
         renderModalTabContent(pack, changelogs);
       };
     }
@@ -447,22 +518,33 @@ function renderModalTabContent(pack, changelogs) {
     if (reportBtn) {
       reportBtn.onclick = async () => {
         const reason = prompt(`Por que você deseja denunciar o modpack "${pack.name}"?`);
-        if (reason) {
+        if (reason && reason.trim()) {
+          const currentUser = getCurrentUser();
+          const currentProfile = getCurrentUserProfile();
+
           if (isConfigured) {
-            const currentUser = getCurrentUser();
             try {
-              await supabase.from('reports').insert([{
+              const reporterId = currentUser ? currentUser.id : null;
+              const reporterName = currentProfile?.username || currentUser?.user_metadata?.username || 'Anônimo';
+
+              const { error } = await supabase.from('reports').insert([{
                 target_type: 'modpack',
                 target_id: pack.id,
                 target_title: pack.name,
-                reporter_id: currentUser?.id,
-                reporter_name: currentUser?.user_metadata?.username || 'Anônimo',
-                reason: reason,
+                reporter_id: reporterId,
+                reporter_name: reporterName,
+                reason: reason.trim(),
                 status: 'open'
               }]);
-            } catch(e) {}
+              if (error) throw error;
+              showTacticalAlert('Denúncia encaminhada com sucesso para a moderação da Staff.', 'DENÚNCIA REGISTRADA', 'success');
+            } catch(e) {
+              console.warn('Erro ao registrar denúncia no Supabase:', e);
+              showTacticalToast('Erro ao registrar denúncia no servidor.', 'error');
+            }
+          } else {
+            showTacticalAlert('Denúncia simulada gravada com sucesso.', 'DENÚNCIA REGISTRADA', 'success');
           }
-          showTacticalAlert('Denúncia encaminhada com sucesso para a moderação da Staff.', 'DENÚNCIA REGISTRADA', 'success');
         }
       };
     }

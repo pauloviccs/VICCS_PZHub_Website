@@ -9,6 +9,7 @@ import { openImageCropperModal } from './imageCropper.js';
 import { showTacticalAlert, showTacticalToast } from './tacticalModal.js';
 
 let postsList = [];
+let userLikedPostIds = new Set();
 let activeFeedTab = 'discovery'; // 'discovery' | 'following'
 let attachedMediaList = []; // Array de base64/URLs (máximo 4)
 let attachedYoutubeId = null;
@@ -248,6 +249,23 @@ function renderComposeMediaPreviews() {
 
 export async function loadTimelinePosts() {
   updateComposeAvatar();
+
+  const currentUser = getCurrentUser();
+  if (currentUser && isConfigured) {
+    try {
+      const { data: likesData } = await supabase
+        .from('post_likes')
+        .select('post_id')
+        .eq('user_id', currentUser.id);
+      if (likesData && Array.isArray(likesData)) {
+        userLikedPostIds = new Set(likesData.map(l => l.post_id));
+      }
+    } catch (e) {
+      console.warn('Erro ao ler curtidas do usuário no Supabase:', e);
+    }
+  } else {
+    userLikedPostIds.clear();
+  }
 
   if (isConfigured) {
     try {
@@ -494,7 +512,7 @@ export function renderTimelineFeed() {
               <span class="action-count">${post.reposts_count || 0}</span>
             </button>
 
-            <button class="tweet-action-btn btn-action-like" data-post-id="${post.id}" title="Curtir">
+            <button class="tweet-action-btn btn-action-like ${userLikedPostIds.has(post.id) ? 'liked' : ''}" data-post-id="${post.id}" title="Curtir" style="${userLikedPostIds.has(post.id) ? 'color: var(--accent-red);' : ''}">
               <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
               <span class="action-count like-counter">${post.likes_count || 0}</span>
             </button>
@@ -641,7 +659,7 @@ function setupTweetCardInteractions() {
     }
   });
 
-  // 4. Curtir Post (Heart)
+  // 4. Curtir Post (Heart) com Toggle Atômico Anti-409
   container.querySelectorAll('.btn-action-like').forEach(btn => {
     btn.onclick = async (e) => {
       e.stopPropagation();
@@ -654,18 +672,42 @@ function setupTweetCardInteractions() {
         return;
       }
 
-      if (post) {
-        post.likes_count = (post.likes_count || 0) + 1;
-        btn.classList.add('liked');
-        const counter = btn.querySelector('.like-counter');
+      if (!post) return;
+
+      const counter = btn.querySelector('.like-counter');
+      const isAlreadyLiked = userLikedPostIds.has(post.id) || btn.classList.contains('liked');
+
+      if (isAlreadyLiked) {
+        // Toggle OFF: Descurtir
+        userLikedPostIds.delete(post.id);
+        post.likes_count = Math.max(0, (post.likes_count || 1) - 1);
+        btn.classList.remove('liked');
+        btn.style.color = '';
         if (counter) counter.textContent = post.likes_count;
 
-        // Persistência no Supabase
         if (isConfigured) {
           try {
             await supabase.from('posts').update({ likes_count: post.likes_count }).eq('id', post.id);
-            await supabase.from('post_likes').insert([{ post_id: post.id, user_id: currentUser.id }]);
-          } catch(e) {}
+            await supabase.from('post_likes').delete().eq('post_id', post.id).eq('user_id', currentUser.id);
+          } catch(e) {
+            console.warn('Erro ao descurtir post no Supabase:', e);
+          }
+        }
+      } else {
+        // Toggle ON: Curtir
+        userLikedPostIds.add(post.id);
+        post.likes_count = (post.likes_count || 0) + 1;
+        btn.classList.add('liked');
+        btn.style.color = 'var(--accent-red)';
+        if (counter) counter.textContent = post.likes_count;
+
+        if (isConfigured) {
+          try {
+            await supabase.from('posts').update({ likes_count: post.likes_count }).eq('id', post.id);
+            await supabase.from('post_likes').upsert([{ post_id: post.id, user_id: currentUser.id }], { onConflict: 'post_id,user_id' });
+          } catch(e) {
+            console.warn('Erro ao curtir post no Supabase:', e);
+          }
         }
       }
     };
@@ -687,7 +729,7 @@ function setupTweetCardInteractions() {
     };
   });
 
-  // 6. Envio de Comentário Inline
+  // 6. Envio de Comentário Inline (Sem ID manual para não quebrar UUID no Supabase)
   container.querySelectorAll('.btn-send-inline-comment').forEach(btn => {
     btn.onclick = async () => {
       const postId = btn.dataset.postId;
@@ -705,26 +747,32 @@ function setupTweetCardInteractions() {
         return;
       }
 
-      const newComment = {
-        id: `c-${Date.now()}`,
+      const commentPayload = {
         post_id: postId,
         author_id: currentUser.id,
         author_name: currentProfile?.display_name || currentProfile?.username || currentUser.user_metadata?.username || 'Sobrevivente',
         author_username: currentProfile?.username || currentUser.user_metadata?.username || 'operador',
         author_avatar: currentProfile?.avatar_url || currentUser.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=80',
-        content: text,
-        created_at: new Date().toISOString()
+        content: text
       };
 
       if (isConfigured) {
         try {
-          await supabase.from('post_comments').insert([newComment]);
+          const { error } = await supabase.from('post_comments').insert([commentPayload]);
+          if (error) throw error;
+
           const post = postsList.find(p => p.id === postId);
           if (post) {
             post.comments_count = (post.comments_count || 0) + 1;
             await supabase.from('posts').update({ comments_count: post.comments_count }).eq('id', postId);
+            const replyCounter = container.querySelector(`.btn-action-reply[data-post-id="${postId}"] .action-count`);
+            if (replyCounter) replyCounter.textContent = post.comments_count;
           }
-        } catch(e) {}
+          showTacticalToast('Resposta transmitida com sucesso!', 'success');
+        } catch(e) {
+          console.warn('Erro ao enviar comentário do post no Supabase:', e);
+          showTacticalToast('Falha ao registrar comentário na rede.', 'error');
+        }
       }
 
       if (input) input.value = '';

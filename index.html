@@ -940,16 +940,54 @@
   <!-- MODAL: REGISTRO & DESPACHO DE NOVO CHANGELOG                          -->
   <!-- ===================================================================== -->
   <div id="changelog-modal" class="tarkov-modal-backdrop">
-    <div class="tarkov-modal-card changelog-modal-card" style="max-width: 680px;">
+    <div class="tarkov-modal-card changelog-modal-card" style="max-width: 720px;">
       <div class="modal-header">
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="color: var(--accent-cyan); font-size: 15px;">🔄</span>
-          <h3 class="modal-title">DESPACHO DE ATUALIZAÇÃO // NOVO CHANGELOG</h3>
+          <h3 class="modal-title" id="changelog-modal-header-title">GERENCIADOR DE CHANGELOGS & VERSÕES</h3>
         </div>
         <button type="button" id="changelog-modal-close" class="modal-close-icon">✕</button>
       </div>
 
-      <form id="changelog-form" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+      <!-- SELETOR DE MODO: HISTÓRICO vs FORMULÁRIO -->
+      <div style="display: flex; gap: 8px; padding: 12px 20px 0 20px; border-bottom: 1px solid var(--panel-border); background: rgba(0,0,0,0.25);">
+        <button type="button" id="btn-ch-mode-history" class="tarkov-editor-tab-btn active" style="padding: 8px 18px; font-size: 11px;">
+          📜 HISTÓRICO DE VERSÕES (<span id="ch-history-count">0</span>)
+        </button>
+        <button type="button" id="btn-ch-mode-create" class="tarkov-editor-tab-btn" style="padding: 8px 18px; font-size: 11px;">
+          ➕ NOVO DESPACHO
+        </button>
+      </div>
+
+      <!-- PAINEL 1: HISTÓRICO DE CHANGELOGS DO MODPACK (GERENCIADOR) -->
+      <div id="changelog-history-pane" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+        <div style="background: rgba(0,0,0,0.35); border: 1px solid var(--panel-border); padding: 10px 14px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <span style="font-size: 10px; font-family: var(--font-mono); color: var(--text-dim); display: block;">MODPACK ALVO:</span>
+            <strong id="ch-history-target-name" style="font-size: 13px; color: #fff;">Nome do Modpack</strong>
+          </div>
+          <div>
+            <span style="font-size: 10px; font-family: var(--font-mono); color: var(--text-dim); display: block;">VERSÃO ATIVA:</span>
+            <span id="ch-history-current-ver" class="tarkov-tag badge-version">v1.0.0</span>
+          </div>
+        </div>
+
+        <div id="ch-history-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 380px; overflow-y: auto; padding-right: 4px;">
+          <!-- Renderizado dinamicamente -->
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--panel-border); padding-top: 14px;">
+          <button type="button" id="btn-ch-history-add-new" class="tarkov-btn btn-amber" style="padding: 8px 18px; font-size: 11px;">
+            ➕ PUBLICAR NOVA VERSÃO
+          </button>
+          <button type="button" id="btn-ch-history-close" class="tarkov-btn">FECHAR</button>
+        </div>
+      </div>
+
+      <!-- PAINEL 2: FORMULÁRIO DE CRIAÇÃO / EDIÇÃO DE CHANGELOG -->
+      <form id="changelog-form" style="padding: 20px; display: none; flex-direction: column; gap: 16px;">
+        <input type="hidden" id="changelog-editing-id" value="" />
+        
         <div style="background: rgba(0,0,0,0.35); border: 1px solid var(--panel-border); padding: 10px 14px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
           <div>
             <span style="font-size: 10px; font-family: var(--font-mono); color: var(--text-dim); display: block;">MODPACK ALVO:</span>
@@ -963,7 +1001,7 @@
 
         <div class="builder-grid-2">
           <div class="form-group">
-            <label class="form-label">Nova Versão *</label>
+            <label class="form-label" id="lbl-ch-version">Versão *</label>
             <input type="text" id="changelog-version-input" class="tarkov-input" placeholder="Ex: 1.1.0" required />
           </div>
           <div class="form-group">
