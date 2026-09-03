@@ -261,6 +261,12 @@ CREATE POLICY "Autores deletam seus posts" ON public.posts FOR DELETE USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role::text IN ('admin', 'moderator'))
 );
 
+DROP POLICY IF EXISTS "Autores ou staff atualizam posts" ON public.posts;
+CREATE POLICY "Autores ou staff atualizam posts" ON public.posts FOR UPDATE USING (
+  auth.uid() = author_id OR 
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role::text IN ('admin', 'moderator'))
+);
+
 -- Likes em Posts
 DROP POLICY IF EXISTS "Post likes são públicos" ON public.post_likes;
 CREATE POLICY "Post likes são públicos" ON public.post_likes FOR SELECT USING (true);
@@ -362,4 +368,89 @@ DROP POLICY IF EXISTS "Apenas staff visualiza e gerencia denúncias" ON public.r
 CREATE POLICY "Apenas staff visualiza e gerencia denúncias" ON public.reports FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role::text IN ('admin', 'moderator'))
 );
+
+DROP POLICY IF EXISTS "Staff gerencia e atualiza denúncias" ON public.reports;
+CREATE POLICY "Staff gerencia e atualiza denúncias" ON public.reports FOR UPDATE USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role::text IN ('admin', 'moderator'))
+);
+
+-- =========================================================================
+-- TRIGGERS DE SINCRONIZAÇÃO ATÔMICA DE CONTADORES SOCIAIS
+-- =========================================================================
+
+-- 1. Sincronização Automática de Likes da Timeline
+CREATE OR REPLACE FUNCTION public.sync_post_likes_count()
+RETURNS TRIGGER AS $$
+DECLARE
+  target_post_id UUID;
+BEGIN
+  target_post_id := COALESCE(NEW.post_id, OLD.post_id);
+  UPDATE public.posts
+  SET likes_count = (
+    SELECT COUNT(*) FROM public.post_likes WHERE post_id = target_post_id
+  )
+  WHERE id = target_post_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_sync_post_likes ON public.post_likes;
+CREATE TRIGGER trg_sync_post_likes
+  AFTER INSERT OR DELETE ON public.post_likes
+  FOR EACH ROW EXECUTE FUNCTION public.sync_post_likes_count();
+
+-- 2. Sincronização Automática de Comentários da Timeline
+CREATE OR REPLACE FUNCTION public.sync_post_comments_count()
+RETURNS TRIGGER AS $$
+DECLARE
+  target_post_id UUID;
+BEGIN
+  target_post_id := COALESCE(NEW.post_id, OLD.post_id);
+  UPDATE public.posts
+  SET comments_count = (
+    SELECT COUNT(*) FROM public.post_comments WHERE post_id = target_post_id
+  )
+  WHERE id = target_post_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_sync_post_comments ON public.post_comments;
+CREATE TRIGGER trg_sync_post_comments
+  AFTER INSERT OR DELETE ON public.post_comments
+  FOR EACH ROW EXECUTE FUNCTION public.sync_post_comments_count();
+
+-- 3. Sincronização Automática de Likes de Modpacks
+CREATE OR REPLACE FUNCTION public.sync_modpack_likes_count()
+RETURNS TRIGGER AS $$
+DECLARE
+  target_pack_id TEXT;
+BEGIN
+  target_pack_id := COALESCE(NEW.modpack_id, OLD.modpack_id);
+  UPDATE public.modpacks
+  SET likes_count = (
+    SELECT COUNT(*) FROM public.modpack_likes WHERE modpack_id = target_pack_id
+  )
+  WHERE id = target_pack_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_sync_modpack_likes ON public.modpack_likes;
+CREATE TRIGGER trg_sync_modpack_likes
+  AFTER INSERT OR DELETE ON public.modpack_likes
+  FOR EACH ROW EXECUTE FUNCTION public.sync_modpack_likes_count();
+
+-- =========================================================================
+-- SINCRONIZAÇÃO IMEDIATA DOS DADOS EXISTENTES (EXECUTÁVEL NO SQL EDITOR)
+-- =========================================================================
+UPDATE public.posts p
+SET 
+  likes_count = (SELECT COUNT(*) FROM public.post_likes WHERE post_id = p.id),
+  comments_count = (SELECT COUNT(*) FROM public.post_comments WHERE post_id = p.id);
+
+UPDATE public.modpacks m
+SET
+  likes_count = (SELECT COUNT(*) FROM public.modpack_likes WHERE modpack_id = m.id);
+
 

@@ -687,7 +687,6 @@ function setupTweetCardInteractions() {
 
         if (isConfigured) {
           try {
-            await supabase.from('posts').update({ likes_count: post.likes_count }).eq('id', post.id);
             await supabase.from('post_likes').delete().eq('post_id', post.id).eq('user_id', currentUser.id);
           } catch(e) {
             console.warn('Erro ao descurtir post no Supabase:', e);
@@ -703,7 +702,6 @@ function setupTweetCardInteractions() {
 
         if (isConfigured) {
           try {
-            await supabase.from('posts').update({ likes_count: post.likes_count }).eq('id', post.id);
             await supabase.from('post_likes').upsert([{ post_id: post.id, user_id: currentUser.id }], { onConflict: 'post_id,user_id' });
           } catch(e) {
             console.warn('Erro ao curtir post no Supabase:', e);
@@ -764,7 +762,6 @@ function setupTweetCardInteractions() {
           const post = postsList.find(p => p.id === postId);
           if (post) {
             post.comments_count = (post.comments_count || 0) + 1;
-            await supabase.from('posts').update({ comments_count: post.comments_count }).eq('id', postId);
             const replyCounter = container.querySelector(`.btn-action-reply[data-post-id="${postId}"] .action-count`);
             if (replyCounter) replyCounter.textContent = post.comments_count;
           }
@@ -814,8 +811,16 @@ async function loadPostComments(postId) {
         .order('created_at', { ascending: true });
 
       if (data) comments = data;
-    } catch(e) {}
+    } catch(e) {
+      console.warn('Erro ao carregar comentários do post:', e);
+    }
   }
+
+  // Sincroniza dinamicamente o contador do botão com a quantidade real do banco
+  const post = postsList.find(p => p.id === postId);
+  if (post) post.comments_count = comments.length;
+  const replyCounter = document.querySelector(`.btn-action-reply[data-post-id="${postId}"] .action-count`);
+  if (replyCounter) replyCounter.textContent = comments.length;
 
   if (comments.length === 0) {
     stream.innerHTML = '<div style="font-size: 11px; color: var(--text-dim); padding: 8px;">Nenhuma resposta ainda. Seja o primeiro a responder.</div>';
@@ -824,7 +829,7 @@ async function loadPostComments(postId) {
 
   stream.innerHTML = comments.map(c => `
     <div class="inline-comment-item">
-      <img src="${c.author_avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=64&q=80'}" class="comment-avatar" alt="${c.author_username}" />
+      <img src="${c.author_avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=64&q=80'}" class="comment-avatar" alt="${c.author_username}" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=64&q=80'" />
       <div class="comment-text-box">
         <div style="display: flex; gap: 6px; align-items: center;">
           <a href="#profile/${c.author_username}" style="color: var(--accent-amber); font-size: 11px; font-weight: bold; text-decoration: none;">@${c.author_username}</a>

@@ -281,7 +281,6 @@ export function renderWorkshop() {
 
         if (isConfigured) {
           try {
-            await supabase.from('modpacks').update({ likes_count: pack.likes_count }).eq('id', pack.id);
             await supabase.from('modpack_likes').delete().eq('modpack_id', pack.id).eq('user_id', currentUser.id);
           } catch(err) {
             console.warn('Erro ao remover curtida no Supabase:', err);
@@ -298,7 +297,6 @@ export function renderWorkshop() {
 
         if (isConfigured) {
           try {
-            await supabase.from('modpacks').update({ likes_count: pack.likes_count }).eq('id', pack.id);
             await supabase.from('modpack_likes').upsert([{ modpack_id: pack.id, user_id: currentUser.id }], { onConflict: 'modpack_id,user_id' });
           } catch(err) {
             console.warn('Erro ao gravar curtida no Supabase:', err);

@@ -218,20 +218,36 @@ function setupAdminEventListeners() {
 
   // Dismiss report
   document.querySelectorAll('.btn-dismiss-report').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const repId = btn.dataset.repId;
       reportsList = reportsList.map(r => r.id === repId ? { ...r, status: 'dismissed' } : r);
       saveReportsLocally();
+      if (isConfigured) {
+        try {
+          await supabase.from('reports').update({ status: 'dismissed' }).eq('id', repId);
+          showTacticalToast('Denúncia descartada no Supabase.', 'info');
+        } catch(err) {
+          console.warn('Erro ao atualizar status do report no Supabase:', err);
+        }
+      }
       renderAdminDashboard();
     });
   });
 
   // Resolve report
   document.querySelectorAll('.btn-resolve-report').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const repId = btn.dataset.repId;
       reportsList = reportsList.map(r => r.id === repId ? { ...r, status: 'resolved' } : r);
       saveReportsLocally();
+      if (isConfigured) {
+        try {
+          await supabase.from('reports').update({ status: 'resolved' }).eq('id', repId);
+          showTacticalToast('Denúncia marcada como resolvida no Supabase.', 'success');
+        } catch(err) {
+          console.warn('Erro ao atualizar status do report no Supabase:', err);
+        }
+      }
       renderAdminDashboard();
     });
   });
