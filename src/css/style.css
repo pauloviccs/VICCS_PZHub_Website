@@ -3462,4 +3462,266 @@ body.theme-light .btn-follow-suggestion.following {
   color: #b45309 !important;
 }
 
+/* ==========================================================================
+   ESTAÇÃO DE REDAÇÃO TÁTICA & EDITOR MARKDOWN (TARKOV THEME)
+   ========================================================================== */
+.tarkov-editor-wrap {
+  background: #111213;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  overflow: hidden;
+}
 
+.tarkov-editor-wrap:focus-within {
+  border-color: rgba(229, 142, 38, 0.7);
+  box-shadow: 0 0 10px rgba(229, 142, 38, 0.15);
+}
+
+.tarkov-editor-wrap.drag-over {
+  border-color: var(--accent-amber) !important;
+  border-style: dashed !important;
+  background: rgba(229, 142, 38, 0.08) !important;
+  box-shadow: inset 0 0 15px rgba(229, 142, 38, 0.2);
+}
+
+/* Header com Abas e Ferramentas */
+.tarkov-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #181a1b;
+  border-bottom: 1px solid var(--panel-border);
+  padding: 6px 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tarkov-editor-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tarkov-editor-tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+}
+
+.tarkov-editor-tab-btn:hover {
+  color: #fff;
+}
+
+.tarkov-editor-tab-btn.active {
+  color: var(--accent-amber);
+  border-bottom-color: var(--accent-amber);
+  background: rgba(229, 142, 38, 0.08);
+}
+
+.tarkov-editor-tools {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.editor-tool-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.editor-tool-btn:hover {
+  border-color: var(--accent-amber);
+  color: var(--accent-amber);
+  background: rgba(229, 142, 38, 0.12);
+  transform: translateY(-1px);
+}
+
+.editor-tool-btn:active {
+  transform: translateY(0);
+}
+
+.editor-tool-btn.btn-upload-md {
+  width: auto;
+  padding: 0 10px;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  border-color: rgba(229, 142, 38, 0.4);
+  color: var(--accent-amber);
+  background: rgba(229, 142, 38, 0.06);
+}
+
+.editor-tool-btn.btn-upload-md:hover {
+  background: var(--accent-amber);
+  color: #000;
+  border-color: var(--accent-amber);
+}
+
+.editor-tool-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--panel-border);
+  margin: 0 4px;
+}
+
+/* Área de Texto */
+.tarkov-editor-textarea {
+  width: 100%;
+  min-height: 220px;
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 14px;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Área de Pré-visualização */
+.tarkov-md-preview {
+  min-height: 220px;
+  max-height: 480px;
+  overflow-y: auto;
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+}
+
+.preview-empty-hint {
+  color: var(--text-dim);
+  font-size: 11px;
+  font-style: italic;
+  font-family: var(--font-mono);
+}
+
+/* Rodapé */
+.tarkov-editor-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #141617;
+  border-top: 1px solid var(--panel-border);
+  padding: 4px 12px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+
+/* Tipografia Renderizada do Markdown */
+.md-rendered-content {
+  color: #d1d5db;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.md-rendered-content h1,
+.md-rendered-content h2,
+.md-rendered-content h3,
+.md-rendered-content h4 {
+  color: #fff;
+  font-weight: 700;
+  margin: 14px 0 8px;
+  letter-spacing: 0.5px;
+}
+
+.md-rendered-content h1 { font-size: 18px; border-bottom: 1px solid var(--panel-border); padding-bottom: 4px; color: var(--accent-amber); }
+.md-rendered-content h2 { font-size: 16px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 3px; }
+.md-rendered-content h3 { font-size: 14px; color: var(--accent-cyan); }
+.md-rendered-content h4 { font-size: 13px; }
+
+.md-rendered-content p { margin: 8px 0; }
+
+.md-rendered-content strong { color: #fff; font-weight: 700; }
+.md-rendered-content em { color: var(--accent-amber); font-style: italic; }
+
+.md-rendered-content ul { padding-left: 20px; margin: 8px 0; list-style-type: square; }
+.md-rendered-content ol { padding-left: 20px; margin: 8px 0; }
+.md-rendered-content li { margin-bottom: 4px; }
+
+.md-rendered-content blockquote {
+  border-left: 3px solid var(--accent-amber);
+  background: rgba(229, 142, 38, 0.05);
+  margin: 10px 0;
+  padding: 8px 14px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.md-rendered-content code {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--accent-amber);
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.md-rendered-content pre {
+  background: #0a0b0c;
+  border: 1px solid var(--panel-border);
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 10px 0;
+}
+
+.md-rendered-content pre code {
+  background: transparent;
+  padding: 0;
+  color: #a4b0be;
+}
+
+.md-rendered-content a {
+  color: var(--accent-cyan);
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.md-rendered-content a:hover {
+  color: #fff;
+}
+
+.md-rendered-content hr {
+  border: none;
+  border-top: 1px dashed var(--panel-border);
+  margin: 16px 0;
+}
+
+/* Modal de Changelog Custom */
+.changelog-modal-card {
+  width: 100%;
+  max-width: 680px;
+  background: var(--bg-surface-card);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+}

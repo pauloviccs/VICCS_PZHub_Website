@@ -11,9 +11,11 @@ import { getCurrentUser, getCurrentUserProfile } from './auth.js';
 import { getAllModpacks, loadWorkshopData } from './workshop.js';
 import { createChangelog } from './changelogs.js';
 import { openImageCropperModal } from './imageCropper.js';
+import { showTacticalAlert, showTacticalConfirm, showTacticalToast } from './tacticalModal.js';
 
 let builderModsList = [];
 let editingPackId = null;
+let currentChangelogPack = null;
 
 export async function initModpackBuilder() {
   const addModBtn = document.getElementById('btn-builder-add-mod');
@@ -115,6 +117,8 @@ export async function initModpackBuilder() {
   }
 
   renderCreatorUploadsList();
+  setupMarkdownEditor();
+  setupChangelogModal();
 }
 
 export function parseSteamWorkshopId(rawInput) {
@@ -474,28 +478,10 @@ export function renderCreatorUploadsList() {
   });
 
   container.querySelectorAll('.btn-changelog-mypack').forEach(btn => {
-    btn.onclick = async () => {
+    btn.onclick = () => {
       const packId = btn.dataset.packId;
       const pack = myPacks.find(p => p.id === packId);
-      if (!pack) return;
-
-      const newVer = prompt(`Informe a nova versão para "${pack.name}" (Atual: v${pack.version}):`, '1.5.0');
-      if (!newVer) return;
-      const title = prompt('Título das melhorias:', 'Atualização de Compatibilidade Build 42');
-      if (!title) return;
-      const notes = prompt('Notas da versão (Changelog):', '- Otimização de performance e correção de bugs.');
-      if (!notes) return;
-
-      await createChangelog(pack.slug || pack.id, newVer, title, notes);
-      pack.version = newVer;
-      if (isConfigured) {
-        try {
-          await supabase.from('modpacks').update({ version: newVer }).eq('id', packId);
-        } catch(e) {}
-      }
-      localStorage.setItem('PZHUB_COMMUNITY_MODPACKS', JSON.stringify(all));
-      showTacticalAlert(`Changelog v${newVer} publicado com sucesso para "${pack.name}"!`, 'CHANGELOG PUBLICADO', 'success');
-      renderCreatorUploadsList();
+      if (pack) openChangelogModal(pack);
     };
   });
 }
@@ -537,4 +523,443 @@ function resetBuilderForm() {
   if (cancelBtn) cancelBtn.style.display = 'none';
   builderModsList = [];
   renderBuilderModsList();
+  document.getElementById('btn-editor-tab-write')?.click();
+}
+
+/**
+ * Parser Nativo e Seguro de Markdown (Zero Dependencies)
+ */
+export function parseMarkdown(md) {
+  if (!md) return '';
+  let html = md
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Cabeçalhos (h1 a h4)
+  html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+  html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+  html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+  html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+  // Citações
+  html = html.replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>');
+
+  // Blocos de código multilinhas
+  html = html.replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>');
+
+  // Código inline
+  html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
+
+  // Negrito e Itálico
+  html = html.replace(/\*\*\*(.*?)\*\*\*/gim, '<strong><em>$1</em></strong>');
+  html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+  html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
+  html = html.replace(/___(.*?)___/gim, '<strong><em>$1</em></strong>');
+  html = html.replace(/__(.*?)__/gim, '<strong>$1</strong>');
+  html = html.replace(/_(.*?)_/gim, '<em>$1</em>');
+
+  // Links seguros
+  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/gim, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+  // Listas não ordenadas
+  html = html.replace(/^\s*[-*]\s+(.*$)/gim, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>(\n|$))+/gim, '<ul>$&</ul>');
+
+  // Linhas horizontais
+  html = html.replace(/^(?:---|\*\*\*|___)\s*$/gim, '<hr />');
+
+  // Quebras de linha e parágrafos
+  html = html.replace(/\n\n+/g, '</p><p>');
+  html = html.replace(/\n/g, '<br />');
+
+  return `<div class="md-rendered-content">${html}</div>`;
+}
+
+/**
+ * Configura os ouvintes do Editor de Descrição de Modpack
+ */
+export function setupMarkdownEditor() {
+  const textarea = document.getElementById('builder-pack-desc');
+  const previewBox = document.getElementById('builder-pack-desc-preview');
+  const tabWrite = document.getElementById('btn-editor-tab-write');
+  const tabPreview = document.getElementById('btn-editor-tab-preview');
+  const toolsGroup = document.getElementById('editor-tools-group');
+  const charCounter = document.getElementById('editor-char-counter');
+  const uploadBtn = document.getElementById('btn-trigger-md-upload');
+  const fileInput = document.getElementById('input-upload-md-file');
+  const editorWrap = document.getElementById('tarkov-desc-editor');
+
+  if (!textarea) return;
+
+  const updateCount = () => {
+    if (charCounter) charCounter.textContent = `${textarea.value.length} CARACTERES`;
+  };
+  textarea.addEventListener('input', updateCount);
+  updateCount();
+
+  if (tabWrite && tabPreview && previewBox) {
+    tabWrite.addEventListener('click', () => {
+      tabWrite.classList.add('active');
+      tabPreview.classList.remove('active');
+      textarea.style.display = 'block';
+      previewBox.style.display = 'none';
+      if (toolsGroup) toolsGroup.style.opacity = '1';
+      textarea.focus();
+    });
+
+    tabPreview.addEventListener('click', () => {
+      tabPreview.classList.add('active');
+      tabWrite.classList.remove('active');
+      textarea.style.display = 'none';
+      previewBox.style.display = 'block';
+      if (toolsGroup) toolsGroup.style.opacity = '0.35';
+
+      const content = textarea.value.trim();
+      previewBox.innerHTML = content ? parseMarkdown(content) : '<span class="preview-empty-hint">Nenhum conteúdo para pré-visualizar. Digite na aba "Escrever" ou carregue um arquivo .md.</span>';
+    });
+  }
+
+  document.querySelectorAll('.editor-tool-btn[data-format]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      applyMarkdownFormat(textarea, btn.dataset.format);
+      updateCount();
+    });
+  });
+
+  textarea.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      const key = e.key.toLowerCase();
+      if (key === 'b') { e.preventDefault(); applyMarkdownFormat(textarea, 'bold'); updateCount(); }
+      else if (key === 'i') { e.preventDefault(); applyMarkdownFormat(textarea, 'italic'); updateCount(); }
+      else if (key === 'k') { e.preventDefault(); applyMarkdownFormat(textarea, 'link'); updateCount(); }
+    }
+  });
+
+  if (uploadBtn && fileInput) {
+    uploadBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        processMarkdownFile(file, textarea, updateCount);
+        fileInput.value = '';
+      }
+    });
+  }
+
+  if (editorWrap) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      editorWrap.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        editorWrap.classList.add('drag-over');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      editorWrap.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        editorWrap.classList.remove('drag-over');
+      });
+    });
+
+    editorWrap.addEventListener('drop', (e) => {
+      const file = e.dataTransfer?.files?.[0];
+      if (file) {
+        processMarkdownFile(file, textarea, updateCount);
+      }
+    });
+  }
+}
+
+/**
+ * Configura o Modal Tático de Changelog e sua Estação de Redação
+ */
+export function setupChangelogModal() {
+  const modal = document.getElementById('changelog-modal');
+  const closeBtn = document.getElementById('changelog-modal-close');
+  const cancelBtn = document.getElementById('btn-cancel-changelog-modal');
+  const form = document.getElementById('changelog-form');
+  const textarea = document.getElementById('changelog-notes-input');
+  const previewBox = document.getElementById('changelog-notes-preview');
+  const tabWrite = document.getElementById('btn-ch-tab-write');
+  const tabPreview = document.getElementById('btn-ch-tab-preview');
+  const toolsGroup = document.getElementById('ch-editor-tools-group');
+  const charCounter = document.getElementById('ch-editor-char-counter');
+  const uploadBtn = document.getElementById('btn-trigger-ch-md-upload');
+  const fileInput = document.getElementById('input-upload-ch-md-file');
+  const editorWrap = document.getElementById('tarkov-changelog-editor');
+
+  if (!modal) return;
+
+  const closeModal = () => modal.classList.remove('visible');
+
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (cancelBtn) cancelBtn.onclick = closeModal;
+  modal.onclick = (e) => {
+    if (e.target === modal) closeModal();
+  };
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('visible')) {
+      closeModal();
+    }
+  });
+
+  const updateChCount = () => {
+    if (charCounter && textarea) charCounter.textContent = `${textarea.value.length} CARACTERES`;
+  };
+  if (textarea) textarea.addEventListener('input', updateChCount);
+
+  if (tabWrite && tabPreview && previewBox && textarea) {
+    tabWrite.addEventListener('click', () => {
+      tabWrite.classList.add('active');
+      tabPreview.classList.remove('active');
+      textarea.style.display = 'block';
+      previewBox.style.display = 'none';
+      if (toolsGroup) toolsGroup.style.opacity = '1';
+      textarea.focus();
+    });
+
+    tabPreview.addEventListener('click', () => {
+      tabPreview.classList.add('active');
+      tabWrite.classList.remove('active');
+      textarea.style.display = 'none';
+      previewBox.style.display = 'block';
+      if (toolsGroup) toolsGroup.style.opacity = '0.35';
+
+      const content = textarea.value.trim();
+      previewBox.innerHTML = content ? parseMarkdown(content) : '<span class="preview-empty-hint">Nenhum conteúdo para pré-visualizar. Digite na aba "Escrever" ou carregue um arquivo .md.</span>';
+    });
+  }
+
+  document.querySelectorAll('.editor-tool-btn[data-ch-format]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (textarea) {
+        applyMarkdownFormat(textarea, btn.dataset.chFormat);
+        updateChCount();
+      }
+    });
+  });
+
+  if (textarea) {
+    textarea.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        const key = e.key.toLowerCase();
+        if (key === 'b') { e.preventDefault(); applyMarkdownFormat(textarea, 'bold'); updateChCount(); }
+        else if (key === 'i') { e.preventDefault(); applyMarkdownFormat(textarea, 'italic'); updateChCount(); }
+        else if (key === 'k') { e.preventDefault(); applyMarkdownFormat(textarea, 'link'); updateChCount(); }
+      }
+    });
+  }
+
+  if (uploadBtn && fileInput && textarea) {
+    uploadBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        processMarkdownFile(file, textarea, updateChCount);
+        fileInput.value = '';
+      }
+    });
+  }
+
+  if (editorWrap && textarea) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      editorWrap.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        editorWrap.classList.add('drag-over');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      editorWrap.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        editorWrap.classList.remove('drag-over');
+      });
+    });
+
+    editorWrap.addEventListener('drop', (e) => {
+      const file = e.dataTransfer?.files?.[0];
+      if (file) {
+        processMarkdownFile(file, textarea, updateChCount);
+      }
+    });
+  }
+
+  if (form) {
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      if (!currentChangelogPack) return;
+
+      const verInput = document.getElementById('changelog-version-input');
+      const titleInput = document.getElementById('changelog-title-input');
+      const notesInput = document.getElementById('changelog-notes-input');
+
+      const version = verInput?.value.trim();
+      const title = titleInput?.value.trim();
+      const notes = notesInput?.value.trim();
+
+      if (!version || !title || !notes) {
+        showTacticalAlert('Preencha a versão, título e as notas detalhadas do changelog.', 'CAMPOS OBRIGATÓRIOS', 'warning');
+        return;
+      }
+
+      await createChangelog(currentChangelogPack.slug || currentChangelogPack.id, version, title, notes);
+      currentChangelogPack.version = version;
+
+      if (isConfigured) {
+        try {
+          await supabase.from('modpacks').update({ version: version }).eq('id', currentChangelogPack.id);
+        } catch (err) {
+          console.warn('Erro ao sincronizar versão do modpack no Supabase:', err);
+        }
+      }
+
+      const allPacks = getAllModpacks();
+      const targetInAll = allPacks.find(p => p.id === currentChangelogPack.id);
+      if (targetInAll) targetInAll.version = version;
+      localStorage.setItem('PZHUB_COMMUNITY_MODPACKS', JSON.stringify(allPacks));
+
+      showTacticalAlert(`Changelog v${version} publicado com sucesso para "${currentChangelogPack.name}"!`, 'CHANGELOG PUBLICADO', 'success');
+      closeModal();
+      renderCreatorUploadsList();
+      await loadWorkshopData();
+    };
+  }
+}
+
+/**
+ * Abre o Modal de Changelog para um modpack específico
+ */
+export function openChangelogModal(pack) {
+  currentChangelogPack = pack;
+  const modal = document.getElementById('changelog-modal');
+  const targetNameEl = document.getElementById('changelog-target-name');
+  const currentVerEl = document.getElementById('changelog-current-ver');
+  const verInput = document.getElementById('changelog-version-input');
+  const titleInput = document.getElementById('changelog-title-input');
+  const notesInput = document.getElementById('changelog-notes-input');
+  const tabWrite = document.getElementById('btn-ch-tab-write');
+
+  if (!modal) return;
+
+  if (targetNameEl) targetNameEl.textContent = pack.name;
+  if (currentVerEl) currentVerEl.textContent = `v${pack.version || '1.0.0'}`;
+
+  // Sugestão de nova versão (bump minor automático)
+  const currentVer = pack.version || '1.0.0';
+  const parts = currentVer.split('.').map(n => parseInt(n, 10) || 0);
+  if (parts.length >= 2) {
+    parts[1] += 1;
+    if (parts.length >= 3) parts[2] = 0;
+    if (verInput) verInput.value = parts.join('.');
+  } else {
+    if (verInput) verInput.value = '1.1.0';
+  }
+
+  if (titleInput) titleInput.value = 'Atualização de Compatibilidade Build 42';
+  if (notesInput) notesInput.value = '- Melhorias de performance e estabilidade.\n- Ajustes de compatibilidade com os mods recentes.\n- Correções de bugs relatados pela comunidade.';
+
+  if (tabWrite) tabWrite.click();
+  modal.classList.add('visible');
+}
+
+/**
+ * Função Auxiliar de Inserção de Formatação no Cursor
+ */
+function applyMarkdownFormat(textarea, formatType) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const text = textarea.value;
+  const selectedText = text.substring(start, end);
+
+  let replacement = '';
+  let cursorOffset = 0;
+
+  switch (formatType) {
+    case 'bold':
+      replacement = selectedText ? `**${selectedText}**` : '**texto em negrito**';
+      cursorOffset = selectedText ? replacement.length : 2;
+      break;
+    case 'italic':
+      replacement = selectedText ? `*${selectedText}*` : '*texto em itálico*';
+      cursorOffset = selectedText ? replacement.length : 1;
+      break;
+    case 'heading':
+      replacement = selectedText ? `\n### ${selectedText}\n` : '\n### Título da Seção\n';
+      cursorOffset = replacement.length;
+      break;
+    case 'list':
+      if (selectedText) {
+        replacement = selectedText.split('\n').map(l => l ? `- ${l}` : '').join('\n');
+      } else {
+        replacement = '\n- Item 1\n- Item 2\n- Item 3\n';
+      }
+      cursorOffset = replacement.length;
+      break;
+    case 'link':
+      replacement = selectedText ? `[${selectedText}](https://link-aqui.com)` : '[Título do Link](https://link-aqui.com)';
+      cursorOffset = replacement.length;
+      break;
+    case 'quote':
+      replacement = selectedText ? `\n> ${selectedText}\n` : '\n> Instrução ou lore tática...\n';
+      cursorOffset = replacement.length;
+      break;
+    case 'code':
+      if (selectedText.includes('\n') || !selectedText) {
+        replacement = `\n\`\`\`\n${selectedText || 'bloco de código ou comando'}\n\`\`\`\n`;
+      } else {
+        replacement = `\`${selectedText}\``;
+      }
+      cursorOffset = replacement.length;
+      break;
+    default:
+      return;
+  }
+
+  textarea.focus();
+  textarea.setRangeText(replacement, start, end, 'end');
+  textarea.dispatchEvent(new Event('input'));
+}
+
+/**
+ * Processa e Valida Arquivos .md ou .txt com Leitura Local Nativa
+ */
+async function processMarkdownFile(file, textarea, onUpdate) {
+  const validExtensions = ['.md', '.txt', '.markdown'];
+  const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+  if (!validExtensions.includes(ext)) {
+    showTacticalAlert('Formato de arquivo incompatível. Selecione um arquivo .md ou .txt.', 'ARQUIVO INVÁLIDO', 'warning');
+    return;
+  }
+
+  if (file.size > 1024 * 1024) {
+    showTacticalAlert('O arquivo excede o limite máximo de 1MB.', 'TAMANHO EXCESSIVO', 'warning');
+    return;
+  }
+
+  if (textarea.value.trim().length > 0) {
+    const confirmOverwrite = await showTacticalConfirm(
+      `O campo já contém texto. Deseja substituir pelo conteúdo do arquivo "${file.name}"?`,
+      'CONFIRMAÇÃO DE SUBSTITUIÇÃO'
+    );
+    if (!confirmOverwrite) return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    textarea.value = event.target.result || '';
+    textarea.dispatchEvent(new Event('input'));
+    if (onUpdate) onUpdate();
+    showTacticalToast(`Arquivo "${file.name}" carregado com sucesso!`, 'success');
+  };
+  reader.onerror = () => {
+    showTacticalAlert('Falha ao ler o arquivo local.', 'ERRO DE LEITURA', 'error');
+  };
+  reader.readAsText(file);
 }

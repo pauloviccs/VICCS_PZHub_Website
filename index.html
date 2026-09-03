@@ -369,10 +369,78 @@
           </div>
         </div>
 
+        <!-- ESTAÇÃO DE REDAÇÃO TÁTICA // EDITOR MARKDOWN -->
         <div class="form-group">
-          <label class="form-label">Descrição Completa / Manifesto *</label>
-          <textarea id="builder-pack-desc" class="tarkov-textarea"
-            placeholder="Descreva o propósito da coleção, lore e instruções..." rows="3" required></textarea>
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
+            <label class="form-label" style="margin-bottom: 0;">Descrição Completa / Manifesto *</label>
+            <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">
+              Suporta Markdown (.md) // Arraste seu arquivo para a caixa
+            </span>
+          </div>
+
+          <div class="tarkov-editor-wrap" id="tarkov-desc-editor">
+            <!-- 1. Header com Abas e Ferramentas -->
+            <div class="tarkov-editor-header">
+              <!-- Abas Escrever / Pré-visualizar -->
+              <div class="tarkov-editor-tabs">
+                <button type="button" class="tarkov-editor-tab-btn active" id="btn-editor-tab-write">
+                  ✏️ ESCREVER
+                </button>
+                <button type="button" class="tarkov-editor-tab-btn" id="btn-editor-tab-preview">
+                  👁️ PRÉ-VISUALIZAR
+                </button>
+              </div>
+
+              <!-- Barra de Ferramentas de Formatação -->
+              <div class="tarkov-editor-tools" id="editor-tools-group">
+                <button type="button" class="editor-tool-btn" data-format="heading" title="Título / Cabeçalho (###)">
+                  <strong>H</strong>
+                </button>
+                <button type="button" class="editor-tool-btn" data-format="bold" title="Negrito (Ctrl+B)">
+                  <strong>B</strong>
+                </button>
+                <button type="button" class="editor-tool-btn" data-format="italic" title="Itálico (Ctrl+I)">
+                  <em>I</em>
+                </button>
+                <div class="editor-tool-divider"></div>
+                <button type="button" class="editor-tool-btn" data-format="list" title="Lista de Itens (- )">
+                  •—
+                </button>
+                <button type="button" class="editor-tool-btn" data-format="link" title="Inserir Link (Ctrl+K)">
+                  🔗
+                </button>
+                <button type="button" class="editor-tool-btn" data-format="quote" title="Citação Tática (>)">
+                  ”
+                </button>
+                <button type="button" class="editor-tool-btn" data-format="code" title="Bloco de Código (```)">
+                  &lt;&gt;
+                </button>
+                <div class="editor-tool-divider"></div>
+
+                <!-- Botão de Upload de Arquivo .MD -->
+                <button type="button" class="editor-tool-btn btn-upload-md" id="btn-trigger-md-upload" title="Carregar arquivo .md ou .txt do computador">
+                  📁 CARREGAR .MD
+                </button>
+                <input type="file" id="input-upload-md-file" accept=".md,.txt,.markdown" style="display: none;" />
+              </div>
+            </div>
+
+            <!-- 2. Área de Edição (Textarea) -->
+            <textarea id="builder-pack-desc" class="tarkov-editor-textarea"
+              placeholder="Descreva o propósito da coleção, lore, regras e instruções... (Você pode arrastar e soltar um arquivo .md aqui dentro)"
+              required></textarea>
+
+            <!-- 3. Área de Pré-visualização Renderizada (Inicialmente Oculta) -->
+            <div id="builder-pack-desc-preview" class="tarkov-md-preview" style="display: none;">
+              <span class="preview-empty-hint">Nenhum conteúdo para pré-visualizar. Digite na aba 'Escrever' ou carregue um arquivo .md.</span>
+            </div>
+
+            <!-- 4. Rodapé Tático de Status -->
+            <div class="tarkov-editor-footer">
+              <span id="editor-char-counter">0 CARACTERES</span>
+              <span class="editor-drop-hint">⚡ ARRASTE E SOLTE ARQUIVO .MD PARA INJETAR</span>
+            </div>
+          </div>
         </div>
 
         <div class="form-group">
@@ -862,6 +930,119 @@
           <button type="button" id="btn-cancel-profile-edit" class="tarkov-btn">CANCELAR</button>
           <button type="submit" id="btn-save-profile-edit" class="tarkov-btn btn-amber" style="padding: 10px 24px;">
             💾 SALVAR ALTERAÇÕES NO SUPABASE
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: REGISTRO & DESPACHO DE NOVO CHANGELOG                          -->
+  <!-- ===================================================================== -->
+  <div id="changelog-modal" class="tarkov-modal-backdrop">
+    <div class="tarkov-modal-card changelog-modal-card" style="max-width: 680px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--accent-cyan); font-size: 15px;">🔄</span>
+          <h3 class="modal-title">DESPACHO DE ATUALIZAÇÃO // NOVO CHANGELOG</h3>
+        </div>
+        <button type="button" id="changelog-modal-close" class="modal-close-icon">✕</button>
+      </div>
+
+      <form id="changelog-form" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+        <div style="background: rgba(0,0,0,0.35); border: 1px solid var(--panel-border); padding: 10px 14px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <span style="font-size: 10px; font-family: var(--font-mono); color: var(--text-dim); display: block;">MODPACK ALVO:</span>
+            <strong id="changelog-target-name" style="font-size: 13px; color: #fff;">Nome do Modpack</strong>
+          </div>
+          <div>
+            <span style="font-size: 10px; font-family: var(--font-mono); color: var(--text-dim); display: block;">VERSÃO ATUAL:</span>
+            <span id="changelog-current-ver" class="tarkov-tag badge-version">v1.0.0</span>
+          </div>
+        </div>
+
+        <div class="builder-grid-2">
+          <div class="form-group">
+            <label class="form-label">Nova Versão *</label>
+            <input type="text" id="changelog-version-input" class="tarkov-input" placeholder="Ex: 1.1.0" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Título da Atualização *</label>
+            <input type="text" id="changelog-title-input" class="tarkov-input" placeholder="Ex: Correções de Colisão e Novos Veículos" required />
+          </div>
+        </div>
+
+        <!-- ESTAÇÃO DE NOTAS DO CHANGELOG // EDITOR MARKDOWN -->
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
+            <label class="form-label" style="margin-bottom: 0;">Notas da Versão (Changelog) *</label>
+            <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">
+              Suporta Markdown (.md) // Arraste seu arquivo para a caixa
+            </span>
+          </div>
+
+          <div class="tarkov-editor-wrap" id="tarkov-changelog-editor">
+            <div class="tarkov-editor-header">
+              <div class="tarkov-editor-tabs">
+                <button type="button" class="tarkov-editor-tab-btn active" id="btn-ch-tab-write">
+                  ✏️ ESCREVER
+                </button>
+                <button type="button" class="tarkov-editor-tab-btn" id="btn-ch-tab-preview">
+                  👁️ PRÉ-VISUALIZAR
+                </button>
+              </div>
+
+              <div class="tarkov-editor-tools" id="ch-editor-tools-group">
+                <button type="button" class="editor-tool-btn" data-ch-format="heading" title="Título / Cabeçalho (###)">
+                  <strong>H</strong>
+                </button>
+                <button type="button" class="editor-tool-btn" data-ch-format="bold" title="Negrito (Ctrl+B)">
+                  <strong>B</strong>
+                </button>
+                <button type="button" class="editor-tool-btn" data-ch-format="italic" title="Itálico (Ctrl+I)">
+                  <em>I</em>
+                </button>
+                <div class="editor-tool-divider"></div>
+                <button type="button" class="editor-tool-btn" data-ch-format="list" title="Lista de Itens (- )">
+                  •—
+                </button>
+                <button type="button" class="editor-tool-btn" data-ch-format="link" title="Inserir Link (Ctrl+K)">
+                  🔗
+                </button>
+                <button type="button" class="editor-tool-btn" data-ch-format="quote" title="Citação Tática (>)">
+                  ”
+                </button>
+                <button type="button" class="editor-tool-btn" data-ch-format="code" title="Bloco de Código (```)">
+                  &lt;&gt;
+                </button>
+                <div class="editor-tool-divider"></div>
+
+                <button type="button" class="editor-tool-btn btn-upload-md" id="btn-trigger-ch-md-upload" title="Carregar arquivo .md ou .txt do computador">
+                  📁 CARREGAR .MD
+                </button>
+                <input type="file" id="input-upload-ch-md-file" accept=".md,.txt,.markdown" style="display: none;" />
+              </div>
+            </div>
+
+            <textarea id="changelog-notes-input" class="tarkov-editor-textarea"
+              placeholder="- Correção de conflito entre mods&#10;- Adicionado novo sistema de buffs&#10;- Otimizado para servidores Build 42"
+              required></textarea>
+
+            <div id="changelog-notes-preview" class="tarkov-md-preview" style="display: none;">
+              <span class="preview-empty-hint">Nenhum conteúdo para pré-visualizar. Digite na aba 'Escrever' ou carregue um arquivo .md.</span>
+            </div>
+
+            <div class="tarkov-editor-footer">
+              <span id="ch-editor-char-counter">0 CARACTERES</span>
+              <span class="editor-drop-hint">⚡ ARRASTE E SOLTE CHANGELOG.MD PARA INJETAR</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--panel-border); padding-top: 14px;">
+          <button type="button" id="btn-cancel-changelog-modal" class="tarkov-btn">CANCELAR</button>
+          <button type="submit" id="btn-submit-changelog-modal" class="tarkov-btn btn-amber" style="padding: 10px 24px;">
+            🚀 PUBLICAR CHANGELOG OFICIAL
           </button>
         </div>
       </form>

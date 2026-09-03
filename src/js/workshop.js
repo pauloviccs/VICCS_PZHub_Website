@@ -7,6 +7,7 @@ import { getCurrentUser } from './auth.js';
 import { fetchModpackChangelogs } from './changelogs.js';
 import { i18n, PZ_CATEGORIES } from './i18n.js';
 import { showTacticalAlert, showTacticalToast } from './tacticalModal.js';
+import { parseMarkdown } from './modpackBuilder.js';
 
 let modpacksList = [];
 let activeCategory = 'all';
@@ -334,7 +335,7 @@ function renderModalTabContent(pack, changelogs) {
   if (activeModalTab === 'tab-ws-overview') {
     bodyEl.innerHTML = `
       <div class="md-overview-pane">
-        <p class="md-desc-long">${pack.description || 'Sem descrição.'}</p>
+        <div class="md-desc-long">${parseMarkdown(pack.description || 'Sem descrição cadastrada.')}</div>
         <h4 style="color: #fff; margin: 20px 0 10px 0; font-size: 13px; letter-spacing: 1px;">COMPONENTES & MODS INCLUSOS (${pack.mods?.length || 0}):</h4>
         <div class="md-mods-list">
           ${(pack.mods || []).map(m => `
@@ -363,7 +364,7 @@ function renderModalTabContent(pack, changelogs) {
                 <strong class="ch-title">${ch.title}</strong>
                 <span class="ch-date">${new Date(ch.created_at).toLocaleDateString('pt-BR')}</span>
               </div>
-              <div class="ch-notes" style="white-space: pre-line; font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-top: 8px;">${ch.notes}</div>
+              <div class="ch-notes" style="font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-top: 8px;">${parseMarkdown(ch.notes)}</div>
             </div>
           `).join('')}
         </div>
