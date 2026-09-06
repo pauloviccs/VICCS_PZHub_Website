@@ -329,6 +329,7 @@ export async function openModpackDetailsModal(pack) {
   const modal = document.getElementById('modpack-details-modal');
   if (!modal) return;
 
+  // Busca changelogs tanto por slug quanto por ID
   const changelogs = await fetchModpackChangelogs(pack.slug || pack.id);
 
   // Carregar comentários reais da nuvem Supabase
@@ -337,7 +338,7 @@ export async function openModpackDetailsModal(pack) {
       const { data: dbComments, error: comErr } = await supabase
         .from('comments')
         .select('*')
-        .eq('target_id', pack.id)
+        .or(`target_id.eq.${pack.id},target_id.eq.${pack.slug || pack.id}`)
         .order('created_at', { ascending: false });
       if (!comErr && Array.isArray(dbComments)) {
         pack.comments = dbComments;
@@ -358,7 +359,58 @@ export async function openModpackDetailsModal(pack) {
     authorEl.innerHTML = `Criado por <a href="#profile/${pack.author || 'operador'}" style="color: var(--accent-amber); font-weight: bold; text-decoration: none;">@${pack.author_name || pack.author || 'PZHub'}</a>`;
   }
   if (downloadsEl) downloadsEl.textContent = `🚀 ${pack.downloads_count || 0} Downloads`;
-  if (likesEl) likesEl.textContent = `❤️ ${pack.likes_count || 0} Likes`;
+
+  // Like interativo dentro do cabeçalho do Modal sincronizado com Supabase
+  if (likesEl) {
+    const isLiked = userLikedModpackIds.has(pack.id);
+    likesEl.style.cursor = 'pointer';
+    likesEl.style.userSelect = 'none';
+    likesEl.innerHTML = `<button class="tarkov-btn-mini btn-modal-like ${isLiked ? 'liked' : ''}" style="color: ${isLiked ? 'var(--accent-red)' : 'var(--text-dim)'}; border-color: ${isLiked ? 'rgba(235, 77, 75, 0.4)' : 'var(--panel-border)'};">❤️ <span class="like-counter">${pack.likes_count || 0}</span> Likes</button>`;
+    
+    likesEl.onclick = async (e) => {
+      e.stopPropagation();
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        openAuthModal();
+        return;
+      }
+      
+      const btn = likesEl.querySelector('.btn-modal-like');
+      const counter = likesEl.querySelector('.like-counter');
+      const currentlyLiked = userLikedModpackIds.has(pack.id);
+
+      if (currentlyLiked) {
+        userLikedModpackIds.delete(pack.id);
+        pack.likes_count = Math.max(0, (pack.likes_count || 1) - 1);
+        btn?.classList.remove('liked');
+        if (btn) btn.style.color = 'var(--text-dim)';
+        if (counter) counter.textContent = pack.likes_count;
+        if (isConfigured) {
+          try {
+            await supabase.from('modpack_likes').delete().eq('modpack_id', pack.id).eq('user_id', currentUser.id);
+          } catch(err) {
+            console.warn('Erro ao remover curtida no Supabase:', err);
+          }
+        }
+      } else {
+        userLikedModpackIds.add(pack.id);
+        pack.likes_count = (pack.likes_count || 0) + 1;
+        btn?.classList.add('liked');
+        if (btn) btn.style.color = 'var(--accent-red)';
+        if (counter) counter.textContent = pack.likes_count;
+        if (isConfigured) {
+          try {
+            await supabase.from('modpack_likes').upsert([{ modpack_id: pack.id, user_id: currentUser.id }], { onConflict: 'modpack_id,user_id' });
+          } catch(err) {
+            console.warn('Erro ao gravar curtida no Supabase:', err);
+          }
+        }
+      }
+      saveModpacksLocally();
+      renderWorkshopFeed(); // Sincroniza os cards de fundo
+    };
+  }
+
   if (bannerEl) {
     bannerEl.src = pack.image || pack.banner_url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80';
     bannerEl.onerror = () => {
@@ -366,56 +418,63 @@ export async function openModpackDetailsModal(pack) {
     };
   }
 
+  // Render da aba ativa inicial
   renderModalTabContent(pack, changelogs);
   modal.classList.add('visible');
 
-  // Modal close
+  // Fechamento
   const closeBtn = document.getElementById('md-modal-close-btn');
   if (closeBtn) {
     closeBtn.onclick = () => modal.classList.remove('visible');
   }
 
-  // Click outside to close
   modal.onclick = (e) => {
     if (e.target === modal) modal.classList.remove('visible');
   };
 
-  // Tab switching inside modal
+  // Alternador de Abas corrigido com data-tab e id
   document.querySelectorAll('.md-tab-btn').forEach(btn => {
     btn.onclick = () => {
       document.querySelectorAll('.md-tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      activeModalTab = btn.id;
+      activeModalTab = btn.dataset.tab || btn.id;
       renderModalTabContent(pack, changelogs);
     };
   });
 }
 
 function renderModalTabContent(pack, changelogs) {
-  const bodyEl = document.getElementById('md-modal-body-content');
+  // Captura garantida do container (suporta md-modal-tab-content e md-modal-body-content)
+  const bodyEl = document.getElementById('md-modal-tab-content') || document.getElementById('md-modal-body-content');
   if (!bodyEl) return;
 
   if (activeModalTab === 'tab-ws-overview') {
     const rawDesc = pack.detailed_description || pack.description || 'Nenhuma descrição estendida informada pelo autor.';
     bodyEl.innerHTML = `
-      <div class="md-rendered-content" style="font-size: 13px; color: var(--text-main); line-height: 1.7;">
+      <div class="md-rendered-content" style="font-size: 13px; color: var(--text-main); line-height: 1.7; word-break: break-word;">
         ${parseMarkdown(rawDesc)}
       </div>
     `;
-  } else if (activeModalTab === 'tab-ws-changelog') {
+  } else if (activeModalTab === 'tab-ws-changelogs' || activeModalTab === 'tab-ws-changelog') {
     bodyEl.innerHTML = `
       <div class="md-changelogs-pane">
         <div class="changelog-timeline-stream" style="display: flex; flex-direction: column; gap: 16px;">
-          ${changelogs.length === 0 ? `
-            <div style="color: var(--text-dim); font-size: 11px; padding: 20px; text-align: center;">Nenhum registro de atualização para este modpack.</div>
+          ${!changelogs || changelogs.length === 0 ? `
+            <div style="color: var(--text-dim); font-size: 11px; padding: 24px; text-align: center; border: 1px dashed var(--panel-border); border-radius: 4px;">
+              ⚠️ Nenhum registro de changelog anterior documentado para este modpack.
+            </div>
           ` : changelogs.map(ch => `
-            <div class="changelog-entry">
-              <div class="ch-header">
-                <span class="tarkov-tag badge-version">v${ch.version}</span>
-                <strong class="ch-title">${ch.title}</strong>
-                <span class="ch-date">${new Date(ch.created_at).toLocaleDateString('pt-BR')}</span>
+            <div class="changelog-entry" style="background: rgba(0,0,0,0.3); border-left: 3px solid var(--accent-amber); padding: 14px; border-radius: 4px;">
+              <div class="ch-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="tarkov-tag badge-version">v${ch.version}</span>
+                  <strong class="ch-title" style="color: #fff; font-size: 13px;">${ch.title}</strong>
+                </div>
+                <span class="ch-date" style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">${new Date(ch.created_at).toLocaleDateString('pt-BR')}</span>
               </div>
-              <div class="ch-notes" style="font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-top: 8px;">${parseMarkdown(ch.notes)}</div>
+              <div class="ch-notes" style="font-size: 12px; color: var(--text-muted); line-height: 1.6; word-break: break-word;">
+                ${parseMarkdown(ch.notes)}
+              </div>
             </div>
           `).join('')}
         </div>
@@ -425,21 +484,26 @@ function renderModalTabContent(pack, changelogs) {
     const comments = pack.comments || [];
     bodyEl.innerHTML = `
       <div class="md-comments-pane">
-        <div class="comment-compose-box">
-          <input type="text" id="input-new-comment" class="tarkov-input" placeholder="Escreva uma mensagem sobre este modpack..." />
+        <div class="comment-compose-box" style="display: flex; gap: 10px; margin-bottom: 20px;">
+          <input type="text" id="input-new-comment" class="tarkov-input" placeholder="Escreva uma mensagem sobre este modpack..." style="flex: 1;" />
           <button id="btn-submit-comment" class="tarkov-btn btn-amber">POSTAR</button>
         </div>
 
-        <div class="comments-list" style="display: flex; flex-direction: column; gap: 10px; margin-top: 16px;">
+        <div class="comments-list" style="display: flex; flex-direction: column; gap: 10px;">
           ${comments.length === 0 ? `
-            <div style="color: var(--text-dim); font-size: 11px; padding: 20px; text-align: center;">Nenhum comentário publicado ainda. Seja o primeiro!</div>
+            <div style="color: var(--text-dim); font-size: 11px; padding: 24px; text-align: center; border: 1px dashed var(--panel-border); border-radius: 4px;">
+              💬 Nenhum comentário publicado ainda. Seja o primeiro a comentar!
+            </div>
           ` : comments.map(c => `
             <div class="comment-card" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06); padding: 12px; border-radius: 4px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <strong style="color: var(--accent-amber); font-size: 12px;">${c.author_name}</strong>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <img src="${c.author_avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=32&q=80'}" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;" />
+                  <strong style="color: var(--accent-amber); font-size: 12px;">${c.author_name}</strong>
+                </div>
                 <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim);">${new Date(c.created_at).toLocaleDateString('pt-BR')}</span>
               </div>
-              <p style="font-size: 12px; color: var(--text-main); line-height: 1.5;">${c.content}</p>
+              <p style="font-size: 12px; color: var(--text-main); line-height: 1.5; margin: 0; word-break: break-word;">${c.content}</p>
             </div>
           `).join('')}
         </div>

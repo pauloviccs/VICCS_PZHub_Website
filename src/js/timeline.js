@@ -10,6 +10,7 @@ import { showTacticalAlert, showTacticalToast } from './tacticalModal.js';
 
 let postsList = [];
 let userLikedPostIds = new Set();
+let userRepostedPostIds = new Set();
 let activeFeedTab = 'discovery'; // 'discovery' | 'following'
 let attachedMediaList = []; // Array de base64/URLs (máximo 4)
 let attachedYoutubeId = null;
@@ -507,7 +508,7 @@ export function renderTimelineFeed() {
               <span class="action-count">${post.comments_count || 0}</span>
             </button>
 
-            <button class="tweet-action-btn btn-action-repost" data-post-id="${post.id}" title="Republicar transmissão">
+            <button class="tweet-action-btn btn-action-repost ${userRepostedPostIds.has(post.id) ? 'reposted' : ''}" data-post-id="${post.id}" title="Republicar transmissão" style="${userRepostedPostIds.has(post.id) ? 'color: var(--accent-emerald);' : ''}">
               <svg viewBox="0 0 24 24"><path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.9 2 2 2H12v2H7.5c-2.21 0-4-1.79-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H12V4h4.5c2.21 0 4 1.79 4 4v8.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.9-2-2-2z"/></svg>
               <span class="action-count">${post.reposts_count || 0}</span>
             </button>
@@ -706,6 +707,52 @@ function setupTweetCardInteractions() {
           } catch(e) {
             console.warn('Erro ao curtir post no Supabase:', e);
           }
+        }
+      }
+    };
+  });
+
+  // 4.1. Repost de Transmissão (Repost Atômico)
+  container.querySelectorAll('.btn-action-repost').forEach(btn => {
+    btn.onclick = async (e) => {
+      e.stopPropagation();
+      const postId = btn.dataset.postId;
+      const post = postsList.find(p => p.id === postId);
+      const currentUser = getCurrentUser();
+
+      if (!currentUser) {
+        showAuthLockModal();
+        return;
+      }
+      if (!post) return;
+
+      const countEl = btn.querySelector('.action-count');
+      const isReposted = userRepostedPostIds.has(post.id) || btn.classList.contains('reposted');
+
+      if (isReposted) {
+        userRepostedPostIds.delete(post.id);
+        btn.classList.remove('reposted');
+        btn.style.color = '';
+        post.reposts_count = Math.max(0, (post.reposts_count || 1) - 1);
+        if (countEl) countEl.textContent = post.reposts_count;
+        showTacticalToast('Republicação cancelada.', 'info');
+      } else {
+        userRepostedPostIds.add(post.id);
+        btn.classList.add('reposted');
+        btn.style.color = 'var(--accent-emerald)';
+        post.reposts_count = (post.reposts_count || 0) + 1;
+        if (countEl) countEl.textContent = post.reposts_count;
+        showTacticalToast('Transmissão republicada no seu radar social!', 'success');
+      }
+
+      if (isConfigured) {
+        try {
+          await supabase
+            .from('posts')
+            .update({ reposts_count: post.reposts_count })
+            .eq('id', post.id);
+        } catch(err) {
+          console.warn('Erro ao atualizar reposts no Supabase:', err);
         }
       }
     };
