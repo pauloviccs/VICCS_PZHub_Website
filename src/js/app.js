@@ -6,7 +6,7 @@ import { initAuth, getCurrentUser, getCurrentUserProfile } from './auth.js';
 import { initWorkshop, loadWorkshopData, populateWebsiteCategoriesSelect } from './workshop.js';
 import { initModpackBuilder, renderCreatorUploadsList } from './modpackBuilder.js';
 import { loadUserProfileView } from './profile.js';
-import { initAdminDashboard } from './admin.js';
+import { initAdminDashboard, fetchActiveDownloadUrl } from './admin.js';
 import { initTimeline, loadTimelinePosts } from './timeline.js';
 import { i18n } from './i18n.js';
 import { showTacticalAlert, showTacticalConfirm, showTacticalToast } from './tacticalModal.js';
@@ -27,6 +27,9 @@ class PZHubApp {
 
     // 0.1 Inicializa o Sistema de Internacionalização (i18n)
     this.setupLanguageSelector();
+
+    // 0.2 Carrega o Link Oficial do Software (.exe) para o botão Hero
+    await fetchActiveDownloadUrl();
 
     // 1. Inicializa Autenticação e Perfil
     await initAuth();

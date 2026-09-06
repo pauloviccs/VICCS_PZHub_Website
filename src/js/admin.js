@@ -9,6 +9,53 @@ import { showTacticalToast } from './tacticalModal.js';
 let reportsList = [];
 let usersManagementList = [];
 
+export const DEFAULT_DESKTOP_DOWNLOAD_URL = 'https://www.dropbox.com/scl/fi/u1zxwky8utdzwdv4spv91/PZHub_Setup.exe?rlkey=nguj8499hj314a1f5rcsxkwdu&st=pcntmhga&dl=1';
+export let activeDownloadUrl = DEFAULT_DESKTOP_DOWNLOAD_URL;
+
+export async function fetchActiveDownloadUrl() {
+  const cached = localStorage.getItem('PZHUB_DESKTOP_DOWNLOAD_URL');
+  if (cached) {
+    activeDownloadUrl = cached;
+    applyDownloadUrlToDom(cached);
+  }
+
+  if (isConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('modpack_changelogs')
+        .select('notes')
+        .eq('modpack_id', 'system_config')
+        .eq('title', 'desktop_download_url')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data?.notes) {
+        activeDownloadUrl = data.notes.trim();
+        localStorage.setItem('PZHUB_DESKTOP_DOWNLOAD_URL', activeDownloadUrl);
+        applyDownloadUrlToDom(activeDownloadUrl);
+        return activeDownloadUrl;
+      }
+    } catch (err) {
+      console.warn('Erro ao carregar download URL do Supabase:', err);
+    }
+  }
+
+  if (!activeDownloadUrl) {
+    activeDownloadUrl = DEFAULT_DESKTOP_DOWNLOAD_URL;
+  }
+  applyDownloadUrlToDom(activeDownloadUrl);
+  return activeDownloadUrl;
+}
+
+export function applyDownloadUrlToDom(url) {
+  if (!url) return;
+  const heroBtn = document.getElementById('hero-btn-download-app');
+  if (heroBtn) {
+    heroBtn.href = url;
+  }
+}
+
 export async function initAdminDashboard() {
   const container = document.getElementById('view-admin');
   if (!container) return;
@@ -29,6 +76,7 @@ export async function initAdminDashboard() {
 
   await loadAdminReports();
   await loadUsersList();
+  await fetchActiveDownloadUrl();
   renderAdminDashboard();
 }
 
@@ -105,6 +153,7 @@ export function renderAdminDashboard() {
       <div class="admin-tabs-bar">
         <button class="admin-tab-btn active" data-tab="admin-reports">TRIAGEM DE DENÚNCIAS (${openReportsCount})</button>
         <button class="admin-tab-btn" data-tab="admin-users">GERENCIAMENTO DE CARGOS & PERMISSÕES</button>
+        <button class="admin-tab-btn" data-tab="admin-settings">⚙️ CONFIGURAÇÕES DE SOFTWARE & DOWNLOADS</button>
       </div>
 
       <!-- CONTEÚDO 1: TRIAGEM DE REPORTS -->
@@ -194,6 +243,66 @@ export function renderAdminDashboard() {
           </table>
         </div>
       </div>
+
+      <!-- CONTEÚDO 3: CONFIGURAÇÕES DE SOFTWARE & DOWNLOADS -->
+      <div id="admin-settings" class="admin-tab-pane">
+        <div class="admin-table-wrapper" style="padding: 24px; background: rgba(15, 20, 28, 0.85); border: 1px solid var(--panel-border); border-radius: 6px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <span class="tarkov-tag badge-emerald" style="margin-bottom: 6px;">DISTRIBUIÇÃO OFICIAL // DESKTOP CLIENT</span>
+              <h2 style="font-size: 17px; font-weight: 800; color: #fff; letter-spacing: 0.5px; margin: 4px 0 0 0;">DISTRIBUIÇÃO DO EXECUTÁVEL (.EXE) DO PZHUB</h2>
+            </div>
+            <span class="tarkov-tag badge-amber">ACESSO EXCLUSIVO STAFF</span>
+          </div>
+
+          <p style="font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 22px; max-width: 820px;">
+            Altere o link direto de download vinculado ao botão principal <strong>"⬇️ BAIXAR PZHUB DESKTOP (.EXE)"</strong> na Hero da página inicial. Qualquer atualização feita aqui é sincronizada imediatamente com a nuvem do Supabase e propagada para todos os operadores.
+          </p>
+
+          <div style="display: flex; flex-direction: column; gap: 18px; max-width: 850px;">
+            <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+              <label style="font-size: 11px; font-weight: 700; color: var(--accent-amber); letter-spacing: 1px;">
+                URL DO EXECUTÁVEL WINDOWS (.EXE)
+              </label>
+              <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input 
+                  type="url" 
+                  id="admin-input-download-url" 
+                  class="tarkov-input" 
+                  style="flex: 1; min-width: 280px; font-family: var(--font-mono); font-size: 12px; padding: 10px 14px;" 
+                  placeholder="https://exemplo.com/downloads/PZHub_Setup.exe" 
+                  value="${activeDownloadUrl}" 
+                />
+                <button type="button" id="btn-admin-copy-download-url" class="tarkov-btn" title="Copiar link atual">
+                  📋 COPIAR
+                </button>
+                <a id="btn-admin-test-download-url" href="${activeDownloadUrl}" target="_blank" class="tarkov-btn btn-cyan" title="Testar abertura direta do link">
+                  🔗 TESTAR LINK
+                </a>
+              </div>
+              <span style="font-size: 11px; color: var(--text-dim);">
+                💡 Dica: Suporta links diretos do Dropbox (com ?dl=1), GitHub Releases, Google Drive direto ou CDN próprio.
+              </span>
+            </div>
+
+            <!-- Card de Status do Botão da Hero -->
+            <div style="background: rgba(0,0,0,0.45); border: 1px dashed rgba(229, 142, 38, 0.4); border-radius: 4px; padding: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 26px;">🎯</span>
+                <div>
+                  <div style="font-size: 12px; font-weight: 700; color: #fff;">Status do Botão Hero Principal:</div>
+                  <div id="admin-hero-preview-status" style="font-size: 11px; font-family: var(--font-mono); color: var(--accent-emerald);">
+                    CONECTADO AO HERO // ${activeDownloadUrl ? activeDownloadUrl.slice(0, 50) + '...' : 'PADRÃO'}
+                  </div>
+                </div>
+              </div>
+              <button type="button" id="btn-admin-save-download-url" class="tarkov-btn btn-amber" style="padding: 10px 24px; font-size: 12px; font-weight: 800;">
+                💾 SALVAR NOVO LINK (.EXE)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   `;
 
@@ -273,6 +382,85 @@ function setupAdminEventListeners() {
       renderAdminDashboard();
     });
   });
+
+  // 4. Gestão do Link do Executável (.exe)
+  const downloadInput = document.getElementById('admin-input-download-url');
+  const copyBtn = document.getElementById('btn-admin-copy-download-url');
+  const testLink = document.getElementById('btn-admin-test-download-url');
+  const saveBtn = document.getElementById('btn-admin-save-download-url');
+
+  if (downloadInput && testLink) {
+    downloadInput.addEventListener('input', () => {
+      const val = downloadInput.value.trim();
+      testLink.href = val || '#';
+    });
+  }
+
+  if (copyBtn && downloadInput) {
+    copyBtn.addEventListener('click', () => {
+      const val = downloadInput.value.trim();
+      if (val) {
+        navigator.clipboard.writeText(val);
+        showTacticalToast('Link copiado para a área de transferência!', 'info');
+      }
+    });
+  }
+
+  if (saveBtn && downloadInput) {
+    saveBtn.addEventListener('click', async () => {
+      const val = downloadInput.value.trim();
+      if (!val || (!val.startsWith('http://') && !val.startsWith('https://'))) {
+        showTacticalToast('Insira uma URL válida iniciando com http:// ou https://', 'warning');
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = '⏳ SINCRONIZANDO...';
+
+      activeDownloadUrl = val;
+      localStorage.setItem('PZHUB_DESKTOP_DOWNLOAD_URL', val);
+      applyDownloadUrlToDom(val);
+
+      if (isConfigured) {
+        try {
+          const { data: existing } = await supabase
+            .from('modpack_changelogs')
+            .select('id')
+            .eq('modpack_id', 'system_config')
+            .eq('title', 'desktop_download_url')
+            .limit(1)
+            .maybeSingle();
+
+          if (existing?.id) {
+            await supabase
+              .from('modpack_changelogs')
+              .update({ notes: val, version: '2.0.0' })
+              .eq('id', existing.id);
+          } else {
+            await supabase
+              .from('modpack_changelogs')
+              .insert([{
+                modpack_id: 'system_config',
+                title: 'desktop_download_url',
+                version: '2.0.0',
+                notes: val
+              }]);
+          }
+        } catch (err) {
+          console.warn('Erro ao salvar URL no Supabase:', err);
+        }
+      }
+
+      saveBtn.disabled = false;
+      saveBtn.textContent = '💾 SALVAR NOVO LINK (.EXE)';
+      showTacticalToast('Link do executável atualizado no site e no Supabase com sucesso!', 'success');
+
+      const previewStatus = document.getElementById('admin-hero-preview-status');
+      if (previewStatus) {
+        previewStatus.textContent = `SINCRONIZADO // ${val.slice(0, 50)}...`;
+      }
+    });
+  }
 }
 
 function saveReportsLocally() {

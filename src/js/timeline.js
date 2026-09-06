@@ -140,6 +140,11 @@ export async function initTimeline() {
   // Carrega dados 100% reais do Supabase
   await loadTimelinePosts();
   await renderFollowSuggestionsSidebar();
+
+  // Re-sincroniza likes e reposts assim que o Supabase valida a sessão
+  window.addEventListener('pzhub:auth-changed', async () => {
+    await loadTimelinePosts();
+  });
 }
 
 function setupAuthLockModal() {
@@ -252,6 +257,26 @@ export async function loadTimelinePosts() {
   updateComposeAvatar();
 
   const currentUser = getCurrentUser();
+  const userId = currentUser?.id || currentUser?.user_metadata?.sub || 'guest';
+
+  // 1. Restaura imediatamente do localStorage para evitar telas piscando descurtidas
+  const cachedLikes = localStorage.getItem(`PZHUB_USER_LIKED_POSTS_${userId}`);
+  if (cachedLikes) {
+    try {
+      const arr = JSON.parse(cachedLikes);
+      if (Array.isArray(arr)) userLikedPostIds = new Set(arr);
+    } catch (e) {}
+  }
+
+  const cachedReposts = localStorage.getItem(`PZHUB_USER_REPOSTS_${userId}`);
+  if (cachedReposts) {
+    try {
+      const arr = JSON.parse(cachedReposts);
+      if (Array.isArray(arr)) userRepostedPostIds = new Set(arr);
+    } catch (e) {}
+  }
+
+  // 2. Sincroniza curtidas do usuário no Supabase
   if (currentUser && isConfigured) {
     try {
       const { data: likesData } = await supabase
@@ -259,13 +284,12 @@ export async function loadTimelinePosts() {
         .select('post_id')
         .eq('user_id', currentUser.id);
       if (likesData && Array.isArray(likesData)) {
-        userLikedPostIds = new Set(likesData.map(l => l.post_id));
+        likesData.forEach(l => userLikedPostIds.add(l.post_id));
+        localStorage.setItem(`PZHUB_USER_LIKED_POSTS_${currentUser.id}`, JSON.stringify([...userLikedPostIds]));
       }
     } catch (e) {
       console.warn('Erro ao ler curtidas do usuário no Supabase:', e);
     }
-  } else {
-    userLikedPostIds.clear();
   }
 
   if (isConfigured) {
@@ -277,6 +301,34 @@ export async function loadTimelinePosts() {
 
       if (!error && Array.isArray(data)) {
         postsList = data;
+
+        // Agregação de contadores em tempo real para contornar qualquer delay de trigger
+        try {
+          const { data: allLikes } = await supabase.from('post_likes').select('post_id');
+          const { data: allComments } = await supabase.from('post_comments').select('post_id');
+
+          const likesCountMap = {};
+          (allLikes || []).forEach(l => {
+            likesCountMap[l.post_id] = (likesCountMap[l.post_id] || 0) + 1;
+          });
+
+          const commentsCountMap = {};
+          (allComments || []).forEach(c => {
+            commentsCountMap[c.post_id] = (commentsCountMap[c.post_id] || 0) + 1;
+          });
+
+          postsList.forEach(p => {
+            if (likesCountMap[p.id] !== undefined) {
+              p.likes_count = Math.max(p.likes_count || 0, likesCountMap[p.id]);
+            }
+            if (commentsCountMap[p.id] !== undefined) {
+              p.comments_count = Math.max(p.comments_count || 0, commentsCountMap[p.id]);
+            }
+          });
+        } catch (aggErr) {
+          console.warn('Aviso: agregação secundária de contadores da timeline:', aggErr);
+        }
+
         localStorage.setItem('PZHUB_TIMELINE_POSTS', JSON.stringify(postsList));
         renderTimelineFeed();
         renderTrendingSidebar();
@@ -287,9 +339,17 @@ export async function loadTimelinePosts() {
     }
   }
 
-  // Fallback 100% limpo (sem posts fake)
-  postsList = [];
-  localStorage.removeItem('PZHUB_TIMELINE_POSTS');
+  // Fallback do localStorage se offline ou falha
+  const cachedPosts = localStorage.getItem('PZHUB_TIMELINE_POSTS');
+  if (cachedPosts) {
+    try {
+      postsList = JSON.parse(cachedPosts);
+    } catch (e) {
+      postsList = [];
+    }
+  } else {
+    postsList = [];
+  }
   renderTimelineFeed();
   renderTrendingSidebar();
 }
@@ -660,7 +720,7 @@ function setupTweetCardInteractions() {
     }
   });
 
-  // 4. Curtir Post (Heart) com Toggle Atômico Anti-409
+  // 4. Curtir Post (Heart) com Toggle Atômico Anti-409 e Persistência
   container.querySelectorAll('.btn-action-like').forEach(btn => {
     btn.onclick = async (e) => {
       e.stopPropagation();
@@ -685,11 +745,14 @@ function setupTweetCardInteractions() {
         btn.classList.remove('liked');
         btn.style.color = '';
         if (counter) counter.textContent = post.likes_count;
+        localStorage.setItem(`PZHUB_USER_LIKED_POSTS_${currentUser.id}`, JSON.stringify([...userLikedPostIds]));
+        localStorage.setItem('PZHUB_TIMELINE_POSTS', JSON.stringify(postsList));
 
         if (isConfigured) {
           try {
             await supabase.from('post_likes').delete().eq('post_id', post.id).eq('user_id', currentUser.id);
-          } catch(e) {
+            await supabase.from('posts').update({ likes_count: post.likes_count }).eq('id', post.id);
+          } catch (e) {
             console.warn('Erro ao descurtir post no Supabase:', e);
           }
         }
@@ -700,11 +763,14 @@ function setupTweetCardInteractions() {
         btn.classList.add('liked');
         btn.style.color = 'var(--accent-red)';
         if (counter) counter.textContent = post.likes_count;
+        localStorage.setItem(`PZHUB_USER_LIKED_POSTS_${currentUser.id}`, JSON.stringify([...userLikedPostIds]));
+        localStorage.setItem('PZHUB_TIMELINE_POSTS', JSON.stringify(postsList));
 
         if (isConfigured) {
           try {
             await supabase.from('post_likes').upsert([{ post_id: post.id, user_id: currentUser.id }], { onConflict: 'post_id,user_id' });
-          } catch(e) {
+            await supabase.from('posts').update({ likes_count: post.likes_count }).eq('id', post.id);
+          } catch (e) {
             console.warn('Erro ao curtir post no Supabase:', e);
           }
         }
@@ -712,7 +778,7 @@ function setupTweetCardInteractions() {
     };
   });
 
-  // 4.1. Repost de Transmissão (Repost Atômico)
+  // 4.1. Repost de Transmissão (Repost Atômico com Persistência)
   container.querySelectorAll('.btn-action-repost').forEach(btn => {
     btn.onclick = async (e) => {
       e.stopPropagation();
@@ -735,6 +801,8 @@ function setupTweetCardInteractions() {
         btn.style.color = '';
         post.reposts_count = Math.max(0, (post.reposts_count || 1) - 1);
         if (countEl) countEl.textContent = post.reposts_count;
+        localStorage.setItem(`PZHUB_USER_REPOSTS_${currentUser.id}`, JSON.stringify([...userRepostedPostIds]));
+        localStorage.setItem('PZHUB_TIMELINE_POSTS', JSON.stringify(postsList));
         showTacticalToast('Republicação cancelada.', 'info');
       } else {
         userRepostedPostIds.add(post.id);
@@ -742,6 +810,8 @@ function setupTweetCardInteractions() {
         btn.style.color = 'var(--accent-emerald)';
         post.reposts_count = (post.reposts_count || 0) + 1;
         if (countEl) countEl.textContent = post.reposts_count;
+        localStorage.setItem(`PZHUB_USER_REPOSTS_${currentUser.id}`, JSON.stringify([...userRepostedPostIds]));
+        localStorage.setItem('PZHUB_TIMELINE_POSTS', JSON.stringify(postsList));
         showTacticalToast('Transmissão republicada no seu radar social!', 'success');
       }
 
@@ -751,7 +821,7 @@ function setupTweetCardInteractions() {
             .from('posts')
             .update({ reposts_count: post.reposts_count })
             .eq('id', post.id);
-        } catch(err) {
+        } catch (err) {
           console.warn('Erro ao atualizar reposts no Supabase:', err);
         }
       }
@@ -774,7 +844,7 @@ function setupTweetCardInteractions() {
     };
   });
 
-  // 6. Envio de Comentário Inline (Sem ID manual para não quebrar UUID no Supabase)
+  // 6. Envio de Comentário Inline com Sincronização
   container.querySelectorAll('.btn-send-inline-comment').forEach(btn => {
     btn.onclick = async () => {
       const postId = btn.dataset.postId;
@@ -811,9 +881,15 @@ function setupTweetCardInteractions() {
             post.comments_count = (post.comments_count || 0) + 1;
             const replyCounter = container.querySelector(`.btn-action-reply[data-post-id="${postId}"] .action-count`);
             if (replyCounter) replyCounter.textContent = post.comments_count;
+            localStorage.setItem('PZHUB_TIMELINE_POSTS', JSON.stringify(postsList));
+            try {
+              await supabase.from('posts').update({ comments_count: post.comments_count }).eq('id', postId);
+            } catch (errPost) {
+              console.warn('Erro ao atualizar comments_count em posts:', errPost);
+            }
           }
           showTacticalToast('Resposta transmitida com sucesso!', 'success');
-        } catch(e) {
+        } catch (e) {
           console.warn('Erro ao enviar comentário do post no Supabase:', e);
           showTacticalToast('Falha ao registrar comentário na rede.', 'error');
         }

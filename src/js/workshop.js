@@ -50,6 +50,10 @@ export async function initWorkshop() {
   }
 
   await loadWorkshopData();
+
+  window.addEventListener('pzhub:auth-changed', async () => {
+    await loadWorkshopData();
+  });
 }
 
 export function populateWebsiteCategoriesSelect() {
@@ -95,6 +99,18 @@ export function populateWebsiteCategoriesSelect() {
 
 export async function loadWorkshopData() {
   const currentUser = getCurrentUser();
+  const userId = currentUser?.id || currentUser?.user_metadata?.sub || 'guest';
+
+  // 1. Restaura imediatamente do cache local para resposta instantânea no F5
+  const cachedLikes = localStorage.getItem(`PZHUB_USER_LIKED_MODPACKS_${userId}`);
+  if (cachedLikes) {
+    try {
+      const arr = JSON.parse(cachedLikes);
+      if (Array.isArray(arr)) userLikedModpackIds = new Set(arr);
+    } catch (e) {}
+  }
+
+  // 2. Sincroniza curtidas do usuário no Supabase
   if (currentUser && isConfigured) {
     try {
       const { data: likesData } = await supabase
@@ -102,13 +118,12 @@ export async function loadWorkshopData() {
         .select('modpack_id')
         .eq('user_id', currentUser.id);
       if (likesData && Array.isArray(likesData)) {
-        userLikedModpackIds = new Set(likesData.map(l => l.modpack_id));
+        likesData.forEach(l => userLikedModpackIds.add(l.modpack_id));
+        localStorage.setItem(`PZHUB_USER_LIKED_MODPACKS_${currentUser.id}`, JSON.stringify([...userLikedModpackIds]));
       }
-    } catch(e) {
+    } catch (e) {
       console.warn('Erro ao carregar modpack_likes no Supabase:', e);
     }
-  } else {
-    userLikedModpackIds.clear();
   }
 
   if (isConfigured) {
@@ -121,6 +136,33 @@ export async function loadWorkshopData() {
 
       if (!error && Array.isArray(data)) {
         modpacksList = data;
+
+        // Agrega contadores reais das tabelas secundárias para contornar qualquer delay ou falta de triggers
+        try {
+          const { data: allLikes } = await supabase.from('modpack_likes').select('modpack_id');
+          const { data: allComments } = await supabase.from('comments').select('target_id');
+
+          const likesCountMap = {};
+          (allLikes || []).forEach(l => {
+            likesCountMap[l.modpack_id] = (likesCountMap[l.modpack_id] || 0) + 1;
+          });
+
+          const commentsCountMap = {};
+          (allComments || []).forEach(c => {
+            commentsCountMap[c.target_id] = (commentsCountMap[c.target_id] || 0) + 1;
+          });
+
+          modpacksList.forEach(pack => {
+            const trueLikes = likesCountMap[pack.id] || (pack.slug && likesCountMap[pack.slug]) || 0;
+            const trueComments = commentsCountMap[pack.id] || (pack.slug && commentsCountMap[pack.slug]) || 0;
+            pack.likes_count = Math.max(pack.likes_count || 0, trueLikes);
+            pack.comments_count = Math.max(pack.comments_count || 0, trueComments);
+          });
+        } catch (aggErr) {
+          console.warn('Aviso: agregação de likes/comentários dos modpacks:', aggErr);
+        }
+
+        saveModpacksLocally();
         renderWorkshop();
         updateDashboardView();
         return;
@@ -135,7 +177,7 @@ export async function loadWorkshopData() {
   if (saved) {
     try { 
       modpacksList = JSON.parse(saved); 
-    } catch(e) { 
+    } catch (e) { 
       modpacksList = []; 
     }
   } else {
@@ -277,12 +319,13 @@ export function renderWorkshop() {
         btn.classList.remove('liked');
         btn.style.color = '';
         if (countEl) countEl.textContent = pack.likes_count;
+        localStorage.setItem(`PZHUB_USER_LIKED_MODPACKS_${currentUser.id}`, JSON.stringify([...userLikedModpackIds]));
         saveModpacksLocally();
 
         if (isConfigured) {
           try {
             await supabase.from('modpack_likes').delete().eq('modpack_id', pack.id).eq('user_id', currentUser.id);
-          } catch(err) {
+          } catch (err) {
             console.warn('Erro ao remover curtida no Supabase:', err);
           }
         }
@@ -293,12 +336,13 @@ export function renderWorkshop() {
         btn.classList.add('liked');
         btn.style.color = 'var(--accent-red)';
         if (countEl) countEl.textContent = pack.likes_count;
+        localStorage.setItem(`PZHUB_USER_LIKED_MODPACKS_${currentUser.id}`, JSON.stringify([...userLikedModpackIds]));
         saveModpacksLocally();
 
         if (isConfigured) {
           try {
             await supabase.from('modpack_likes').upsert([{ modpack_id: pack.id, user_id: currentUser.id }], { onConflict: 'modpack_id,user_id' });
-          } catch(err) {
+          } catch (err) {
             console.warn('Erro ao gravar curtida no Supabase:', err);
           }
         }
@@ -401,11 +445,12 @@ export async function openModpackDetailsModal(pack) {
         if (isConfigured) {
           try {
             await supabase.from('modpack_likes').upsert([{ modpack_id: pack.id, user_id: currentUser.id }], { onConflict: 'modpack_id,user_id' });
-          } catch(err) {
+          } catch (err) {
             console.warn('Erro ao gravar curtida no Supabase:', err);
           }
         }
       }
+      localStorage.setItem(`PZHUB_USER_LIKED_MODPACKS_${currentUser.id}`, JSON.stringify([...userLikedModpackIds]));
       saveModpacksLocally();
       renderWorkshopFeed(); // Sincroniza os cards de fundo
     };
@@ -558,9 +603,11 @@ function renderModalTabContent(pack, changelogs) {
           showTacticalToast('Comentário salvo localmente!', 'success');
         }
 
+        pack.comments_count = (pack.comments_count || 0) + 1;
         saveModpacksLocally();
         commentInput.value = '';
         renderModalTabContent(pack, changelogs);
+        renderWorkshopFeed();
       };
     }
   } else if (activeModalTab === 'tab-ws-credits') {

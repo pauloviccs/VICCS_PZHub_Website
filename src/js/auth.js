@@ -33,6 +33,7 @@ export async function initAuth() {
           currentUserProfile = null;
         }
         updateAuthUI();
+        window.dispatchEvent(new CustomEvent('pzhub:auth-changed', { detail: { user: currentUser } }));
       });
     } catch(err) {
       console.warn('Erro ao conectar Supabase Auth:', err);
