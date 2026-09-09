@@ -1,5 +1,32 @@
 # Project Memory Changelog
 
+## [2026-09-06] - Gestão de Download de Software na Moderação & Fim da Amnésia Front-end
+
+### Problema Resolvido
+- O link do executável `.exe` do botão principal da Hero (`#hero-btn-download-app`) estava chumbado no código e não permitia alteração direta pela Staff através da aba de moderação.
+- Amnésia de interações sociais no front-end: curtidas em posts e modpacks, comentários e reposts eram perdidos ao atualizar a página (F5), pois dependiam apenas de estado em RAM ou de triggers de banco que podiam não estar sincronizados.
+- Condição de corrida no carregamento inicial da autenticação que limpava os dados de likes antes da confirmação da sessão no Supabase.
+
+### Mudanças Implementadas
+1. **Painel de Moderação (`src/js/admin.js`):**
+   - Criação da 3ª aba operacional: `⚙️ CONFIGURAÇÕES DE SOFTWARE & DOWNLOADS`.
+   - Implementação de painel tático com input da URL do executável `.exe`, botão de cópia rápida, botão de teste direto do link e botão com feedback de gravação.
+   - Sincronização remota via Supabase (`modpack_changelogs` com `system_config` / `desktop_download_url`), cache local (`PZHUB_DESKTOP_DOWNLOAD_URL`) e atualização imediata do DOM no botão Hero `#hero-btn-download-app`.
+2. **Boot da Aplicação (`src/js/app.js`):**
+   - Chamada `await fetchActiveDownloadUrl()` no início do `init()`, garantindo que o link correto seja injetado antes de renderizar as telas.
+3. **Radar Social (`src/js/timeline.js`):**
+   - Cache e restauração imediata de `userLikedPostIds` e `userRepostedPostIds` via `localStorage` indexado por usuário.
+   - Contagem agregada em tempo real de `post_likes` e `post_comments` no `loadTimelinePosts()`.
+   - Atualização explícita de `likes_count`, `reposts_count` e `comments_count` na tabela `posts` ao interagir.
+4. **Catálogo da Comunidade (`src/js/workshop.js`):**
+   - Cache e restauração imediata de `userLikedModpackIds` via `localStorage`.
+   - Agregação em tempo real de `modpack_likes` e `comments` para alimentar com precisão os cards no F5.
+   - Re-renderização instantânea de comentários no modal de detalhes ao postar.
+5. **Autenticação (`src/js/auth.js`):**
+   - Emissão do evento `pzhub:auth-changed` no `onAuthStateChange`, escutado por `timeline.js` e `workshop.js` para re-sincronizar dados sociais assim que o JWT for verificado.
+
+---
+
 ## [2026-09-03] - Sincronização Atômica de Elementos Sociais (Likes, Comentários, Reports)
 
 ### Problema Resolvido

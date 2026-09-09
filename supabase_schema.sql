@@ -453,4 +453,35 @@ UPDATE public.modpacks m
 SET
   likes_count = (SELECT COUNT(*) FROM public.modpack_likes WHERE modpack_id = m.id);
 
+-- =========================================================================
+-- 13. TABELA: MENSAGENS DIRETAS / CHAT SOCIAL PRIVADO (DIRECT MESSAGES)
+-- Isolamento estrito entre DMs privadas e o Mural Público de Recados (profile_scraps)
+-- =========================================================================
+CREATE TABLE IF NOT EXISTS public.direct_messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  sender_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  receiver_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  sender_name TEXT NOT NULL,
+  sender_avatar TEXT,
+  message TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Índices de alta performance para busca de histórico entre operadores
+CREATE INDEX IF NOT EXISTS idx_direct_messages_participants 
+  ON public.direct_messages (sender_id, receiver_id);
+CREATE INDEX IF NOT EXISTS idx_direct_messages_created 
+  ON public.direct_messages (created_at ASC);
+
+-- Habilita RLS estrito: Apenas os participantes da conversa (remetente ou destinatário) podem ler
+ALTER TABLE public.direct_messages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "direct_messages_select_policy" ON public.direct_messages;
+CREATE POLICY "direct_messages_select_policy" ON public.direct_messages
+  FOR SELECT USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
+
+DROP POLICY IF EXISTS "direct_messages_insert_policy" ON public.direct_messages;
+CREATE POLICY "direct_messages_insert_policy" ON public.direct_messages
+  FOR INSERT WITH CHECK (auth.uid() = sender_id);
+
 
