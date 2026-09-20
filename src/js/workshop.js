@@ -664,23 +664,37 @@ function updateDashboardView() {
   const container = document.getElementById('view-dashboard');
   if (!container) return;
 
+  window.modpacksList = modpacksList;
+  window.renderWorkshopFeed = renderWorkshopFeed;
+
   const totalModpacks = modpacksList.length;
   let totalMods = 0;
-  let totalDownloads = 0;
+  let totalModpackDownloads = 0;
   let totalLikes = 0;
 
   modpacksList.forEach(p => {
     totalMods += (p.mods?.length || 0);
-    totalDownloads += (p.downloads_count || 0);
+    totalModpackDownloads += (p.downloads_count || 0);
     totalLikes += (p.likes_count || 0);
   });
 
   const statBoxes = container.querySelectorAll('.dashboard-stats-grid .profile-stat-box .stat-value');
-  if (statBoxes && statBoxes.length >= 4) {
+  if (statBoxes && statBoxes.length >= 5) {
     statBoxes[0].textContent = totalModpacks;
     statBoxes[1].textContent = `${totalMods} mods`;
-    statBoxes[2].textContent = totalDownloads.toLocaleString('pt-BR');
+    // statBoxes[2] é o stat-software-downloads (atualizado via admin.js)
+    statBoxes[3].textContent = totalModpackDownloads.toLocaleString('pt-BR');
+    statBoxes[4].textContent = `❤️ ${totalLikes.toLocaleString('pt-BR')}`;
+  } else if (statBoxes && statBoxes.length >= 4) {
+    statBoxes[0].textContent = totalModpacks;
+    statBoxes[1].textContent = `${totalMods} mods`;
+    statBoxes[2].textContent = totalModpackDownloads.toLocaleString('pt-BR');
     statBoxes[3].textContent = `❤️ ${totalLikes.toLocaleString('pt-BR')}`;
+  }
+
+  const modpackDownloadsEl = document.getElementById('stat-modpack-downloads');
+  if (modpackDownloadsEl) {
+    modpackDownloadsEl.textContent = totalModpackDownloads.toLocaleString('pt-BR');
   }
 
   const tbody = container.querySelector('.tarkov-table tbody');
@@ -697,7 +711,7 @@ function updateDashboardView() {
         <td><span class="tarkov-tag badge-amber">B${pack.zomboid_version || '42.0+'}</span></td>
         <td>${pack.category || 'Militar'}</td>
         <td>${pack.mods?.length || 0} mods</td>
-        <td>${pack.downloads_count || 0}</td>
+        <td>${(pack.downloads_count || 0).toLocaleString('pt-BR')}</td>
         <td>❤️ ${pack.likes_count || 0}</td>
         <td>
           <button class="tarkov-btn-mini btn-open-dash-pack" data-pack-id="${pack.id}">DETALHES</button>

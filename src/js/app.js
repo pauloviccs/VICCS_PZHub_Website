@@ -6,10 +6,11 @@ import { initAuth, getCurrentUser, getCurrentUserProfile } from './auth.js';
 import { initWorkshop, loadWorkshopData, populateWebsiteCategoriesSelect } from './workshop.js';
 import { initModpackBuilder, renderCreatorUploadsList } from './modpackBuilder.js';
 import { loadUserProfileView } from './profile.js';
-import { initAdminDashboard, fetchActiveDownloadUrl } from './admin.js';
+import { initAdminDashboard, fetchActiveDownloadUrl, fetchAppDownloadsCount, updateAppDownloadCountersInDom } from './admin.js';
 import { initTimeline, loadTimelinePosts } from './timeline.js';
 import { i18n } from './i18n.js';
 import { showTacticalAlert, showTacticalConfirm, showTacticalToast } from './tacticalModal.js';
+import { supabase, isConfigured } from './supabaseClient.js';
 
 // Expõe globalmente para que qualquer script possa usar diálogos elegantes
 window.showTacticalAlert = showTacticalAlert;
@@ -28,8 +29,12 @@ class PZHubApp {
     // 0.1 Inicializa o Sistema de Internacionalização (i18n)
     this.setupLanguageSelector();
 
-    // 0.2 Carrega o Link Oficial do Software (.exe) para o botão Hero
+    // 0.2 Carrega o Link Oficial do Software (.exe) e o Contador de Downloads
     await fetchActiveDownloadUrl();
+    await fetchAppDownloadsCount();
+
+    // 0.3 Inicia Sincronização em Tempo Real (WebSocket) de Downloads
+    this.setupRealtimeDownloads();
 
     // 1. Inicializa Autenticação e Perfil
     await initAuth();
@@ -198,6 +203,33 @@ class PZHubApp {
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  setupRealtimeDownloads() {
+    if (!isConfigured) return;
+    try {
+      supabase
+        .channel('pzhub-global-downloads')
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_analytics' }, (payload) => {
+          if (payload.new && payload.new.total_downloads !== undefined) {
+            updateAppDownloadCountersInDom(payload.new.total_downloads);
+          }
+        })
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'modpacks' }, (payload) => {
+          if (payload.new && payload.new.id) {
+            const pack = window.modpacksList?.find(m => m.id === payload.new.id);
+            if (pack) {
+              pack.downloads_count = payload.new.downloads_count;
+              if (typeof window.renderWorkshopFeed === 'function') {
+                window.renderWorkshopFeed();
+              }
+            }
+          }
+        })
+        .subscribe();
+    } catch (e) {
+      console.warn('[Realtime] Falha ao conectar canal de downloads:', e);
+    }
   }
 }
 

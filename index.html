@@ -126,8 +126,9 @@
     </div>
     <div class="mobile-drawer-footer">
       <a href="https://www.dropbox.com/scl/fi/u1zxwky8utdzwdv4spv91/PZHub_Setup.exe?rlkey=nguj8499hj314a1f5rcsxkwdu&st=pcntmhga&dl=1"
+        id="mobile-drawer-btn-download"
         class="tarkov-btn btn-amber" style="width: 100%; justify-content: center; font-size: 11px;">
-        ⬇️ BAIXAR PZHUB DESKTOP (.EXE)
+        ⬇️ BAIXAR PZHUB DESKTOP (.EXE) <span id="mobile-app-downloads-count" style="margin-left: 6px; opacity: 0.85;">(0)</span>
       </a>
     </div>
   </div>
@@ -157,6 +158,9 @@
               d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z" />
           </svg>
           <span data-i18n="btn_download_software">⬇️ BAIXAR PZHUB DESKTOP (.EXE)</span>
+          <span id="hero-app-downloads-badge" class="tarkov-tag badge-emerald" style="margin-left: 8px; font-size: 11px; font-family: var(--font-mono); font-weight: bold;">
+            🚀 <span id="hero-app-downloads-count">0</span>
+          </span>
         </a>
 
         <a href="#studio" class="tarkov-btn btn-amber">
@@ -238,8 +242,12 @@
         <span class="stat-value text-cyan">0 mods</span>
       </div>
       <div class="profile-stat-box">
-        <span class="stat-label">DOWNLOADS TOTAIS</span>
-        <span class="stat-value text-emerald">0</span>
+        <span class="stat-label">DOWNLOADS DO SOFTWARE (.EXE)</span>
+        <span id="stat-software-downloads" class="stat-value text-emerald">0</span>
+      </div>
+      <div class="profile-stat-box">
+        <span class="stat-label">DOWNLOADS DE MODPACKS</span>
+        <span id="stat-modpack-downloads" class="stat-value text-emerald">0</span>
       </div>
       <div class="profile-stat-box">
         <span class="stat-label">AVALIAÇÕES & LIKES</span>

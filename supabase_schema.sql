@@ -484,4 +484,70 @@ DROP POLICY IF EXISTS "direct_messages_insert_policy" ON public.direct_messages;
 CREATE POLICY "direct_messages_insert_policy" ON public.direct_messages
   FOR INSERT WITH CHECK (auth.uid() = sender_id);
 
+-- =========================================================================
+-- 14. TABELA: ANALYTICS E TELEMETRIA DO SOFTWARE (APP_ANALYTICS)
+-- =========================================================================
+CREATE TABLE IF NOT EXISTS public.app_analytics (
+  id TEXT PRIMARY KEY,
+  total_downloads BIGINT DEFAULT 0 NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+INSERT INTO public.app_analytics (id, total_downloads)
+VALUES ('pzhub_desktop', 0)
+ON CONFLICT (id) DO NOTHING;
+
+ALTER TABLE public.app_analytics ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "App analytics é pública para leitura" ON public.app_analytics;
+CREATE POLICY "App analytics é pública para leitura" ON public.app_analytics FOR SELECT USING (true);
+
+-- RPC Atômica para incremento seguro de download do executável PZHub Desktop
+CREATE OR REPLACE FUNCTION public.increment_app_download()
+RETURNS BIGINT AS $$
+DECLARE
+  new_count BIGINT;
+BEGIN
+  UPDATE public.app_analytics
+  SET total_downloads = total_downloads + 1,
+      updated_at = timezone('utc'::text, now())
+  WHERE id = 'pzhub_desktop'
+  RETURNING total_downloads INTO new_count;
+  
+  RETURN new_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- RPC Atômica para incremento seguro de download de Modpack
+CREATE OR REPLACE FUNCTION public.increment_modpack_download(target_pack_id TEXT)
+RETURNS INTEGER AS $$
+DECLARE
+  new_count INTEGER;
+BEGIN
+  UPDATE public.modpacks
+  SET downloads_count = COALESCE(downloads_count, 0) + 1,
+      updated_at = timezone('utc'::text, now())
+  WHERE id = target_pack_id
+  RETURNING downloads_count INTO new_count;
+  
+  RETURN new_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Habilitação de Realtime para sincronização global instantânea
+DO $$
+BEGIN
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.app_analytics;
+  EXCEPTION
+    WHEN duplicate_object THEN NULL;
+  END;
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.modpacks;
+  EXCEPTION
+    WHEN duplicate_object THEN NULL;
+  END;
+END $$;
+
+
 

@@ -48,11 +48,82 @@ export async function fetchActiveDownloadUrl() {
   return activeDownloadUrl;
 }
 
+// =========================================================================
+// TELEMETRIA E CONTADOR DE DOWNLOADS DO EXECUTÁVEL DESKTOP
+// =========================================================================
+
+export async function fetchAppDownloadsCount() {
+  if (isConfigured) {
+    try {
+      const { data, error } = await supabase
+        .from('app_analytics')
+        .select('total_downloads')
+        .eq('id', 'pzhub_desktop')
+        .maybeSingle();
+      if (!error && data) {
+        const count = Number(data.total_downloads) || 0;
+        updateAppDownloadCountersInDom(count);
+        return count;
+      }
+    } catch (e) {
+      console.warn('[Analytics] Erro ao buscar downloads do app:', e);
+    }
+  }
+  return 0;
+}
+
+export async function trackAppDownload() {
+  if (isConfigured) {
+    try {
+      const { data, error } = await supabase.rpc('increment_app_download');
+      if (!error && data !== null && data !== undefined) {
+        const newCount = Number(data);
+        updateAppDownloadCountersInDom(newCount);
+        return newCount;
+      }
+    } catch (e) {
+      console.warn('[Analytics] Erro ao registrar download do app:', e);
+    }
+  }
+  return null;
+}
+
+export function updateAppDownloadCountersInDom(count) {
+  if (count === null || count === undefined) return;
+  const formatted = Number(count).toLocaleString('pt-BR');
+  
+  const heroCount = document.getElementById('hero-app-downloads-count');
+  if (heroCount) heroCount.textContent = formatted;
+
+  const mobileCount = document.getElementById('mobile-app-downloads-count');
+  if (mobileCount) mobileCount.textContent = `(${formatted})`;
+
+  const dashCount = document.getElementById('stat-software-downloads');
+  if (dashCount) dashCount.textContent = formatted;
+}
+
 export function applyDownloadUrlToDom(url) {
   if (!url) return;
   const heroBtn = document.getElementById('hero-btn-download-app');
   if (heroBtn) {
     heroBtn.href = url;
+    if (!heroBtn.dataset.telemetryAttached) {
+      heroBtn.dataset.telemetryAttached = 'true';
+      heroBtn.addEventListener('click', () => {
+        trackAppDownload();
+      });
+    }
+  }
+
+  const mobileBtn = document.getElementById('mobile-drawer-btn-download');
+  if (mobileBtn) {
+    mobileBtn.href = url;
+    if (!mobileBtn.dataset.telemetryAttached) {
+      mobileBtn.dataset.telemetryAttached = 'true';
+      mobileBtn.addEventListener('click', () => {
+        trackAppDownload();
+      });
+    }
   }
 }
 
