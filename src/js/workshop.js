@@ -665,7 +665,7 @@ function updateDashboardView() {
   if (!container) return;
 
   window.modpacksList = modpacksList;
-  window.renderWorkshopFeed = renderWorkshopFeed;
+  window.renderWorkshopFeed = renderWorkshop;
 
   const totalModpacks = modpacksList.length;
   let totalMods = 0;
