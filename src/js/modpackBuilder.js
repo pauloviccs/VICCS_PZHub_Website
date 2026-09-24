@@ -8,7 +8,7 @@
 
 import { supabase, isConfigured } from './supabaseClient.js';
 import { getCurrentUser, getCurrentUserProfile } from './auth.js';
-import { getAllModpacks, loadWorkshopData } from './workshop.js';
+import { getAllModpacks, loadWorkshopData, updateModpackInList } from './workshop.js';
 import { createChangelog, updateChangelog, deleteChangelog, fetchModpackChangelogs, syncLatestModpackVersion } from './changelogs.js';
 import { openImageCropperModal } from './imageCropper.js';
 import { showTacticalAlert, showTacticalConfirm, showTacticalToast } from './tacticalModal.js';
@@ -235,6 +235,10 @@ function handleAddModComponent() {
     builderModsList.push(modObject);
     if (nameInput) nameInput.value = '';
     renderBuilderModsList();
+
+    if (editingPackId && isConfigured) {
+      syncCurrentPackModsToDatabase();
+    }
   }
 }
 
@@ -283,10 +287,15 @@ export function renderBuilderModsList() {
   });
 
   container.querySelectorAll('.btn-remove-mod-item').forEach(btn => {
-    btn.onclick = () => {
+    btn.onclick = async () => {
       const idx = parseInt(btn.dataset.index, 10);
       builderModsList.splice(idx, 1);
       renderBuilderModsList();
+
+      if (editingPackId && isConfigured) {
+        await syncCurrentPackModsToDatabase();
+        showTacticalToast('Mod componente removido e banco de dados sincronizado!', 'info');
+      }
     };
   });
 }
@@ -375,20 +384,55 @@ async function handlePublishModpack() {
       }
 
       // 2. Salva o modpack
-      const { data, error } = await supabase
-        .from('modpacks')
-        .upsert([pack], { onConflict: 'id' });
+      if (editingPackId) {
+        // Atualização cirúrgica no Supabase sem sobrescrever contadores ou gerar conflito de slug
+        const updatePayload = {
+          name: pack.name,
+          title: pack.title,
+          version: pack.version,
+          category: pack.category,
+          zomboid_version: pack.zomboid_version,
+          description: pack.description,
+          banner_url: pack.banner_url,
+          image: pack.image,
+          mods: builderModsList,
+          updated_at: new Date().toISOString()
+        };
 
-      if (error) {
-        console.error('Erro detalhado Supabase:', error);
-        throw error;
+        const { error } = await supabase
+          .from('modpacks')
+          .update(updatePayload)
+          .eq('id', editingPackId);
+
+        if (error) {
+          console.error('Erro detalhado Supabase UPDATE:', error);
+          throw error;
+        }
+
+        updateModpackInList(editingPackId, updatePayload);
+
+        await showTacticalAlert(
+          `Modpack "${pack.name}" atualizado no Supabase com sucesso!`,
+          'OPERAÇÃO CONCLUÍDA',
+          'success'
+        );
+      } else {
+        // Inserção de novo modpack
+        const { error } = await supabase
+          .from('modpacks')
+          .insert([pack]);
+
+        if (error) {
+          console.error('Erro detalhado Supabase INSERT:', error);
+          throw error;
+        }
+
+        await showTacticalAlert(
+          `Modpack "${pack.name}" publicado com sucesso no banco de dados!`,
+          'OPERAÇÃO CONCLUÍDA',
+          'success'
+        );
       }
-
-      await showTacticalAlert(
-        editingPackId ? `Modpack "${pack.name}" atualizado no Supabase com sucesso!` : `Modpack "${pack.name}" publicado com sucesso no banco de dados!`,
-        'OPERAÇÃO CONCLUÍDA',
-        'success'
-      );
     } catch (err) {
       console.error('Erro ao salvar no Supabase:', err);
       await showTacticalAlert(`Falha ao gravar no Supabase: ${err.message || JSON.stringify(err)}`, 'ERRO DE SINCRONIZAÇÃO', 'error');
@@ -1325,7 +1369,7 @@ function handleEditModTypeChange(selectedType) {
   if (groupDirectFolder) groupDirectFolder.style.display = selectedType === 'direct_download' ? 'block' : 'none';
 }
 
-function handleSaveModEdit() {
+async function handleSaveModEdit() {
   const idxInput = document.getElementById('edit-mod-item-index');
   const idx = parseInt(idxInput?.value, 10);
   if (isNaN(idx) || !builderModsList[idx]) {
@@ -1390,6 +1434,54 @@ function handleSaveModEdit() {
     builderModsList[idx] = updatedMod;
     renderBuilderModsList();
     closeEditModModal();
-    showTacticalToast(`Mod "${name}" atualizado no pacote com sucesso!`, 'success');
+
+    if (editingPackId && isConfigured) {
+      try {
+        showTacticalToast('Gravando alterações no Supabase...', 'info');
+        const { error } = await supabase
+          .from('modpacks')
+          .update({
+            mods: builderModsList,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingPackId);
+
+        if (error) {
+          console.error('Erro ao atualizar mod no Supabase:', error);
+          showTacticalAlert(`Falha ao sincronizar com o banco: ${error.message}`, 'ERRO NO SUPABASE', 'error');
+          return;
+        }
+
+        updateModpackInList(editingPackId, { mods: builderModsList, updated_at: new Date().toISOString() });
+        showTacticalToast(`Mod "${name}" atualizado e gravado no Supabase com sucesso!`, 'success');
+      } catch (err) {
+        console.error('Erro de conexão ao salvar mod:', err);
+        showTacticalAlert(`Erro ao persistir no Supabase: ${err.message || err}`, 'ERRO', 'error');
+      }
+    } else {
+      showTacticalToast(`Mod "${name}" atualizado no pacote com sucesso!`, 'success');
+    }
+  }
+}
+
+async function syncCurrentPackModsToDatabase() {
+  if (!editingPackId || !isConfigured) return;
+  try {
+    const { error } = await supabase
+      .from('modpacks')
+      .update({
+        mods: builderModsList,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', editingPackId);
+
+    if (error) {
+      console.error('Erro ao sincronizar mods no Supabase:', error);
+      showTacticalAlert(`Falha ao sincronizar com o banco: ${error.message}`, 'ERRO NO SUPABASE', 'error');
+    } else {
+      updateModpackInList(editingPackId, { mods: builderModsList, updated_at: new Date().toISOString() });
+    }
+  } catch (err) {
+    console.warn('Erro ao sincronizar mods:', err);
   }
 }

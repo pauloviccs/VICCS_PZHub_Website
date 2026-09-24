@@ -732,3 +732,12 @@ function saveModpacksLocally() {
   localStorage.setItem('PZHUB_COMMUNITY_MODPACKS', JSON.stringify(modpacksList));
   updateDashboardView();
 }
+
+export function updateModpackInList(packId, updatedFields) {
+  const pack = modpacksList.find(p => p.id === packId || p.slug === packId);
+  if (pack) {
+    Object.assign(pack, updatedFields);
+    saveModpacksLocally();
+    renderWorkshop();
+  }
+}
