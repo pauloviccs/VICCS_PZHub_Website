@@ -265,10 +265,6 @@ export function renderWorkshop() {
           <p class="ws-card-desc">${pack.description || 'Sem descrição informada.'}</p>
 
           <div class="ws-stats-row">
-            <span class="ws-stat">
-              <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
-              <span>${pack.downloads_count || 0}</span>
-            </span>
             <button class="btn-like-modpack ws-stat-btn ${userLikedModpackIds.has(pack.id) ? 'liked' : ''}" data-pack-id="${pack.id}" title="Curtir modpack" style="${userLikedModpackIds.has(pack.id) ? 'color: var(--accent-red);' : ''}">
               ❤️ <strong class="like-count">${pack.likes_count || 0}</strong>
             </button>
@@ -394,7 +390,6 @@ export async function openModpackDetailsModal(pack) {
 
   const titleEl = document.getElementById('md-modal-title');
   const authorEl = document.getElementById('md-modal-author');
-  const downloadsEl = document.getElementById('md-modal-downloads');
   const likesEl = document.getElementById('md-modal-likes');
   const bannerEl = document.getElementById('md-modal-banner');
 
@@ -402,7 +397,6 @@ export async function openModpackDetailsModal(pack) {
   if (authorEl) {
     authorEl.innerHTML = `Criado por <a href="#profile/${pack.author || 'operador'}" style="color: var(--accent-amber); font-weight: bold; text-decoration: none;">@${pack.author_name || pack.author || 'PZHub'}</a>`;
   }
-  if (downloadsEl) downloadsEl.textContent = `🚀 ${pack.downloads_count || 0} Downloads`;
 
   // Like interativo dentro do cabeçalho do Modal sincronizado com Supabase
   if (likesEl) {
