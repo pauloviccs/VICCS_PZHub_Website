@@ -1094,6 +1094,75 @@
       </form>
     </div>
   </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL: EDIÇÃO DE MOD COMPONENTE (ESTÚDIO TÁTICO)                      -->
+  <!-- ===================================================================== -->
+  <div id="mod-component-edit-modal" class="tarkov-modal-backdrop">
+    <div class="tarkov-modal-card" style="max-width: 620px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--accent-cyan); font-size: 15px;">⚙️</span>
+          <h3 class="modal-title">EDITAR MOD COMPONENTE // ESTÚDIO TÁTICO</h3>
+        </div>
+        <button type="button" id="mod-component-edit-close" class="modal-close-icon">✕</button>
+      </div>
+
+      <form id="mod-component-edit-form" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+        <input type="hidden" id="edit-mod-item-index" value="" />
+
+        <!-- Seletor do Tipo de Origem do Mod -->
+        <div class="form-group">
+          <label class="form-label" style="font-size: 11px;">Tipo de Origem do Mod *</label>
+          <select id="edit-mod-type" class="tarkov-select" style="width: 100%;">
+            <option value="workshop">🌐 Steam Workshop (Oficina Oficial)</option>
+            <option value="direct_download">📦 Download Direto (.ZIP / Servidor)</option>
+          </select>
+        </div>
+
+        <!-- Nome do Mod -->
+        <div class="form-group">
+          <label class="form-label" style="font-size: 11px;">Nome do Mod *</label>
+          <input type="text" id="edit-mod-name" class="tarkov-input" placeholder="Ex: Filibuster Rhymes Cars B42" required />
+        </div>
+
+        <!-- Grupo Workshop -->
+        <div id="edit-field-group-workshop" class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label class="form-label" style="font-size: 11px; margin: 0;">Link do Mod na Steam ou ID *</label>
+            <span id="edit-mod-ws-feedback" class="steam-extraction-badge" style="display: none;"></span>
+          </div>
+          <input type="text" id="edit-mod-ws-id" class="tarkov-input" placeholder="Cole o link da Steam (https://steamcommunity.com/...) ou o ID" />
+        </div>
+
+        <!-- Grupo Download Direto -->
+        <div id="edit-field-group-direct-url" class="form-group" style="display: none;">
+          <label class="form-label" style="font-size: 11px;">URL Direta do .ZIP *</label>
+          <input type="url" id="edit-mod-direct-url" class="tarkov-input" placeholder="https://servidor.com/mods/mod.zip" />
+        </div>
+        <div id="edit-field-group-direct-folder" class="form-group" style="display: none;">
+          <label class="form-label" style="font-size: 11px;">Pasta em Zomboid/mods/ *</label>
+          <input type="text" id="edit-mod-folder-name" class="tarkov-input" placeholder="Ex: MeuModFolder" />
+        </div>
+
+        <!-- Checkbox Obrigatório -->
+        <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; color: var(--text-muted);">
+            <input type="checkbox" id="edit-mod-required" checked />
+            <span>Instalação Obrigatória para o Funcionamento do Modpack</span>
+          </label>
+        </div>
+
+        <!-- Ações do Rodapé -->
+        <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--panel-border); padding-top: 14px; margin-top: 6px;">
+          <button type="button" id="btn-cancel-edit-mod-modal" class="tarkov-btn">CANCELAR</button>
+          <button type="submit" id="btn-save-edit-mod-modal" class="tarkov-btn btn-amber" style="padding: 10px 22px;">
+            💾 SALVAR ALTERAÇÕES
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </body>
 
 </html>

@@ -4,13 +4,13 @@
 PZHub Community Workshop & Creator Platform (`pzhub-website`)
 
 ## Description
-Plataforma Web Oficial (SPA) de compartilhamento, criação, publicação e exploração de modpacks para Project Zomboid (Build 42 e Build 41). Possui interface e design system inspirados no jogo *Escape from Tarkov*, autenticação integrada com Supabase, rede social tática (Radar Social/Timeline), sistema de perfis de operadores estilo vitrine Steam, estúdio de criação de pacotes com suporte a IDs da Oficina Steam e links de download direto, painel de moderação para administradores com triagem em tempo real e controle dinâmico da URL do executável desktop (.exe), além de motor de persistência social híbrido (Supabase + `localStorage`) anti-amnésia para likes, reposts e comentários.
+Plataforma Web Oficial (SPA) de compartilhamento, criação, publicação e exploração de modpacks para Project Zomboid (Build 42 e Build 41). Possui interface e design system inspirados no jogo *Escape from Tarkov*, autenticação integrada com Supabase, rede social tática (Radar Social/Timeline), sistema de perfis de operadores estilo vitrine Steam, estúdio de criação de pacotes com suporte a IDs da Oficina Steam e links de download direto, **telemetria de downloads do software desktop com badges visuais e sincronização em tempo real via Supabase Realtime WebSocket**, painel de moderação para administradores com triagem em tempo real e controle dinâmico da URL do executável desktop (.exe), além de motor de persistência social híbrido (Supabase + `localStorage`) anti-amnésia para likes, reposts e comentários.
 
 ## Tech Stack
-- Languages: JavaScript (ES6+ Vanilla Modules), HTML5, CSS3, SQL (PostgreSQL / Supabase DDL)
+- Languages: JavaScript (ES6+ Vanilla Modules), HTML5, CSS3, SQL (PostgreSQL / Supabase DDL / Stored Procedures)
 - Frameworks: Vite 6.4.3 (Build Tool & Dev Server), @supabase/supabase-js 2.49.1
 - Tools: npm, Vercel CLI / Config
-- Services: Supabase (PostgreSQL, Auth, Row Level Security, REST API, Database Triggers), Vercel (Hospedagem SPA & Edge CDN)
+- Services: Supabase (PostgreSQL, Auth, Row Level Security, REST API, RPC, Database Triggers, Realtime Postgres Changes), Vercel (Hospedagem SPA & Edge CDN)
 
 ## Folder Structure
 ```text
@@ -67,11 +67,11 @@ VICCS_PZHub_Website/
 ```
 
 ## Key Files & Architecture
-- `index.html`: Ponto de entrada SPA contendo as views principais (`#view-workshop`, `#view-dashboard`, `#view-studio`, `#view-timeline`, `#view-profile`, `#view-admin`), botão principal de download do instalador na Hero (`#hero-btn-download-app`), modais globais e sistema de layout.
-- `src/js/app.js`: Controlador central do SPA, roteamento via hash de URL, reidratação inicial do link do executável desktop no boot (`fetchActiveDownloadUrl`), alternador de temas (claro/escuro) e inicialização dos subsistemas.
-- `src/js/admin.js`: Área restrita para Staff e Moderadores com 3 abas operacionais: Triagem de Denúncias, Gerenciamento de Cargos e Gestão de Software & Downloads (configuração em tempo real do link do executável `.exe` com sincronização no Supabase e `localStorage`).
+- `index.html`: Ponto de entrada SPA contendo as views principais (`#view-workshop`, `#view-dashboard`, `#view-studio`, `#view-timeline`, `#view-profile`, `#view-admin`), botão principal de download do instalador na Hero (`#hero-btn-download-app`) com badge de contagem de downloads (`#hero-app-downloads-badge`), modais globais e sistema de layout.
+- `src/js/app.js`: Controlador central do SPA, roteamento via hash de URL, reidratação inicial do link do executável desktop no boot (`fetchActiveDownloadUrl`), inicialização de contadores de downloads (`fetchAppDownloadsCount`), subscrição Realtime WebSocket (`setupRealtimeDownloads`) via canal `pzhub-global-downloads`, alternador de temas (claro/escuro) e inicialização dos subsistemas.
+- `src/js/admin.js`: Área restrita para Staff e Moderadores com 3 abas operacionais: Triagem de Denúncias, Gerenciamento de Cargos e Gestão de Software & Downloads. Funções de telemetria exportadas: `trackAppDownload()` (RPC atômica não-bloqueante), `fetchAppDownloadsCount()` e `updateAppDownloadCountersInDom()`.
 - `src/js/timeline.js`: Radar Social com feed de posts curtos, anexo de imagens (cortador/compressor WebP), player YouTube tático com hover autoplay, gaveta expansível de respostas inline, persistência resiliente de likes e reposts no cache local do usuário e contagem real agregada de curtidas e comentários direto das tabelas relacionais.
-- `src/js/workshop.js`: Feed do catálogo, filtros por categorias militares/táticas, barra de pesquisa, ordenação, modal detalhado com histórico de versões (Changelogs), comentários dinâmicos com re-renderização imediata, e sincronização atômica de likes.
+- `src/js/workshop.js`: Feed do catálogo, filtros por categorias militares/táticas, barra de pesquisa, ordenação, modal detalhado com histórico de versões (Changelogs), comentários dinâmicos com re-renderização imediata, sincronização atômica de likes, dashboard com métricas separadas Software vs Modpacks e exposição de `window.renderWorkshopFeed` para atualização Realtime.
 - `src/js/auth.js`: Camada de autenticação (login, registro, logout) integrada ao Supabase Auth, emissão do evento global `pzhub:auth-changed` para re-sincronizar dados sociais nos módulos clientes eliminando condições de corrida no F5.
 - `src/js/profile.js`: Painel de perfil de operador com badges militares, mural de recados (scraps) interativo, agregações dinâmicas de métricas e gerenciamento de seguidores.
 - `src/js/modpackBuilder.js`: Estúdio de criação e edição de modpacks com suporte a múltiplos tipos de mods (Oficina Steam ou Download Direto), editor de descrição com formatação e Drag & Drop de arquivos Markdown.
@@ -84,6 +84,8 @@ VICCS_PZHub_Website/
 - `supabase_schema.sql`: Script SQL idempotente com criação de enums, tabelas com integridade referencial, triggers automáticos para contadores sociais e políticas RLS completas.
 
 ## Current Features Implemented
+- [x] **Telemetria de Downloads do Software Desktop (v2.2.6 sync):** badges visuais de contagem real de downloads no botão Hero (`#hero-app-downloads-badge`), drawer mobile (`#mobile-app-downloads-count`) e dashboard. Rastreamento não-bloqueante via RPC `increment_app_download` com `SECURITY DEFINER`. Divisão de métricas *DOWNLOADS DO SOFTWARE (.EXE)* e *DOWNLOADS DE MODPACKS* no Dashboard.
+- [x] **Sincronização em Tempo Real (Supabase Realtime WebSocket):** canal `pzhub-global-downloads` assinando tabelas `app_analytics` e `modpacks` via `postgres_changes` para zero-refresh updates de contadores entre múltiplos clientes.
 - [x] **Gestão de Distribuição do Executável (.exe):** aba dedicada no painel de moderação (`admin.js`) para alteração dinâmica do link de download do aplicativo PZHub Desktop vinculado ao botão Hero, com persistência remota no Supabase (`system_config`), cache local imediato e reidratação automática no boot.
 - [x] **Persistência Social Anti-Amnésia:** sistema de dupla camada (`localStorage` indexado por usuário + Supabase) para curtidas de posts e modpacks, e persistência completa de reposts na timeline. Agregação em tempo real a partir de `post_likes`, `modpack_likes`, `post_comments` e `comments`, impedindo reset de contadores para zero no refresh (F5).
 - [x] **Re-renderização Instantânea de Comentários:** comentários adicionados aos modpacks no modal de detalhes aparecem imediatamente sem necessidade de refresh ou fechamento do modal.
@@ -101,8 +103,12 @@ VICCS_PZHub_Website/
 - [x] **Internacionalização (i18n):** alternador dinâmico entre Português, Inglês e Espanhol.
 - [x] **Design Responsivo & Temas:** layout adaptável para mobile (drawer de navegação) e alternador entre modo escuro tático e modo claro.
 
+## Bugfixes & Estabilidade Recente
+- **[v2.2.6 hotfix] Navegação do SPA Desbloqueada:** `workshop.js` referenciava `renderWorkshopFeed` (função inexistente) em `updateDashboardView()`, causando `ReferenceError` que impedia o `setupRouting()`. Corrigido para `renderWorkshop`.
+- **[v2.2.6 build] Bundle de Produção Atualizado:** Compilação limpa do Vite (`npm run build`) gerando os artefatos otimizados em `dist/` sem pendências.
+
 ## Work-in-Progress & Known Next Steps
-- [ ] **Sincronização em Tempo Real (Supabase Realtime):** implementação de subscrições via `supabase.channel` para que posts da timeline e comentários atualizem instantaneamente entre múltiplos clientes sem refresh.
-- [ ] **Paginação com Infinite Scroll:** adicionar carregamento paginado no catálogo e na timeline para otimizar transferência de dados conforme o volume de conteúdo cresce.
-- [ ] **Integração com Protocolo Desktop (`pzhub://`):** botão de 1-clique para abrir e sincronizar diretamente com o aplicativo nativo do PZHub.
-- [ ] **Recuperação de Senha & Validação de E-mail:** inclusão dos fluxos de redefinição de credenciais diretamente nos modais de autenticação.
+- [ ] **Expansão do Supabase Realtime:** Adicionar subscrições de eventos WebSocket para novos posts e comentários na Timeline sem necessidade de refresh manual.
+- [ ] **Paginação com Infinite Scroll:** Adicionar carregamento paginado no catálogo e na timeline para otimizar transferência de dados conforme o volume de conteúdo cresce.
+- [ ] **Integração com Protocolo Desktop (`pzhub://`):** Botão de 1-clique para abrir e sincronizar diretamente com o aplicativo nativo do PZHub.
+- [ ] **Recuperação de Senha & Validação de E-mail:** Inclusão dos fluxos de redefinição de credenciais diretamente nos modais de autenticação.

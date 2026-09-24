@@ -121,6 +121,7 @@ export async function initModpackBuilder() {
   renderCreatorUploadsList();
   setupMarkdownEditor();
   setupChangelogModal();
+  setupEditModModal();
 }
 
 export function parseSteamWorkshopId(rawInput) {
@@ -266,10 +267,20 @@ export function renderBuilderModsList() {
           ${metaDetails}
           ${m.required ? '<span class="tarkov-tag" style="font-size: 9px; padding: 1px 4px; color: var(--accent-amber); border-color: rgba(229,142,38,0.3);">OBRIGATÓRIO</span>' : '<span class="tarkov-tag" style="font-size: 9px; padding: 1px 4px; color: var(--text-dim);">OPCIONAL</span>'}
         </div>
-        <button type="button" class="tarkov-btn-mini btn-remove-mod-item" data-index="${idx}" style="color: var(--accent-red); border-color: rgba(214,48,49,0.3);">✕ REMOVER</button>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <button type="button" class="tarkov-btn-mini btn-edit-mod-item" data-index="${idx}" style="color: var(--accent-cyan); border-color: rgba(0,206,201,0.3);">✎ EDITAR</button>
+          <button type="button" class="tarkov-btn-mini btn-remove-mod-item" data-index="${idx}" style="color: var(--accent-red); border-color: rgba(214,48,49,0.3);">✕ REMOVER</button>
+        </div>
       </div>
     `;
   }).join('');
+
+  container.querySelectorAll('.btn-edit-mod-item').forEach(btn => {
+    btn.onclick = () => {
+      const idx = parseInt(btn.dataset.index, 10);
+      openEditModModal(idx);
+    };
+  });
 
   container.querySelectorAll('.btn-remove-mod-item').forEach(btn => {
     btn.onclick = () => {
@@ -1167,4 +1178,218 @@ async function processMarkdownFile(file, textarea, onUpdate) {
     showTacticalAlert('Falha ao ler o arquivo local.', 'ERRO DE LEITURA', 'error');
   };
   reader.readAsText(file);
+}
+
+/**
+ * =========================================================================
+ * GERENCIADOR DO MODAL DE EDIÇÃO DE MOD COMPONENTE (ESTÚDIO TÁTICO)
+ * =========================================================================
+ */
+
+export function openEditModModal(idx) {
+  const mod = builderModsList[idx];
+  if (!mod) return;
+
+  const modal = document.getElementById('mod-component-edit-modal');
+  if (!modal) return;
+
+  const idxInput = document.getElementById('edit-mod-item-index');
+  const typeSelect = document.getElementById('edit-mod-type');
+  const nameInput = document.getElementById('edit-mod-name');
+  const wsInput = document.getElementById('edit-mod-ws-id');
+  const wsFeedback = document.getElementById('edit-mod-ws-feedback');
+  const directUrlInput = document.getElementById('edit-mod-direct-url');
+  const directFolderInput = document.getElementById('edit-mod-folder-name');
+  const reqCheckbox = document.getElementById('edit-mod-required');
+
+  if (idxInput) idxInput.value = idx;
+  if (nameInput) nameInput.value = mod.name || '';
+  if (reqCheckbox) reqCheckbox.checked = mod.required !== false;
+
+  const modType = mod.mod_type || (mod.download_url ? 'direct_download' : 'workshop');
+  if (typeSelect) {
+    typeSelect.value = modType;
+  }
+
+  handleEditModTypeChange(modType);
+
+  if (modType === 'workshop') {
+    const rawWsId = mod.workshop_id || mod.id || '';
+    if (wsInput) wsInput.value = rawWsId;
+    if (wsFeedback) {
+      if (rawWsId) {
+        wsFeedback.style.display = 'inline-flex';
+        wsFeedback.className = 'steam-extraction-badge valid';
+        wsFeedback.innerHTML = `✓ ID Detectado: <strong>${rawWsId}</strong>`;
+      } else {
+        wsFeedback.style.display = 'none';
+        wsFeedback.innerHTML = '';
+      }
+    }
+    if (directUrlInput) directUrlInput.value = '';
+    if (directFolderInput) directFolderInput.value = '';
+  } else {
+    if (directUrlInput) directUrlInput.value = mod.download_url || '';
+    if (directFolderInput) directFolderInput.value = mod.folder_name || mod.id || '';
+    if (wsInput) wsInput.value = '';
+    if (wsFeedback) {
+      wsFeedback.style.display = 'none';
+      wsFeedback.innerHTML = '';
+    }
+  }
+
+  modal.classList.add('visible');
+}
+
+export function closeEditModModal() {
+  const modal = document.getElementById('mod-component-edit-modal');
+  if (modal) {
+    modal.classList.remove('visible');
+  }
+}
+
+export function setupEditModModal() {
+  const modal = document.getElementById('mod-component-edit-modal');
+  if (!modal) return;
+
+  const form = document.getElementById('mod-component-edit-form');
+  const closeBtn = document.getElementById('mod-component-edit-close');
+  const cancelBtn = document.getElementById('btn-cancel-edit-mod-modal');
+  const typeSelect = document.getElementById('edit-mod-type');
+  const wsInput = document.getElementById('edit-mod-ws-id');
+  const wsFeedback = document.getElementById('edit-mod-ws-feedback');
+
+  if (closeBtn) closeBtn.onclick = closeEditModModal;
+  if (cancelBtn) cancelBtn.onclick = closeEditModModal;
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeEditModModal();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('visible')) {
+      closeEditModModal();
+    }
+  });
+
+  if (typeSelect) {
+    typeSelect.addEventListener('change', () => {
+      handleEditModTypeChange(typeSelect.value);
+    });
+  }
+
+  if (wsInput) {
+    const handleWsEditInput = () => {
+      const val = wsInput.value.trim();
+      if (!val) {
+        if (wsFeedback) {
+          wsFeedback.style.display = 'none';
+          wsFeedback.innerHTML = '';
+        }
+        return;
+      }
+      const extractedId = parseSteamWorkshopId(val);
+      if (extractedId) {
+        if (wsFeedback) {
+          wsFeedback.style.display = 'inline-flex';
+          wsFeedback.className = 'steam-extraction-badge valid';
+          wsFeedback.innerHTML = `✓ ID Detectado: <strong>${extractedId}</strong>`;
+        }
+      } else {
+        if (wsFeedback) {
+          wsFeedback.style.display = 'inline-flex';
+          wsFeedback.className = 'steam-extraction-badge invalid';
+          wsFeedback.innerHTML = `⚠️ Insira um link válido da Steam ou o ID numérico`;
+        }
+      }
+    };
+    wsInput.addEventListener('input', handleWsEditInput);
+    wsInput.addEventListener('paste', () => setTimeout(handleWsEditInput, 50));
+  }
+
+  if (form) {
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      handleSaveModEdit();
+    };
+  }
+}
+
+function handleEditModTypeChange(selectedType) {
+  const groupWorkshop = document.getElementById('edit-field-group-workshop');
+  const groupDirectUrl = document.getElementById('edit-field-group-direct-url');
+  const groupDirectFolder = document.getElementById('edit-field-group-direct-folder');
+
+  if (groupWorkshop) groupWorkshop.style.display = selectedType === 'workshop' ? 'block' : 'none';
+  if (groupDirectUrl) groupDirectUrl.style.display = selectedType === 'direct_download' ? 'block' : 'none';
+  if (groupDirectFolder) groupDirectFolder.style.display = selectedType === 'direct_download' ? 'block' : 'none';
+}
+
+function handleSaveModEdit() {
+  const idxInput = document.getElementById('edit-mod-item-index');
+  const idx = parseInt(idxInput?.value, 10);
+  if (isNaN(idx) || !builderModsList[idx]) {
+    closeEditModModal();
+    return;
+  }
+
+  const typeSelect = document.getElementById('edit-mod-type');
+  const nameInput = document.getElementById('edit-mod-name');
+  const reqCheckbox = document.getElementById('edit-mod-required');
+  const wsInput = document.getElementById('edit-mod-ws-id');
+  const directUrlInput = document.getElementById('edit-mod-direct-url');
+  const directFolderInput = document.getElementById('edit-mod-folder-name');
+
+  const mod_type = typeSelect?.value || 'workshop';
+  const name = nameInput?.value.trim();
+  const required = reqCheckbox?.checked || false;
+
+  if (!name) {
+    showTacticalAlert('Informe o nome do mod componente antes de salvar.', 'VALOR OBRIGATÓRIO', 'warning');
+    return;
+  }
+
+  let updatedMod = null;
+
+  if (mod_type === 'workshop') {
+    const rawVal = wsInput?.value.trim();
+    const extractedId = parseSteamWorkshopId(rawVal);
+    if (!extractedId) {
+      showTacticalAlert('Por favor, informe o link completo do mod na Steam ou o Workshop ID numérico.', 'LINK OU ID INVÁLIDO', 'warning');
+      return;
+    }
+    updatedMod = {
+      id: extractedId,
+      name,
+      mod_type: 'workshop',
+      workshop_id: extractedId,
+      required,
+      description: `Steam Workshop [ID: ${extractedId}]`
+    };
+  } else if (mod_type === 'direct_download') {
+    const download_url = directUrlInput?.value.trim();
+    const folder_name = directFolderInput?.value.trim() || name.replace(/[^a-zA-Z0-9_-]/g, '');
+
+    if (!download_url || !download_url.startsWith('http')) {
+      showTacticalAlert('Por favor, informe uma URL válida (.ZIP ou .RAR) para o download direto do mod.', 'URL INVÁLIDA', 'warning');
+      return;
+    }
+
+    updatedMod = {
+      id: folder_name,
+      name,
+      mod_type: 'direct_download',
+      download_url: download_url,
+      folder_name: folder_name,
+      required,
+      description: `Download Direto (.ZIP) ➔ Zomboid/mods/${folder_name}`
+    };
+  }
+
+  if (updatedMod) {
+    builderModsList[idx] = updatedMod;
+    renderBuilderModsList();
+    closeEditModModal();
+    showTacticalToast(`Mod "${name}" atualizado no pacote com sucesso!`, 'success');
+  }
 }
